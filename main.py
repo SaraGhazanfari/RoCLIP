@@ -1,3 +1,4 @@
+import os
 import sys
 
 import torch
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         lang_encoder_path="anas-awadalla/mpt-1b-redpajama-200b",
         tokenizer_path="anas-awadalla/mpt-1b-redpajama-200b",
         cross_attn_every_n_layers=1,
-        cache_dir="/scratch/sg7457"
+        cache_dir=os.getcwd()
     )
     model.requires_grad_(True)
 
