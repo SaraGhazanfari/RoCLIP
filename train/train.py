@@ -42,13 +42,13 @@ parser.add_argument(
 )
 
 
-def get_result_file_name_and_dir(args, eval_model):
+def get_result_file_name_and_dir(args):
 
     results_file_dir = f"{args.results_file}_{'_'.join(['sbucaptions'])}"
     results_file_dir += f"_{args.num_samples}samples"
     tme = time.strftime("%Y-%m-%d_%H-%M-%S")
     results_file_dir += f"_{tme}"
-    results_file_dir = os.path.join(args.out_base_path, 'results', results_file_dir)
+    results_file_dir = os.path.join('results', results_file_dir)
     results_file_name = os.path.join(results_file_dir, 'results.json')
     return results_file_dir, results_file_name
 
