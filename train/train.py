@@ -108,21 +108,6 @@ def get_query_set(train_dataset, query_set_size, seed, args):
     return [train_dataset[i] for i in query_set]
 
 
-def prepare_eval_samples(test_dataset, num_samples, batch_size, seed, args):
-    np.random.seed(seed)
-    # TODO
-    random_indices = np.random.choice(1000, num_samples, replace=False)
-    dataset = torch.utils.data.Subset(test_dataset, random_indices)
-    sampler = torch.utils.data.SequentialSampler(dataset)
-    loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=batch_size,
-        sampler=sampler,
-        collate_fn=custom_collate_fn,
-    )
-    return loader
-
-
 def sample_batch_demos_from_query_set(query_set, num_samples, batch_size):
     return [random.sample(query_set, num_samples) for _ in range(batch_size)]
 
@@ -183,14 +168,7 @@ def evaluate_captioning(
     """
 
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
-
-    test_dataloader = prepare_eval_samples(
-        data['val'],
-        args.num_samples if args.num_samples > 0 else len(data['val'][1]),
-        args.batch_size,
-        seed,
-        args,
-    )
+    test_loader = data['val'].dataloader
 
     # in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
 
