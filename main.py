@@ -77,6 +77,9 @@ def main(args):
         tokenizer=None,
     )
 
+    for sample in data:
+        print(type(sample))
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
