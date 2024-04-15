@@ -2,9 +2,7 @@ import os
 import sys
 
 import torch
-from advertorch import attacks
 from huggingface_hub import hf_hub_download
-from torch.nn import CrossEntropyLoss
 
 from data.reader import get_data
 from open_flamingo import create_model_and_transforms
@@ -54,15 +52,14 @@ if __name__ == '__main__':
                     )
     print('The data is loaded successfully')
 
-    for sample in data['train'].dataloader:
-        print(len(sample))
-        print((sample[0].shape) * len())
-        print(len(sample[1]))
-        print(sample[1][0])
-        print(sample[1][0].ids)
-        break
     finetune_clip(model, data, args)
 
+    # for sample in data['train'].dataloader:
+    #     print(len(sample))
+    #     print(len(sample[1]))
+    #     print(sample[1][0])
+    #     print(sample[1][0].ids)
+    #     break
     # lang_x = tokenizer(
     #     ["<image>An image of two cats.<|endofchunk|><image>An image of a bathroom sink.<|endofchunk|><image>An image of"],
     #     return_tensors="pt",
