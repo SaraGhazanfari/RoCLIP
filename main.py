@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 import torch
+from transformers import AutoTokenizer
 
 try:
     import wandb
@@ -70,11 +71,25 @@ def main(args):
         **model_kwargs,
     )
 
+    text_tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_path='anas-awadalla/mpt-1b-redpajama-200b',
+        local_files_only=False,
+        trust_remote_code=True,
+        cache_dir='.',
+    )
+    # add Flamingo special tokens to the tokenizer
+    text_tokenizer.add_special_tokens(
+        {"additional_special_tokens": ["<|endofchunk|>", "<image>"]}
+    )
+    if text_tokenizer.pad_token is None:
+        # Issue: GPT models don't have a pad token, which we use to
+        # modify labels for the loss.
+        text_tokenizer.add_special_tokens({"pad_token": "<PAD>"})
     data = get_data(
         args,
         (preprocess_train, preprocess_val),
         epoch=0,
-        tokenizer=None,
+        tokenizer=text_tokenizer,
     )
     print(data['train'].__dict__)
     for sample in data['train'].dataloader:
