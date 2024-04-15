@@ -76,8 +76,8 @@ def main(args):
         epoch=0,
         tokenizer=None,
     )
-    print(data.keys())
-    for sample in data['train']:
+    print(data['train'].__dict__)
+    for sample in data['train'].dataloader:
         print(type(sample))
         break
 
