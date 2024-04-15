@@ -94,7 +94,8 @@ def main(args):
     for sample in data['train'].dataloader:
         print(len(sample))
         print(sample[0].shape)
-        print(sample[1].shape)
+        print(len(sample[1]))
+        print(sample[1][0])
         break
 
 
