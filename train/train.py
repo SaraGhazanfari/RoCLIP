@@ -168,7 +168,7 @@ def evaluate_captioning(
     """
 
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
-    test_loader = data['val'].dataloader
+    test_dataloader = data['val'].dataloader
 
     # in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
 
