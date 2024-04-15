@@ -8,7 +8,6 @@ import uuid
 from collections import defaultdict
 
 import numpy as np
-import torch
 from tqdm import tqdm
 
 from utils.captioning_utils import postprocess_captioning_generation, compute_cider, compute_cider_all_scores
@@ -281,10 +280,6 @@ def evaluate_captioning(
             if n_left == 0:
                 break
 
-    if attack_config["save_adv"]:
-        for img_id in adv_images_dict:
-            torch.save(adv_images_dict[img_id], f'{images_save_path}/{str(img_id).zfill(12)}.pt')
-    # save gt dict and left to attack dict
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
     with open(f'{os.path.dirname(args.results_file)}/left_to_attack.json', 'w') as f:
@@ -292,28 +287,12 @@ def evaluate_captioning(
     with open(f'{os.path.dirname(args.results_file)}/captions_attack_dict.json', 'w') as f:
         json.dump(captions_attack_dict, f)
 
-    if attack_str == "ensemble":
-        assert None not in captions_best_dict.values()
-        results_path = f"{dataset_name}results-best_{uuid.uuid4()}.json"
-        results_path = os.path.join(args.out_base_path, "captions-json", results_path)
-        os.makedirs(os.path.dirname(results_path), exist_ok=True)
-        print(f"Saving **best** generated captions to {results_path}")
-        with open(results_path, "w") as f:
-            f.write(
-                json.dumps([{"image_id": k, "caption": captions_best_dict[k]} for k in captions_best_dict], indent=4)
-            )
-
     metrics = compute_cider(
         result_path=results_path,
         annotations_path=args.coco_annotations_json_path
         if dataset_name == "coco"
         else args.flickr_annotations_json_path,
     )
-    # delete the temporary file
-    # os.remove(results_path)
-    if not targeted:
-        attack_success = np.nan
-    else:
-        attack_success = get_attack_success_rate(predictions, target_str)
-    res = {"cider": metrics["CIDEr"] * 100.0, "success_rate": attack_success}
+
+    res = {"cider": metrics["CIDEr"] * 100.0, "success_rate": 0}
     return res, results_path
