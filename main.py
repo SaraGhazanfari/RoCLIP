@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     for sample in data['train'].dataloader:
         print(len(sample))
-        print(sample[0].shape)
+        print((sample[0].shape) * len())
         print(len(sample[1]))
         print(sample[1][0])
         print(sample[1][0].ids)

@@ -100,15 +100,15 @@ def finetune_clip(eval_model, data, args):
     del res, out_captions_json
 
 
-def get_query_set(train_dataset, query_set_size, seed):
+def get_query_set(train_dataset, query_set_size, seed, args):
     np.random.seed(seed)
-    query_set = np.random.choice(len(train_dataset), query_set_size, replace=False)
+    query_set = np.random.choice(len(train_dataset.dataloader) * args.batch_size, query_set_size, replace=False)
     return [train_dataset[i] for i in query_set]
 
 
-def prepare_eval_samples(test_dataset, num_samples, batch_size, seed):
+def prepare_eval_samples(test_dataset, num_samples, batch_size, seed, args):
     np.random.seed(seed)
-    random_indices = np.random.choice(len(test_dataset), num_samples, replace=False)
+    random_indices = np.random.choice(len(test_dataset.dataloader) * args.batch_size, num_samples, replace=False)
     dataset = torch.utils.data.Subset(test_dataset, random_indices)
     sampler = torch.utils.data.SequentialSampler(dataset)
     loader = torch.utils.data.DataLoader(
@@ -186,9 +186,10 @@ def evaluate_captioning(
         args.num_samples if args.num_samples > 0 else len(data['val'][1]),
         args.batch_size,
         seed,
+        args,
     )
 
-    in_context_samples = get_query_set(data['train'], args.query_set_size, seed)
+    in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
 
     # attack stuff
     attack_str = attack_config["attack_str"]
