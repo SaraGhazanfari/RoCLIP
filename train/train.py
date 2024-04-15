@@ -180,8 +180,8 @@ def evaluate_captioning(
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
 
     test_dataloader = prepare_eval_samples(
-        data['test'],
-        args.num_samples if args.num_samples > 0 else len(data['test'][1]),
+        data['val'],
+        args.num_samples if args.num_samples > 0 else len(data['val'][1]),
         args.batch_size,
         seed,
     )
