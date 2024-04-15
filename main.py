@@ -72,7 +72,7 @@ def main(args):
     )
 
     text_tokenizer = AutoTokenizer.from_pretrained(
-        tokenizer_path='anas-awadalla/mpt-1b-redpajama-200b',
+        'anas-awadalla/mpt-1b-redpajama-200b',
         local_files_only=False,
         trust_remote_code=True,
         cache_dir='.',
