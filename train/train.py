@@ -45,12 +45,6 @@ parser.add_argument(
 def get_result_file_name_and_dir(args, eval_model):
 
     results_file_dir = f"{args.results_file}_{'_'.join(['sbucaptions'])}"
-    if args.attack not in [None, "none"]:
-        results_file_dir += f"_{args.attack}_{args.eps}_{args.steps}_{args.mask_out}_{''.join(map(str, args.shots))}-shot"
-    if args.from_saved:
-        results_file_dir += f"_FROM_{'-'.join(args.from_saved.split('/')[-2:])}"
-    if args.targeted:
-        results_file_dir += f"_targeted={args.target_str.replace(' ', '-').replace('/', '-')}"
     results_file_dir += f"_{args.num_samples}samples"
     tme = time.strftime("%Y-%m-%d_%H-%M-%S")
     results_file_dir += f"_{tme}"
