@@ -45,11 +45,6 @@ parser.add_argument(
 def get_result_file_name_and_dir(args, eval_model):
 
     results_file_dir = f"{args.results_file}_{'_'.join(['sbucaptions'])}"
-    if (v := eval_model.model_args.get("vision_encoder_pretrained")) is not None:
-        v = ("-" + v.split("/")[-3]) if "/" in v else v
-        if len(v) > 180:
-            v = v[140:]
-        results_file_dir += v
     if args.attack not in [None, "none"]:
         results_file_dir += f"_{args.attack}_{args.eps}_{args.steps}_{args.mask_out}_{''.join(map(str, args.shots))}-shot"
     if args.from_saved:
