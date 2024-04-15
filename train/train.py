@@ -176,7 +176,8 @@ def evaluate_captioning(
     gt_dict = {}  # saves which gt works best for each image
 
     for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
-        
+        print(len(batch[0]))
+
         batch_images = []
         batch_text = []
         for i in range(len(batch[0])):
