@@ -76,9 +76,10 @@ def main(args):
         epoch=0,
         tokenizer=None,
     )
-
-    for sample in data:
-        print(sample)
+    print(data.keys())
+    for sample in data['train']:
+        print(type(sample))
+        break
 
 
 if __name__ == "__main__":
