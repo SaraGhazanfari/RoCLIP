@@ -53,15 +53,16 @@ if __name__ == '__main__':
                     tokenizer=tokenizer,
                     )
     print('The data is loaded successfully')
-    print(data)
+
+    for sample in data['train'].dataloader:
+        print(len(sample))
+        print(sample[0].shape)
+        print(len(sample[1]))
+        print(sample[1][0])
+        print(sample[1][0].ids)
+        break
     finetune_clip(model, data, args)
-    # for sample in data['train'].dataloader:
-    #     print(len(sample))
-    #     print(sample[0].shape)
-    #     print(len(sample[1]))
-    #     print(sample[1][0])
-    #     print(sample[1][0].ids)
-    #     break
+
     # lang_x = tokenizer(
     #     ["<image>An image of two cats.<|endofchunk|><image>An image of a bathroom sink.<|endofchunk|><image>An image of"],
     #     return_tensors="pt",
