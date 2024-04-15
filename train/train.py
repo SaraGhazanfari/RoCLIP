@@ -69,21 +69,10 @@ def finetune_clip(eval_model, data):
     model_args = {
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
-    attack_config = {
-        "attack_str": args.attack,
-        "eps": args.eps / 255,
-        "steps": args.steps,
-        "mask_out": args.mask_out,
-        "targeted": args.targeted,
-        "target_str": args.target_str,
-        "from_saved": args.from_saved,
-        "save_adv": (not args.dont_save_adv) and args.attack != "none",
-    }
 
     results = defaultdict(list)
 
     results["model"] = leftovers
-    results["attack"] = attack_config
     results_file_dir, results_file_name = get_result_file_name_and_dir(args, eval_model)
     for shot in args.shots:
         scores = {'cider': [], 'success_rate': []}
@@ -95,8 +84,7 @@ def finetune_clip(eval_model, data):
                 eval_model=eval_model,
                 num_shots=shot,
                 seed=seed,
-                dataset_name="coco",
-                attack_config=attack_config,
+                dataset_name="coco"
             )
             print(f"Shots {shot} Trial {trial} Score: {res}")
             scores['cider'].append(res['cider'])
