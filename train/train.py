@@ -183,20 +183,15 @@ def evaluate_captioning(
                           test_dataloader}  # saves the best captions path for each image
 
     for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
-        if not left_to_attack[batch["image_id"][0]]:  # hardcoded to batch size 1
-            continue
-
-        # batch_demo_samples = sample_batch_demos_from_query_set(
-        #     in_context_samples, effective_num_shots, len(batch["image"])
-        # )
+        
         batch_images = []
         batch_text = []
-        for i in range(len(batch["image"])):
+        for i in range(len(batch[0])):
             if num_shots > 0:
                 context_images = [x["image"] for x in batch_demo_samples[i]]
             else:
                 context_images = []
-            batch_images.append(context_images + [batch["image"][i]])
+            batch_images.append(context_images + [batch[0][i]])
 
             context_text = "".join(
                 [eval_model.get_caption_prompt(caption=x["caption"].strip()) for x in batch_demo_samples[i]]
@@ -205,9 +200,6 @@ def evaluate_captioning(
             # Keep the text but remove the image tags for the zero-shot case
             if num_shots == 0:
                 context_text = context_text.replace("<image>", "")
-            print('----------------------------------------------')
-            print(context_text)
-            print('----------------------------------------------')
 
             if effective_num_shots > 0:
                 batch_text.append(context_text + eval_model.get_caption_prompt())
@@ -234,12 +226,11 @@ def evaluate_captioning(
         ]
         if batch_n < 20 and args.verbose:
             for k in range(len(new_predictions)):
-                print(f"[gt] {batch['caption'][k]} [pred] {new_predictions[k]}")
+                print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
             print(flush=True)
-            # print(f"gt captions: {batch['caption']}")
-            # print(f"new_predictions: {new_predictions}\n", flush=True)
-        for i, sample_id in enumerate(batch["image_id"]):
-            predictions[sample_id] = {"caption": new_predictions[i]}
+
+        # for i, sample_id in enumerate(batch["image_id"]):
+        #     predictions[sample_id] = {"caption": new_predictions[i]}
 
         # save the predictions to a temporary file
         uid = uuid.uuid4()
@@ -247,38 +238,10 @@ def evaluate_captioning(
         results_path = os.path.join("captions-json", results_path)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving generated captions to {results_path}")
-        with open(results_path, "w") as f:
-            f.write(
-                json.dumps([{"image_id": k, "caption": predictions[k]["caption"]} for k in predictions], indent=4)
-            )
-
-        if attack_str == "ensemble":
-            ciders, img_ids = compute_cider_all_scores(
-                result_path=results_path,
-                annotations_path=args.coco_annotations_json_path
-                if dataset_name == "coco"
-                else args.flickr_annotations_json_path,
-                return_img_ids=True,
-            )
-            # if cider improved, save the new predictions
-            # and if it is below thresh, set left to attack to false
-            for cid, img_id in zip(ciders, img_ids):
-                if cid < scores_dict[img_id]:
-                    scores_dict[img_id] = cid
-                    captions_best_dict[img_id] = predictions[img_id]["caption"]
-
-                cider_threshold = {"coco": 10., "flickr": 2.}[dataset_name]
-                if cid < cider_threshold:
-                    left_to_attack[img_id] = False
-            # delete the temporary file
-            # os.remove(results_path)
-            # output how many left to attack
-            n_left = sum(left_to_attack.values())
-            print(f"##### "
-                  f"current cider: {np.mean(ciders)}, best cider: {np.mean(list(scores_dict.values()))} "
-                  f"cider-thresh: {cider_threshold}\n", flush=True)
-            if n_left == 0:
-                break
+        # with open(results_path, "w") as f:
+        #     f.write(
+        #         json.dumps([{"image_id": k, "caption": predictions[k]["caption"]} for k in predictions], indent=4)
+        #     )
 
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
