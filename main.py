@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     tokenizer=tokenizer,
                     )
     print('The data is loaded successfully')
-    print(data.keys())
+    print(data)
     finetune_clip(model, data)
     # for sample in data['train'].dataloader:
     #     print(len(sample))
