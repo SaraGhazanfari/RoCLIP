@@ -123,6 +123,9 @@ def parse_args(args):
         "--workers", type=int, default=4, help="Number of dataloader workers per GPU."
     )
     parser.add_argument(
+        "--world_size", type=int, default=1, help="Number of gpus."
+    )
+    parser.add_argument(
         "--batch-size", type=int, default=64, help="Batch size per GPU."
     )
     parser.add_argument(
