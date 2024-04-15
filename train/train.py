@@ -177,10 +177,12 @@ def evaluate_captioning(
     for sample in data['train'].dataloader:
         print(len(sample[1]))
         print(sample[0].shape)
+        break
 
     for sample in data['val'].dataloader:
         print(len(sample[1]))
         print(sample[0].shape)
+        break
 
     for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
         print(len(batch[0]))
