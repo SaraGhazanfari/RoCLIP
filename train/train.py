@@ -62,7 +62,7 @@ def finetune_clip(eval_model, data):
     results = defaultdict(list)
 
     results["model"] = leftovers
-    results_file_dir, results_file_name = get_result_file_name_and_dir(args, eval_model)
+    results_file_dir, results_file_name = get_result_file_name_and_dir(args)
     for shot in args.shots:
         scores = {'cider': [], 'success_rate': []}
         for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
