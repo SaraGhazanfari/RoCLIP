@@ -78,7 +78,7 @@ def main(args):
     )
 
     for sample in data:
-        print(type(sample))
+        print(sample)
 
 
 if __name__ == "__main__":
