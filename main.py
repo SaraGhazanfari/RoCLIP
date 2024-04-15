@@ -1,104 +1,82 @@
-import random
 import sys
 
-import numpy as np
 import torch
-from transformers import AutoTokenizer
+from advertorch import attacks
+from huggingface_hub import hf_hub_download
+from torch.nn import CrossEntropyLoss
 
-try:
-    import wandb
-except ImportError:
-    wandb = None
-
-try:
-    import torch.utils.tensorboard as tensorboard
-except ImportError:
-    tensorboard = None
-
-try:
-    import horovod.torch as hvd
-except ImportError:
-    hvd = None
-
-from clip import create_model_and_transforms
-from clip.training.data import get_data
-from clip.training.distributed import init_distributed_device
-from clip.training.params import parse_args
-
-LATEST_CHECKPOINT_NAME = "epoch_latest.pt"
+from data.reader import get_data
+from open_flamingo import create_model_and_transforms
+from train.train import finetune_clip
+from utils.param import parse_args
 
 
-def random_seed(seed=42, rank=0):
-    torch.manual_seed(seed + rank)
-    np.random.seed(seed + rank)
-    random.seed(seed + rank)
+def model_wrapper(model, part_of_visiox_x, lang_x, attention_mask, max_new_tokens, num_beams, output_scores,
+                  return_dict_in_generate):
+    def generate(one_img):
+        vision_x = torch.concat((part_of_visiox_x, one_img.unsqueeze(0).unsqueeze(0)), dim=1)
+        out = model(vision_x=vision_x, lang_x=lang_x,
+                    attention_mask=attention_mask)
+        print(out)
+        return out.logits[:, -1, :]
+        # out = model.generate(vision_x=vision_x, lang_x=lang_x,
+        #                 attention_mask=attention_mask, max_new_tokens=max_new_tokens,
+        #                 num_beams=num_beams, output_scores=output_scores, return_dict_in_generate=return_dict_in_generate)
+        # print(torch.stack(list(out.scores), dim=0).squeeze(1).shape)
+        # print(torch.stack(list(out.scores), dim=0).squeeze(1).requires_grad)
+        # return torch.stack(list(out.scores), dim=0).squeeze(1)
+
+    return generate
 
 
-def main(args):
+if __name__ == '__main__':
+    args = sys.argv[1:]
     args = parse_args(args)
-
-    if torch.cuda.is_available():
-        # This enables tf32 on Ampere GPUs which is only 8% slower than
-        # float16 and almost as accurate as float32
-        # This was a default in pytorch until 1.12
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.benchmark = True
-        torch.backends.cudnn.deterministic = False
-
-    # fully initialize distributed device environment
-    device = init_distributed_device(args)
-
-    random_seed(args.seed, 0)
-    model_kwargs = {}
-
-    model, preprocess_train, preprocess_val = create_model_and_transforms(
-        args.model,
-        args.pretrained,
-        precision=args.precision,
-        device=device,
-        jit=args.torchscript,
-        force_quick_gelu=args.force_quick_gelu,
-        force_custom_text=args.force_custom_text,
-        force_patch_dropout=args.force_patch_dropout,
-        force_image_size=args.force_image_size,
-        image_mean=args.image_mean,
-        image_std=args.image_std,
-        image_interpolation=args.image_interpolation,
-        image_resize_mode=args.image_resize_mode,  # only effective for inference
-        aug_cfg=args.aug_cfg,
-        pretrained_image=args.pretrained_image,
-        output_dict=True,
-        **model_kwargs,
+    model, image_processor, tokenizer = create_model_and_transforms(
+        clip_vision_encoder_path="ViT-L-14",
+        clip_vision_encoder_pretrained="openai",
+        lang_encoder_path="anas-awadalla/mpt-1b-redpajama-200b",
+        tokenizer_path="anas-awadalla/mpt-1b-redpajama-200b",
+        cross_attn_every_n_layers=1,
+        cache_dir="/scratch/sg7457"
     )
+    model.requires_grad_(True)
 
-    text_tokenizer = AutoTokenizer.from_pretrained(
-        'anas-awadalla/mpt-1b-redpajama-200b',
-        local_files_only=False,
-        trust_remote_code=True,
-        cache_dir='.',
-    )
-    # add Flamingo special tokens to the tokenizer
-    text_tokenizer.add_special_tokens(
-        {"additional_special_tokens": ["<|endofchunk|>", "<image>"]}
-    )
-    if text_tokenizer.pad_token is None:
-        # Issue: GPT models don't have a pad token, which we use to
-        # modify labels for the loss.
-        text_tokenizer.add_special_tokens({"pad_token": "<PAD>"})
-    data = get_data(
-        args,
-        (preprocess_train, preprocess_val),
-        epoch=0,
-        tokenizer=text_tokenizer,
-    )
-    for sample in data['train'].dataloader:
-        print(len(sample))
-        print(sample[0].shape)
-        print(len(sample[1]))
-        print(sample[1][0])
-        print(sample[1][0].ids)
-        break
+    checkpoint_path = hf_hub_download("openflamingo/OpenFlamingo-3B-vitl-mpt1b", "checkpoint.pt")
+    model.load_state_dict(torch.load(checkpoint_path), strict=False)
+    print(f'The model is loaded successfully!')
+    tokenizer.padding_side = "left"  # For generation padding tokens should be on the left
+    data = get_data(args,
+                    (image_processor, image_processor),
+                    epoch=0,
+                    tokenizer=tokenizer,
+                    )
+    print('The data is loaded successfully')
+    finetune_clip(model, data)
+    # for sample in data['train'].dataloader:
+    #     print(len(sample))
+    #     print(sample[0].shape)
+    #     print(len(sample[1]))
+    #     print(sample[1][0])
+    #     print(sample[1][0].ids)
+    #     break
+    # lang_x = tokenizer(
+    #     ["<image>An image of two cats.<|endofchunk|><image>An image of a bathroom sink.<|endofchunk|><image>An image of"],
+    #     return_tensors="pt",
+    # )
 
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
+    # model_generate = model_wrapper(model, part_of_visiox_x=vision_x[:, :2, :, :, :, :],
+    #                                lang_x=lang_x["input_ids"], attention_mask=lang_x["attention_mask"],
+    #                                max_new_tokens=20, num_beams=1, output_scores=True, return_dict_in_generate=True)
+    # attack = attacks.LinfPGDAttack(model_generate, loss_fn=CrossEntropyLoss(), nb_iter=1, eps=4 / 255, eps_iter=2 / 255,
+    #                                clip_min=0, clip_max=1, targeted=False)
+    #
+    # label = torch.tensor([273, 247, 14664, 292, 2829, 15])
+    #
+    # adv = attack(vision_x[:, -1, :, :, :, :].squeeze(0), label[:1])
+    #
+    # out = model.generate(vision_x=adv, lang_x=lang_x["input_ids"], attention_mask=lang_x["attention_mask"],
+    #                      max_new_tokens=20, num_beams=1, output_scores=True, return_dict_in_generate=True)
+    #
+    # loss = CrossEntropyLoss()(torch.stack(list(out.scores), dim=0).squeeze(1), label)
+    # print(loss)
