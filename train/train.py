@@ -102,13 +102,14 @@ def finetune_clip(eval_model, data, args):
 
 def get_query_set(train_dataset, query_set_size, seed, args):
     np.random.seed(seed)
-    query_set = np.random.choice(len(train_dataset.dataloader) * args.batch_size, query_set_size, replace=False)
+    query_set = np.random.choice(args.train_num_samples, query_set_size, replace=False)
     return [train_dataset[i] for i in query_set]
 
 
 def prepare_eval_samples(test_dataset, num_samples, batch_size, seed, args):
     np.random.seed(seed)
-    random_indices = np.random.choice(len(test_dataset.dataloader) * args.batch_size, num_samples, replace=False)
+    # TODO
+    random_indices = np.random.choice(1000, num_samples, replace=False)
     dataset = torch.utils.data.Subset(test_dataset, random_indices)
     sampler = torch.utils.data.SequentialSampler(dataset)
     loader = torch.utils.data.DataLoader(
@@ -190,19 +191,6 @@ def evaluate_captioning(
     )
 
     in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
-
-    # attack stuff
-    attack_str = attack_config["attack_str"]
-    targeted = attack_config["targeted"]
-    target_str = attack_config["target_str"]
-    if attack_str != "none":
-        mask_out = attack_config["mask_out"]
-        if attack_config["save_adv"]:
-            images_save_path = os.path.join(os.path.dirname(args.results_file), "adv-images")
-            os.makedirs(images_save_path, exist_ok=True)
-            print(f"saving adv images to {images_save_path}")
-        if num_shots == 0:
-            mask_out = None
 
     predictions = defaultdict()
     np.random.seed(seed)
