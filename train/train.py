@@ -16,6 +16,10 @@ from utils.captioning_utils import postprocess_captioning_generation, compute_ci
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
+    "--model", type=str, default='open_flamingo', help="VLM model name"
+)
+
+parser.add_argument(
     "--results_file", type=str, default='./out', help="JSON file to save results"
 )
 
@@ -43,7 +47,6 @@ parser.add_argument(
 
 
 def get_result_file_name_and_dir(args):
-
     results_file_dir = f"{args.results_file}_{'_'.join(['sbucaptions'])}"
     results_file_dir += f"_{args.num_samples}samples"
     tme = time.strftime("%Y-%m-%d_%H-%M-%S")
