@@ -10,7 +10,7 @@ from collections import defaultdict
 import numpy as np
 from tqdm import tqdm
 
-from utils.captioning_utils import postprocess_captioning_generation, compute_cider, compute_cider_all_scores
+from utils.captioning_utils import postprocess_captioning_generation, compute_cider
 
 parser = argparse.ArgumentParser()
 
@@ -174,6 +174,13 @@ def evaluate_captioning(
     np.random.seed(seed)
 
     gt_dict = {}  # saves which gt works best for each image
+    for sample in data['train'].dataloader:
+        print(len(sample[1]))
+        print(sample[0].shape)
+
+    for sample in data['val'].dataloader:
+        print(len(sample[1]))
+        print(sample[0].shape)
 
     for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
         print(len(batch[0]))
