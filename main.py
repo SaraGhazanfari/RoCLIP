@@ -54,7 +54,7 @@ if __name__ == '__main__':
                     )
     print('The data is loaded successfully')
     print(data)
-    finetune_clip(model, data)
+    finetune_clip(model, data, args)
     # for sample in data['train'].dataloader:
     #     print(len(sample))
     #     print(sample[0].shape)

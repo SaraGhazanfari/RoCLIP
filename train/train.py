@@ -56,8 +56,9 @@ def get_result_file_name_and_dir(args):
     return results_file_dir, results_file_name
 
 
-def finetune_clip(eval_model, data):
-    args, leftovers = parser.parse_known_args()
+def finetune_clip(eval_model, data, args):
+    finetune_args, leftovers = parser.parse_known_args()
+    args = args + finetune_args
     model_args = {
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
