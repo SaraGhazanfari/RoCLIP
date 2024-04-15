@@ -171,16 +171,9 @@ def evaluate_captioning(
 
     # in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
 
-    predictions = defaultdict()
     np.random.seed(seed)
 
-    left_to_attack = {x["image_id"][0]: True for x in test_dataloader}  # hardcoded to batch size 1
-    scores_dict = {x["image_id"][0]: np.inf for x in test_dataloader}  # hardcoded to batch size 1
-    adv_images_dict = {}
     gt_dict = {}  # saves which gt works best for each image
-    captions_attack_dict = {}  # saves the captions path for each attack
-    captions_best_dict = {x["image_id"][0]: None for x in
-                          test_dataloader}  # saves the best captions path for each image
 
     for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
         
@@ -188,7 +181,8 @@ def evaluate_captioning(
         batch_text = []
         for i in range(len(batch[0])):
             if num_shots > 0:
-                context_images = [x["image"] for x in batch_demo_samples[i]]
+                pass
+                # context_images = [x["image"] for x in batch_demo_samples[i]]
             else:
                 context_images = []
             batch_images.append(context_images + [batch[0][i]])
@@ -245,10 +239,6 @@ def evaluate_captioning(
 
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
-    with open(f'{os.path.dirname(args.results_file)}/left_to_attack.json', 'w') as f:
-        json.dump(left_to_attack, f)
-    with open(f'{os.path.dirname(args.results_file)}/captions_attack_dict.json', 'w') as f:
-        json.dump(captions_attack_dict, f)
 
     metrics = compute_cider(
         result_path=results_path,
