@@ -18,7 +18,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--model", type=str, default='open_flamingo', help="VLM model name"
 )
-
+parser.add_argument(
+    "--query_set_size", type=int, default=2048, help="Size of demonstration query set"
+)
 parser.add_argument(
     "--results_file", type=str, default='./out', help="JSON file to save results"
 )
