@@ -274,7 +274,7 @@ def evaluate_captioning(
         # save the predictions to a temporary file
         uid = uuid.uuid4()
         results_path = f"{dataset_name}results_{uid}.json"
-        results_path = os.path.join(args.out_base_path, "captions-json", results_path)
+        results_path = os.path.join("captions-json", results_path)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving generated captions to {results_path}")
         with open(results_path, "w") as f:
