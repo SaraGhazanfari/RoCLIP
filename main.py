@@ -91,9 +91,9 @@ def main(args):
         epoch=0,
         tokenizer=text_tokenizer,
     )
-    print(data['train'].__dict__)
     for sample in data['train'].dataloader:
-        print(type(sample))
+        print(len(sample))
+        print(sample[0])
         break
 
 
