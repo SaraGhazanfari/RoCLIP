@@ -26,7 +26,7 @@ parser.add_argument(
 )
 
 # Trial arguments
-parser.add_argument("--shots", nargs="+", default=[0, 4, 8, 16, 32], type=int)
+parser.add_argument("--shots", nargs="+", default=[0], type=int)  # todo [0, 4, 8, 16, 32]
 parser.add_argument(
     "--num_trials",
     type=int,
@@ -192,7 +192,7 @@ def evaluate_captioning(
         args,
     )
 
-    in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
+    # in_context_samples = get_query_set(data['train'], args.query_set_size, seed, args)
 
     predictions = defaultdict()
     np.random.seed(seed)
@@ -209,12 +209,11 @@ def evaluate_captioning(
         if not left_to_attack[batch["image_id"][0]]:  # hardcoded to batch size 1
             continue
 
-        batch_demo_samples = sample_batch_demos_from_query_set(
-            in_context_samples, effective_num_shots, len(batch["image"])
-        )
+        # batch_demo_samples = sample_batch_demos_from_query_set(
+        #     in_context_samples, effective_num_shots, len(batch["image"])
+        # )
         batch_images = []
         batch_text = []
-        batch_text_adv = []
         for i in range(len(batch["image"])):
             if num_shots > 0:
                 context_images = [x["image"] for x in batch_demo_samples[i]]
@@ -232,13 +231,11 @@ def evaluate_captioning(
             print('----------------------------------------------')
             print(context_text)
             print('----------------------------------------------')
-            adv_caption = batch["caption"][i] if not targeted else target_str
+
             if effective_num_shots > 0:
                 batch_text.append(context_text + eval_model.get_caption_prompt())
-                batch_text_adv.append(context_text + eval_model.get_caption_prompt(adv_caption))
             else:
                 batch_text.append(eval_model.get_caption_prompt())
-                batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
 
         batch_images = eval_model._prepare_images(batch_images)
 
