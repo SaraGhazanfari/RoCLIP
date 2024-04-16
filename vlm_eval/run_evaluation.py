@@ -1014,7 +1014,6 @@ def evaluate_captioning(
                     mask_out=mask_out,
                     initial_stepsize=1.0,
                 )
-                print(eval_model.device, batch_images.to(eval_model.device, dtype=eval_model.cast_dtype).device)
                 batch_images = attack.perturb(
                     batch_images.to(eval_model.device, dtype=eval_model.cast_dtype),
                     iterations=attack_config["steps"],
