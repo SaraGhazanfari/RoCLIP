@@ -202,11 +202,7 @@ def evaluate_captioning(
             else:
                 batch_text.append(get_caption_prompt())
 
-        batch_images = eval_model._prepare_images(batch_images)
-
-        for i in range(batch_images.shape[0]):
-            # save the adversarial images
-            img_id = batch["image_id"][i]
+        batch_images = batch_images.unsqueeze(1).unsqueeze(1)
 
         outputs = eval_model.get_outputs(
             batch_images=batch_images,
@@ -225,19 +221,12 @@ def evaluate_captioning(
                 print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
             print(flush=True)
 
-        # for i, sample_id in enumerate(batch["image_id"]):
-        #     predictions[sample_id] = {"caption": new_predictions[i]}
-
-        # save the predictions to a temporary file
         uid = uuid.uuid4()
         results_path = f"{dataset_name}results_{uid}.json"
         results_path = os.path.join("captions-json", results_path)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving generated captions to {results_path}")
-        # with open(results_path, "w") as f:
-        #     f.write(
-        #         json.dumps([{"image_id": k, "caption": predictions[k]["caption"]} for k in predictions], indent=4)
-        #     )
+
         batch_n += 1
 
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
