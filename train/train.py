@@ -22,7 +22,9 @@ parser.add_argument(
 parser.add_argument(
     "--results_file", type=str, default='./out', help="JSON file to save results"
 )
-
+parser.add_argument(
+    "--verbose", type=bool, default=True, help="Print the logs"
+)
 # Trial arguments
 parser.add_argument("--shots", nargs="+", default=[0], type=int)  # todo [0, 4, 8, 16, 32]
 parser.add_argument(
