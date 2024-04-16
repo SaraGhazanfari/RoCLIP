@@ -204,13 +204,17 @@ def evaluate_captioning(
         vision_x = batch_images.unsqueeze(1).unsqueeze(1)
 
         lang_x = tokenizer(batch_text, return_tensors="pt")
+        start_time = time.time()
         outputs = eval_model.generate(vision_x=vision_x, lang_x=lang_x["input_ids"],
                                       attention_mask=lang_x["attention_mask"], max_new_tokens=20, num_beams=1,
                                       output_scores=True, return_dict_in_generate=True)
         new_predictions = [
             postprocess_captioning_generation(out).replace('"', "") for out in outputs
         ]
+        end_time = time.time()
+
         print(new_predictions)
+        print(f'{(end_time - start_time) / 60} minutes passed for {args.batch_size} batch size')
         if batch_n < 20 and args.verbose:
             for k in range(len(new_predictions)):
                 print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
