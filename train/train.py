@@ -199,7 +199,7 @@ def evaluate_captioning(
             else:
                 batch_text.append(get_caption_prompt())
 
-        vision_x = image_processor(batch_images)
+        vision_x = batch_images
 
         lang_x = tokenizer(batch_text, return_tensors="pt")
         outputs = eval_model.generate(vision_x=vision_x, lang_x=lang_x["input_ids"],
