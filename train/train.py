@@ -181,18 +181,10 @@ def evaluate_captioning(
     for batch in data['train'].dataloader:
         print(len(batch[1]))
 
-        batch_images = []
+        batch_images = batch[0]
         batch_text = []
         for i in range(len(batch[0])):
-            if num_shots > 0:
-                pass
-                # context_images = [x["image"] for x in batch_demo_samples[i]]
-            else:
-                context_images = []
-            batch_images.append(context_images + [batch[0][i]])
-
             context_text = ""
-
             # Keep the text but remove the image tags for the zero-shot case
             if num_shots == 0:
                 context_text = context_text.replace("<image>", "")
