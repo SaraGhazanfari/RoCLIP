@@ -26,7 +26,7 @@ from ..llava_arch import LlavaMetaModel, LlavaMetaForCausalLM
 
 
 class LlavaConfig(LlamaConfig):
-    model_type = "llava_1"
+    model_type = "llava"
 
 
 class LlavaLlamaModel(LlavaMetaModel, LlamaModel):
