@@ -1014,6 +1014,7 @@ def evaluate_captioning(
                     mask_out=mask_out,
                     initial_stepsize=1.0,
                 )
+                print(eval_model.device, batch_images.device)
                 batch_images = attack.perturb(
                     batch_images.to(eval_model.device, dtype=eval_model.cast_dtype),
                     iterations=attack_config["steps"],
@@ -1026,7 +1027,7 @@ def evaluate_captioning(
                 # save the adversarial images
                 img_id = batch["image_id"][i]
                 adv_images_cur_dict[img_id] = batch_images[i]
-            print(eval_model.device, batch_images.device)
+
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
