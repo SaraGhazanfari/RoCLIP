@@ -216,10 +216,10 @@ def evaluate_captioning(
 
         print(new_predictions)
         print(f'{(end_time - start_time) / 60} minutes passed for {args.batch_size} batch size')
-        if batch_n < 20 and args.verbose:
-            for k in range(len(new_predictions)):
-                print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
-            print(flush=True)
+        # if batch_n < 20 and args.verbose:
+        #     for k in range(len(new_predictions)):
+        #         print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
+        #     print(flush=True)
 
         uid = uuid.uuid4()
         results_path = f"{dataset_name}results_{uid}.json"
