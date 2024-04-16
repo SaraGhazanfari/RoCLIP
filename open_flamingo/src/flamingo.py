@@ -24,6 +24,7 @@ class Flamingo(nn.Module):
         vis_dim: int,
         cross_attn_every_n_layers: int = 1,
         gradient_checkpointing: bool = False,
+        compute_all_grads: bool = False,
     ):
         """
         Args:
@@ -56,6 +57,7 @@ class Flamingo(nn.Module):
         )
         self._use_gradient_checkpointing = gradient_checkpointing
         self.perceiver._use_gradient_checkpointing = gradient_checkpointing
+        self.compute_all_grads = compute_all_grads
 
     def forward(
         self,
@@ -126,7 +128,19 @@ class Flamingo(nn.Module):
         vision_x: torch.Tensor,
         lang_x: torch.Tensor,
         attention_mask: torch.Tensor = None,
-        **kwargs,
+        num_beams=1,
+        min_new_tokens=None,
+        max_new_tokens=None,
+        temperature=1.0,
+        top_k=0,
+        top_p=1.0,
+        no_repeat_ngram_size=0,
+        repetition_penalty=1.0,
+        prefix_allowed_tokens_fn=None,
+        length_penalty=1.0,
+        num_return_sequences=1,
+        do_sample=False,
+        early_stopping=False,
     ):
         """
         Generate text conditioned on vision and language inputs.
@@ -138,36 +152,44 @@ class Flamingo(nn.Module):
                 currently only F=1 is supported (single-frame videos)
             lang_x (torch.Tensor): Language input
                 shape (B, T_txt)
-            **kwargs: see generate documentation in Hugging Face CausalLM models. Some notable kwargs:
-                max_length (int, optional): Maximum length of the output. Defaults to None.
-                attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
-                num_beams (int, optional): Number of beams. Defaults to 1.
-                max_new_tokens (int, optional): Maximum new tokens. Defaults to None.
-                temperature (float, optional): Temperature. Defaults to 1.0.
-                top_k (int, optional): Top k. Defaults to 50.
-                top_p (float, optional): Top p. Defaults to 1.0.
-                no_repeat_ngram_size (int, optional): No repeat ngram size. Defaults to 0.
-                length_penalty (float, optional): Length penalty. Defaults to 1.0.
-                num_return_sequences (int, optional): Number of return sequences. Defaults to 1.
-                do_sample (bool, optional): Do sample. Defaults to False.
-                early_stopping (bool, optional): Early stopping. Defaults to False.
+            max_length (int, optional): Maximum length of the output. Defaults to None.
+            attention_mask (torch.Tensor, optional): Attention mask. Defaults to None.
+            num_beams (int, optional): Number of beams. Defaults to 1.
+            max_new_tokens (int, optional): Maximum new tokens. Defaults to None.
+            temperature (float, optional): Temperature. Defaults to 1.0.
+            top_k (int, optional): Top k. Defaults to 0.
+            top_p (float, optional): Top p. Defaults to 1.0.
+            no_repeat_ngram_size (int, optional): No repeat ngram size. Defaults to 0.
+            length_penalty (float, optional): Length penalty. Defaults to 1.0.
+            num_return_sequences (int, optional): Number of return sequences. Defaults to 1.
+            do_sample (bool, optional): Do sample. Defaults to False.
+            early_stopping (bool, optional): Early stopping. Defaults to False.
         Returns:
             torch.Tensor: lang_x with generated tokens appended to it
         """
-        num_beams = kwargs.pop("num_beams", 1)
         if num_beams > 1:
             vision_x = vision_x.repeat_interleave(num_beams, dim=0)
 
         self.lang_encoder._use_cached_vision_x = True
         self._encode_vision_x(vision_x=vision_x)
 
-        eos_token_id = kwargs.pop("eos_token_id", self.eoc_token_id)
         output = self.lang_encoder.generate(
             input_ids=lang_x,
             attention_mask=attention_mask,
-            eos_token_id=eos_token_id,
+            eos_token_id=self.eoc_token_id,
             num_beams=num_beams,
-            **kwargs,
+            min_new_tokens=min_new_tokens,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            prefix_allowed_tokens_fn=prefix_allowed_tokens_fn,
+            no_repeat_ngram_size=no_repeat_ngram_size,
+            repetition_penalty=repetition_penalty,
+            length_penalty=length_penalty,
+            num_return_sequences=num_return_sequences,
+            do_sample=do_sample,
+            early_stopping=early_stopping,
         )
 
         self.lang_encoder.clear_conditioned_layers()
@@ -191,7 +213,7 @@ class Flamingo(nn.Module):
         assert F == 1, "Only single frame supported"
 
         vision_x = rearrange(vision_x, "b T F c h w -> (b T F) c h w")
-        with torch.no_grad():
+        with torch.set_grad_enabled(self.compute_all_grads):
             vision_x = self.vision_encoder(vision_x)[1]
         vision_x = rearrange(vision_x, "(b T F) v d -> b T F v d", b=b, T=T, F=F)
         vision_x = self.perceiver(vision_x)
@@ -199,6 +221,34 @@ class Flamingo(nn.Module):
         for layer in self.lang_encoder._get_decoder_layers():
             layer.condition_vis_x(vision_x)
 
+    def _get_vision_embedding(self, vision_x: torch.Tensor):
+        """Without perceiver, not yet checked with new version
+            Compute media tokens from vision input by passing it through vision encoder and conditioning language model.
+            Args:
+                vision_x (torch.Tensor): Vision input
+                    shape (B, T_img, F, C, H, W)
+                    Images in the same chunk are collated along T_img, and frames are collated along F
+                    Currently only F=1 is supported (single-frame videos)
+
+            rearrange code based on https://github.com/dhansmair/flamingo-mini
+            """
+
+        assert vision_x.ndim == 6, "vision_x should be of shape (b, T_img, F, C, H, W)"
+        b, T, F = vision_x.shape[:3]
+        assert F == 1, "Only single frame supported"
+
+        vision_x = rearrange(vision_x, "b T F c h w -> (b T F) c h w")
+        with torch.set_grad_enabled(self.compute_all_grads):
+            vision_x = self.vision_encoder(vision_x)[1]
+        vision_x = rearrange(vision_x, "(b T F) v d -> b T F v d", b=b, T=T, F=F)
+        return vision_x
+
+    def _encode_vision_embedding(self, vision_x_embedding: torch.Tensor):
+        # encode vision embedding, that has not gone through perceiver yet
+        vision_x_embedding = self.perceiver(vision_x_embedding)  # reshapes to (b, T, n, d)
+
+        for layer in self.lang_encoder._get_decoder_layers():
+            layer.condition_vis_x(vision_x_embedding)
     def wrap_fsdp(self, wrapper_kwargs, device_id):
         """
         Manually wraps submodules for FSDP and move other parameters to device_id.

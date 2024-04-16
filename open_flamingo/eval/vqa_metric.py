@@ -524,7 +524,7 @@ class VQAEval:
         sys.stdout.flush()
 
 
-def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_path):
+def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_path, return_individual_scores=False):
     """Compute the VQA accuracy metric.
 
     Args:
@@ -535,6 +535,29 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     Returns:
         float: VQA accuracy
     """
+    # coding: utf-8
+    # dataDir = data_dir
+
+    # set up file names and paths
+    # versionType = 'v2_'  # this should be '' when using VQA v2.0 dataset
+    # 'OpenEnded' only for v2.0. 'OpenEnded' or 'MultipleChoice' for v1.0
+    # taskType = 'OpenEnded'
+    # 'mscoco' only for v1.0. 'mscoco' for real and 'abstract_v002' for abstract for v1.0.
+    # dataType = 'mscoco'
+    # dataSubType = 'train2014'
+    # annFile = '%s/%s%s_%s_annotations.json' % (
+    # dataDir, versionType, dataType, dataSubType)
+    # quesFile = '%s/%s%s_%s_%s_questions.json' % (
+    # dataDir, versionType, taskType, dataType, dataSubType)
+    # imgDir = '%s/%s/%s/' % (dataDir, dataType, dataSubType)
+    # resultType = res_file_name
+    # fileTypes = ['results', 'accuracy',
+    #              'evalQA', 'evalQuesType', 'evalAnsType']
+
+    # An example result json file has been provided in './Results' folder.
+
+    # [resFile, accuracyFile, evalQAFile, evalQuesTypeFile, evalAnsTypeFile] = ['%s/%s%s_%s_%s_%s_%s.json' % (dataDir, versionType, taskType, dataType, dataSubType,
+    # resultType, fileType) for fileType in fileTypes]
 
     # create vqa object and vqaRes object
     vqa = VQA(annotation_json_path, question_json_path)
@@ -551,10 +574,24 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     """
     vqaEval.evaluate()
 
-    return vqaEval.accuracy["overall"]
+    if return_individual_scores:
+        return vqaEval.evalQA
+    else:
+        return vqaEval.accuracy["overall"]
 
 
 def postprocess_vqa_generation(predictions):
     answer = re.split("Question|Answer|Short", predictions, 1)[0]
     answer = re.split(", ", answer, 1)[0]
     return answer
+
+
+if __name__ == '__main__':
+    q = "/mnt/datasets/vizwiz/val_questions_vqa_format.json"
+    a = "/mnt/datasets/vizwiz/val_annotations_vqa_format.json"
+    #r = "/mnt/cschlarmann37/vizwiz_theirs.json"
+    r = input("Enter path to results file: ")
+    # r = "/mnt/cschlarmann37/" + r
+    print(f"Computing VQA accuracy for {r}")
+    acc = compute_vqa_accuracy(r, q, a)
+    print(acc)
