@@ -385,7 +385,7 @@ parser.add_argument("--device_n", type=int, default=None)
 parser.add_argument("--verbose", action="store_true", default=False)
 
 def main():
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
     args, leftovers = parser.parse_known_args()
     if args.targeted:
         assert args.target_str is not None
