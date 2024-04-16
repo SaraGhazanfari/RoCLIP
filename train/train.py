@@ -206,8 +206,9 @@ def evaluate_captioning(
         lang_x = tokenizer(batch_text, return_tensors="pt")
         start_time = time.time()
         outputs = eval_model.generate(vision_x=vision_x, lang_x=lang_x["input_ids"],
-                                      attention_mask=lang_x["attention_mask"], max_new_tokens=20, num_beams=1,
-                                      output_scores=True, return_dict_in_generate=True)
+                                      attention_mask=lang_x["attention_mask"], max_new_tokens=20, num_beams=1)
+                                      # output_scores=True, return_dict_in_generate=True)
+        print(outputs)
         new_predictions = [
             postprocess_captioning_generation(out).replace('"', "") for out in outputs
         ]
