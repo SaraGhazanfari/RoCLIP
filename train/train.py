@@ -202,7 +202,9 @@ def evaluate_captioning(
         vision_x = image_processor(batch_images)
 
         lang_x = tokenizer(batch_text, return_tensors="pt")
-
+        outputs = eval_model.generate(vision_x=vision_x, lang_x=lang_x["input_ids"],
+                                      attention_mask=lang_x["attention_mask"], max_new_tokens=20, num_beams=1,
+                                      output_scores=True, return_dict_in_generate=True)
         new_predictions = [
             postprocess_captioning_generation(out).replace('"', "") for out in outputs
         ]
