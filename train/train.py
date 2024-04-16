@@ -208,6 +208,7 @@ def evaluate_captioning(
         new_predictions = [
             postprocess_captioning_generation(out).replace('"', "") for out in outputs
         ]
+        print(new_predictions)
         if batch_n < 20 and args.verbose:
             for k in range(len(new_predictions)):
                 print(f"[gt] {batch[0][k]} [pred] {new_predictions[k]}")
