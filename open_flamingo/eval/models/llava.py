@@ -72,7 +72,7 @@ class EvalModelLLAVA(BaseEvalModel):
         batch_images = self.normalizer(batch_images)
         output_ids = self.model.generate(
             input_ids,
-            images=batch_images.to(dtype=self.cast_dtype, device='cuda', non_blocking=True),
+            images=batch_images.to(dtype=self.cast_dtype, device='cuda:0', non_blocking=True),
             do_sample=True if self.model_args["temperature"] > 0 else False,
             temperature=self.model_args["temperature"],
             top_p=self.model_args.get("top_p"),
@@ -142,7 +142,7 @@ class EvalModelLLAVA(BaseEvalModel):
         input_ids = [
             tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
         ]
-        input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
+        input_ids = torch.stack(input_ids, dim=0).to(device='cuda:0', non_blocking=True)
         return input_ids
 
     def get_vqa_prompt(self, question, answer=None) -> str:
