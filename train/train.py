@@ -213,8 +213,10 @@ def evaluate_captioning(
             tokenizer.decode(out) for out in outputs
         ]
         end_time = time.time()
-
+        print('--------------------------------PRED--------------------------------')
         print(new_predictions)
+        print('--------------------------------CORR--------------------------------')
+        print(batch[1])
         print(f'{(end_time - start_time) / 60} minutes passed for {args.batch_size} batch size')
         # if batch_n < 20 and args.verbose:
         #     for k in range(len(new_predictions)):
