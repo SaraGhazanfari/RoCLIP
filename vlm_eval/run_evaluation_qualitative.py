@@ -81,7 +81,7 @@ query_data = [  # TODO: replace with actual data and target captions
 
 # hardcoded to zeroshot for now for OpenFlamingo models
 context_text = f"Output: two cats on a bed.<|endofchunk|>Output: a bathroom sink.<|endofchunk|><image>Output:"
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     args = parser.parse_args()
