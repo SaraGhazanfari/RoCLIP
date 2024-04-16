@@ -183,8 +183,8 @@ def evaluate_captioning(
         print(len(sample[1]))
         print(sample[0].shape)
         break
-
-    for batch_n, batch in enumerate(data['train'].dataloader):
+    batch_n = 0
+    for batch in data['train'].dataloader:
         print(len(batch[0]))
 
         batch_images = []
@@ -246,6 +246,7 @@ def evaluate_captioning(
         #     f.write(
         #         json.dumps([{"image_id": k, "caption": predictions[k]["caption"]} for k in predictions], indent=4)
         #     )
+        batch_n += 1
 
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
