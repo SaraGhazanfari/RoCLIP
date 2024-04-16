@@ -8,7 +8,6 @@ import uuid
 from collections import defaultdict
 
 import numpy as np
-from tqdm import tqdm
 
 from utils.captioning_utils import postprocess_captioning_generation, compute_cider
 
@@ -188,9 +187,7 @@ def evaluate_captioning(
                 context_images = []
             batch_images.append(context_images + [batch[0][i]])
 
-            context_text = "".join(
-                [eval_model.get_caption_prompt(caption=x["caption"].strip()) for x in batch_demo_samples[i]]
-            )
+            context_text = ""
 
             # Keep the text but remove the image tags for the zero-shot case
             if num_shots == 0:
