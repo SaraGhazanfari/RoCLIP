@@ -135,6 +135,10 @@ def get_attack_success_rate(predictions, target_str):
     return n_success / n * 100
 
 
+def get_caption_prompt(caption=None) -> str:
+    return f"<image>Output:{caption if caption is not None else ''}{'<|endofchunk|>' if caption is not None else ''}"
+
+
 def evaluate_captioning(
         args: argparse.Namespace,
         data,
@@ -194,9 +198,9 @@ def evaluate_captioning(
                 context_text = context_text.replace("<image>", "")
 
             if effective_num_shots > 0:
-                batch_text.append(context_text + eval_model.get_caption_prompt())
+                batch_text.append(context_text + get_caption_prompt())
             else:
-                batch_text.append(eval_model.get_caption_prompt())
+                batch_text.append(get_caption_prompt())
 
         batch_images = eval_model._prepare_images(batch_images)
 
