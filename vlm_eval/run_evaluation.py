@@ -747,7 +747,7 @@ def get_random_indices(num_samples, query_set_size, full_dataset, seed):
 def force_cudnn_initialization():
     # https://stackoverflow.com/questions/66588715/runtimeerror-cudnn-error-cudnn-status-not-initialized-using-pytorch
     s = 32
-    dev = torch.device("cuda")
+    dev = torch.device("cuda:0")
     torch.nn.functional.conv2d(
         torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev)
     )
