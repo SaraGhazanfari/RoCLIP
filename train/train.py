@@ -174,15 +174,6 @@ def evaluate_captioning(
     np.random.seed(seed)
 
     gt_dict = {}  # saves which gt works best for each image
-    for batch in data['train'].dataloader:
-        print(len(batch[1]))
-        print(batch[0].shape)
-        break
-
-    for sample in data['val'].dataloader:
-        print(len(sample[1]))
-        print(sample[0].shape)
-        break
     batch_n = 0
     for batch in data['train'].dataloader:
         print(len(batch[1]))
