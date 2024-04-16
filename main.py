@@ -52,7 +52,7 @@ if __name__ == '__main__':
                     )
     print('The data is loaded successfully')
 
-    finetune_clip(model, data, args)
+    finetune_clip(model, data, args, image_processor, tokenizer)
 
     # for sample in data['train'].dataloader:
     #     print(len(sample))

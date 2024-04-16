@@ -56,7 +56,7 @@ def get_result_file_name_and_dir(args):
     return results_file_dir, results_file_name
 
 
-def finetune_clip(eval_model, data, args):
+def finetune_clip(eval_model, data, args, image_processor, tokenizer):
     finetune_args, leftovers = parser.parse_known_args()
 
     args = argparse.Namespace(**{**vars(args), **vars(finetune_args)})
@@ -73,6 +73,8 @@ def finetune_clip(eval_model, data, args):
         for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
             res, out_captions_json = evaluate_captioning(
                 args,
+                tokenizer=tokenizer,
+                image_processor=image_processor,
                 data=data,
                 model_args=model_args,
                 eval_model=eval_model,
@@ -144,6 +146,8 @@ def evaluate_captioning(
         data,
         model_args: dict,
         eval_model,
+        tokenizer,
+        image_processor,
         seed: int = 42,
         min_generation_length: int = 0,
         max_generation_length: int = 20,
@@ -152,6 +156,7 @@ def evaluate_captioning(
         num_shots: int = 8,
         dataset_name: str = "coco",
         attack_config: dict = None,
+
 ):
     """Evaluate a model on COCO dataset.
 
@@ -194,16 +199,9 @@ def evaluate_captioning(
             else:
                 batch_text.append(get_caption_prompt())
 
-        batch_images = batch_images.unsqueeze(1).unsqueeze(1)
+        vision_x = image_processor(batch_images)
 
-        outputs = eval_model.get_outputs(
-            batch_images=batch_images,
-            batch_text=batch_text,
-            min_generation_length=min_generation_length,
-            max_generation_length=max_generation_length,
-            num_beams=num_beams,
-            length_penalty=length_penalty,
-        )
+        lang_x = tokenizer(batch_text, return_tensors="pt")
 
         new_predictions = [
             postprocess_captioning_generation(out).replace('"', "") for out in outputs
