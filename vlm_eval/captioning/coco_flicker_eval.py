@@ -170,6 +170,9 @@ def evaluate_captioning(
                 context_text = "".join(
                     [eval_model.get_caption_prompt(caption=x["caption"].strip()) for x in batch_demo_samples[i]]
                 )
+
+                print('**********************************')
+                print(batch_demo_samples)
                 print('**********************************')
                 print(context_text)
                 print('**********************************')
