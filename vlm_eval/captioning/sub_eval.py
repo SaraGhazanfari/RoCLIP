@@ -50,7 +50,7 @@ def evaluate_sub_captioning(
                     epoch=0, tokenizer=eval_model.tokenizer)
     test_dataset = data['val']['dataset']
     test_dataloader = data['val']['dataloader']
-    effective_num_shots = args.shots
+    effective_num_shots = num_shots
     # test_dataloader = prepare_eval_samples(
     #     test_dataset,
     #     args.num_samples if args.num_samples > 0 else len(test_dataset),
