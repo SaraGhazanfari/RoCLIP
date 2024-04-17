@@ -389,3 +389,7 @@ parser.add_argument(
 parser.add_argument(
     "--seed", type=int, default=0, help="Default random seed."
 )
+
+parser.add_argument(
+    "--workers", type=int, default=4, help="Number of dataloader workers per GPU."
+)
