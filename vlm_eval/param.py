@@ -393,3 +393,7 @@ parser.add_argument(
 parser.add_argument(
     "--workers", type=int, default=4, help="Number of dataloader workers per GPU."
 )
+
+parser.add_argument(
+    "--world-size", type=int, default=1, help="Number of GPUs."
+)
