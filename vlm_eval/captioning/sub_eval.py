@@ -4,6 +4,7 @@ import os
 import uuid
 from collections import defaultdict
 
+from PIL import Image
 from tqdm import tqdm
 
 from data.reader import get_data
@@ -46,7 +47,7 @@ def evaluate_sub_captioning(
 
     """
     data = get_data(args,
-                    (eval_model.image_processor, eval_model.image_processor),
+                    (Image.open, Image.open),
                     epoch=0, tokenizer=eval_model.tokenizer)
     test_dataset = data['val']['dataset']
     test_dataloader = data['val']['dataloader']
@@ -138,13 +139,7 @@ def evaluate_sub_captioning(
                     batch_text.append(eval_model.get_caption_prompt())
                     batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
 
-            # batch_images = eval_model._prepare_images(batch_images)
-            print('**********************')
-            print(batch_images)
-            print('**********************')
-            print(len(batch_images))
-            print(len(batch_images))
-            batch_images = torch.stack(batch_images[0], dim=0).unsqueeze(1).unsqueeze(1)
+            batch_images = eval_model._prepare_images(batch_images)
             if args.from_saved:
                 assert args.batch_size == 1
                 assert init == "clean", "not implemented"
