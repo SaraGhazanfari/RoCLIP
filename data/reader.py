@@ -362,14 +362,12 @@ def get_data(args, preprocess_fns, epoch=0, tokenizer=None):
     data = {}
 
     if args.train_data or args.dataset_type == "synthetic":
-        dataloader, dataset = get_wds_dataset(args.train_data, args.dataset_type)(
-            args, preprocess_train, is_train=True, epoch=epoch, tokenizer=tokenizer)
+        dataloader, dataset = get_wds_dataset(args, preprocess_train, is_train=True, epoch=epoch, tokenizer=tokenizer)
         data["train"]['dataloader'] = dataloader
         data["train"]['dataset'] = dataset
 
     if args.val_data:
-        dataloader, dataset = get_wds_dataset(args.val_data, args.dataset_type)(
-            args, preprocess_val, is_train=False, tokenizer=tokenizer)
+        dataloader, dataset = get_wds_dataset(args, preprocess_val, is_train=False, tokenizer=tokenizer)
         data["val"]['dataloader'] = dataloader
         data["val"]['dataset'] = dataset
 
