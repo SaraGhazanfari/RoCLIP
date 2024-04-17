@@ -86,12 +86,12 @@ def evaluate_sub_captioning(
         attacks = [(attack_str, 'none', 'clean', 0)]
     print(f"attacks: {attacks}")
 
-    left_to_attack = {x["image_id"][0]: True for x in test_dataloader}  # hardcoded to batch size 1
-    scores_dict = {x["image_id"][0]: np.inf for x in test_dataloader}  # hardcoded to batch size 1
+    left_to_attack = {x[2][0]: True for x in test_dataloader}  # hardcoded to batch size 1
+    scores_dict = {x[2][0]: np.inf for x in test_dataloader}  # hardcoded to batch size 1
     adv_images_dict = {}
     gt_dict = {}  # saves which gt works best for each image
     captions_attack_dict = {}  # saves the captions path for each attack
-    captions_best_dict = {x["image_id"][0]: None for x in
+    captions_best_dict = {x[2][0]: None for x in
                           test_dataloader}  # saves the best captions path for each image
     for attack_n, (attack_str_cur, precision, init, gt) in enumerate(attacks):
         print(f"attack_str_cur: {attack_str_cur}, precision: {precision}, init: {init}, gt: {gt}")
@@ -109,7 +109,7 @@ def evaluate_sub_captioning(
             eval_model.set_device(device_id)
             eval_model.dataset_name = ds_name
         for batch_n, batch in enumerate(tqdm(test_dataloader, desc=f"Running inference {dataset_name.upper()}")):
-            if not left_to_attack[batch["image_id"][0]]:  # hardcoded to batch size 1
+            if not left_to_attack[batch[2][0]]:  # hardcoded to batch size 1
                 continue
 
             batch_images, batch_demo_samples = [], []
@@ -146,7 +146,7 @@ def evaluate_sub_captioning(
                 # load the adversarial images, compute the perturbation
                 # note when doing n-shot (n>0), have to make sure that context images
                 # are the same as the ones where the perturbation was computed on
-                adv = perturbation_dataset.get_from_id(batch["image_id"][0])
+                adv = perturbation_dataset.get_from_id(batch[2][0])
                 # make sure adv has the same shape as batch_images
                 if len(batch_images.shape) - len(adv.shape) == 1:
                     adv = adv.unsqueeze(0)
@@ -157,7 +157,7 @@ def evaluate_sub_captioning(
                     # apply perturbation, otherwise it is applied by the attack
                     batch_images = batch_images + pert
             elif init == "prev-best":
-                adv = adv_images_dict[batch["image_id"][0]].unsqueeze(0)
+                adv = adv_images_dict[batch[2][0]].unsqueeze(0)
                 pert = adv - batch_images
             else:
                 assert init == "clean"
@@ -190,7 +190,7 @@ def evaluate_sub_captioning(
                 ### end adversarial attack
             for i in range(batch_images.shape[0]):
                 # save the adversarial images
-                img_id = batch["image_id"][i]
+                img_id = batch[2][i]
                 adv_images_cur_dict[img_id] = batch_images[i]
 
             outputs = eval_model.get_outputs(
@@ -211,7 +211,7 @@ def evaluate_sub_captioning(
                 print(flush=True)
                 # print(f"gt captions: {batch['caption']}")
                 # print(f"new_predictions: {new_predictions}\n", flush=True)
-            for i, sample_id in enumerate(batch["image_id"]):
+            for i, sample_id in enumerate(batch[2]):
                 predictions[sample_id] = {"caption": new_predictions[i]}
 
         # save the predictions to a temporary file
