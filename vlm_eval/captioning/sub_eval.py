@@ -138,8 +138,8 @@ def evaluate_sub_captioning(
                     batch_text.append(eval_model.get_caption_prompt())
                     batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
 
-            batch_images = eval_model._prepare_images(batch_images)
-
+            # batch_images = eval_model._prepare_images(batch_images)
+            batch_images = batch_images.unsqueeze(1).unsqueeze(1)
             if args.from_saved:
                 assert args.batch_size == 1
                 assert init == "clean", "not implemented"
