@@ -54,9 +54,10 @@ def evaluate_sub_captioning(
     effective_num_shots = args.shots
     test_dataloader = prepare_eval_samples(
         test_dataset,
-        args.val_num_samples if args.val_num_samples > 0 else len(test_dataset),
+        args.num_samples if args.num_samples > 0 else len(test_dataset),
         args.batch_size,
         seed,
+        len_test_dataset=len(test_dataset)
     )
     # attack stuff
     attack_str = attack_config["attack_str"]
