@@ -359,16 +359,16 @@ def get_wds_dataset(args, preprocess_img, is_train, epoch=0, floor=False, tokeni
 
 def get_data(args, preprocess_fns, epoch=0, tokenizer=None):
     preprocess_train, preprocess_val = preprocess_fns
-    data = {}
+    data = {'train': {}, 'val': {}}
 
     if args.train_data or args.dataset_type == "synthetic":
         dataloader, dataset = get_wds_dataset(args, preprocess_train, is_train=True, epoch=epoch, tokenizer=tokenizer)
-        data["train"]['dataloader'] = dataloader
-        data["train"]['dataset'] = dataset
+        data['train']['dataloader'] = dataloader
+        data['train']['dataset'] = dataset
 
     if args.val_data:
         dataloader, dataset = get_wds_dataset(args, preprocess_val, is_train=False, tokenizer=tokenizer)
-        data["val"]['dataloader'] = dataloader
-        data["val"]['dataset'] = dataset
+        data['val']['dataloader'] = dataloader
+        data['val']['dataset'] = dataset
 
     return data
