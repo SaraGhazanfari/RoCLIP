@@ -50,11 +50,11 @@ def evaluate_sub_captioning(
                     epoch=0
                     )
     test_dataset = data['val']['dataset']
-    print(test_dataset.__dict__)
+
     effective_num_shots = args.shots
     test_dataloader = prepare_eval_samples(
         test_dataset,
-        args.num_samples if args.num_samples > 0 else len(test_dataset),
+        args.val_num_samples if args.val_num_samples > 0 else len(test_dataset),
         args.batch_size,
         seed,
     )
