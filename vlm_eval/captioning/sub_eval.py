@@ -46,7 +46,7 @@ def evaluate_sub_captioning(
 
     """
     data = get_data(args,
-                    (image_processor, image_processor),
+                    (eval_model.image_processor, eval_model.image_processor),
                     epoch=0
                     )
     test_dataset = data['val']['dataset']
@@ -114,22 +114,22 @@ def evaluate_sub_captioning(
             batch_images, batch_demo_samples = [], []
             batch_text = []
             batch_text_adv = []
-            for i in range(len(batch["image"])):
+            for i in range(len(batch[0])):
                 if num_shots > 0:
-                    context_images = [x["image"] for x in batch_demo_samples[i]]
+                    context_images = [x[0] for x in batch_demo_samples[i]]
                 else:
                     context_images = []
-                batch_images.append(context_images + [batch["image"][i]])
+                batch_images.append(context_images + [batch[0][i]])
 
                 context_text = "".join(
-                    [eval_model.get_caption_prompt(caption=x["caption"].strip()) for x in batch_demo_samples[i]]
+                    [eval_model.get_caption_prompt(caption=x[1].strip()) for x in batch_demo_samples[i]]
                 )
 
                 # Keep the text but remove the image tags for the zero-shot case
                 if num_shots == 0:
                     context_text = context_text.replace("<image>", "")
 
-                adv_caption = batch["caption"][i] if not targeted else target_str
+                adv_caption = batch[1][i] if not targeted else target_str
                 if effective_num_shots > 0:
                     batch_text.append(context_text + eval_model.get_caption_prompt())
                     batch_text_adv.append(context_text + eval_model.get_caption_prompt(adv_caption))
