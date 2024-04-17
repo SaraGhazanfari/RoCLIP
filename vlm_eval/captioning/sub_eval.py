@@ -47,8 +47,7 @@ def evaluate_sub_captioning(
     """
     data = get_data(args,
                     (eval_model.image_processor, eval_model.image_processor),
-                    epoch=0
-                    )
+                    epoch=0, tokenizer=eval_model.tokenizer)
     test_dataset = data['val']['dataset']
     test_dataloader = data['val']['dataloader']
     effective_num_shots = args.shots
