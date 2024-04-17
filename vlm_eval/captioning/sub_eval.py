@@ -139,6 +139,9 @@ def evaluate_sub_captioning(
                     batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
 
             # batch_images = eval_model._prepare_images(batch_images)
+            print('**********************')
+            print(batch_images)
+            print('**********************')
             print(len(batch_images))
             print(len(batch_images))
             batch_images = torch.stack(batch_images[0], dim=0).unsqueeze(1).unsqueeze(1)
