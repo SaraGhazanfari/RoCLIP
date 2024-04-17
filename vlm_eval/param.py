@@ -365,11 +365,11 @@ parser.add_argument(
     help="Path to file(s) with validation data",
 )
 parser.add_argument(
-        "--train-num-samples",
-        type=int,
-        default=None,
-        help="Number of samples in dataset. Required for webdataset if not available in info file.",
-    )
+    "--train-num-samples",
+    type=int,
+    default=None,
+    help="Number of samples in dataset. Required for webdataset if not available in info file.",
+)
 parser.add_argument(
     "--val-num-samples",
     type=int,
@@ -385,4 +385,7 @@ parser.add_argument(
         "Similar to --train-data, this should be a string with as many numbers as there are data sources, separated by `::` (e.g. 1::2::0.5) "
         "By default, datapoints are sampled uniformly regardless of the dataset sizes."
     )
+)
+parser.add_argument(
+    "--seed", type=int, default=0, help="Default random seed."
 )
