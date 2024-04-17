@@ -352,3 +352,37 @@ parser.add_argument("--dont_save_adv", action="store_true", default=False)
 parser.add_argument("--out_base_path", type=str, default=".")
 parser.add_argument("--device_n", type=int, default=None)
 parser.add_argument("--verbose", action="store_true", default=False)
+parser.add_argument(
+    "--dataset-type",
+    choices=["webdataset", "csv", "synthetic", "auto"],
+    default="webdataset",
+    help="Which type of dataset to process."
+)
+parser.add_argument(
+    "--val-data",
+    type=str,
+    default=None,
+    help="Path to file(s) with validation data",
+)
+parser.add_argument(
+        "--train-num-samples",
+        type=int,
+        default=None,
+        help="Number of samples in dataset. Required for webdataset if not available in info file.",
+    )
+parser.add_argument(
+    "--val-num-samples",
+    type=int,
+    default=None,
+    help="Number of samples in dataset. Useful for webdataset if not available in info file.",
+)
+parser.add_argument(
+    "--train-data-upsampling-factors",
+    type=str,
+    default=None,
+    help=(
+        "When using multiple data sources with webdataset and sampling with replacement, this can be used to upsample specific data sources. "
+        "Similar to --train-data, this should be a string with as many numbers as there are data sources, separated by `::` (e.g. 1::2::0.5) "
+        "By default, datapoints are sampled uniformly regardless of the dataset sizes."
+    )
+)
