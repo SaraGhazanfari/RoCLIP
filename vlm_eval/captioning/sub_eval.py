@@ -112,7 +112,7 @@ def evaluate_sub_captioning(
             if not left_to_attack[batch[2][0]]:  # hardcoded to batch size 1
                 continue
 
-            batch_images, batch_demo_samples = [], []
+            batch_images, batch_demo_samples = [], [[] * args.batch_size]
             batch_text = []
             batch_text_adv = []
             for i in range(len(batch[0])):

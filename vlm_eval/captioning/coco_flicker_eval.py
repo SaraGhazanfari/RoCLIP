@@ -171,11 +171,6 @@ def evaluate_captioning(
                     [eval_model.get_caption_prompt(caption=x["caption"].strip()) for x in batch_demo_samples[i]]
                 )
 
-                print('**********************************')
-                print(batch_demo_samples)
-                print('**********************************')
-                print(context_text)
-                print('**********************************')
                 # Keep the text but remove the image tags for the zero-shot case
                 if num_shots == 0:
                     context_text = context_text.replace("<image>", "")
