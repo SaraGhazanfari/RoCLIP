@@ -108,7 +108,7 @@ parser.add_argument(
 # Dataset arguments
 ## Subcaption Dataset
 parser.add_argument(
-    "--train_data",
+    "--train-data",
     type=str,
     help="Path to the train data of Subcaption directory.",
     default=None,
