@@ -122,10 +122,15 @@ parser.add_argument(
 parser.add_argument(
     "--sbu_annotations_json_path",
     type=str,
-    help="Path to the flickr30/flickr30k_images directory.",
+    help="Path to the SBU annotations directory.",
     default=None,
 )
-
+parser.add_argument(
+    "--cc_annotations_json_path",
+    type=str,
+    help="Path to the CC-3M annotations directory.",
+    default=None,
+)
 
 ## Flickr30 Dataset
 parser.add_argument(

@@ -104,7 +104,7 @@ def evaluate_vqa(
         )
     if dataset_name == 'cc3m':
         train_dataset = CC3MDataset(
-            img_root=train_image_dir_path,
+            img_root=args.train_data,
             annotations_path=train_annotations_json_path,
         )
 
