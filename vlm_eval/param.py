@@ -108,7 +108,7 @@ parser.add_argument(
 # Dataset arguments
 ## SBUcaption Dataset
 parser.add_argument(
-    "--train-data",
+    "--train_data",
     type=str,
     help="Path to the train data of SBUcaption directory.",
     default=None,
