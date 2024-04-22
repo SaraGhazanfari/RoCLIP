@@ -4,7 +4,6 @@ import os
 import uuid
 from collections import defaultdict
 
-from torchvision import transforms
 from tqdm import tqdm
 
 from data.sbu_dataset import CompleteSBU
@@ -281,11 +280,17 @@ def evaluate_captioning(
             )
 
         if attack_str == "ensemble":
+
+            if dataset_name == "coco":
+                annotations_path = args.coco_annotations_json_path
+            elif dataset_name == "flickr":
+                annotations_path = args.flickr_annotations_json_path
+            elif dataset_name == "sbu":
+                annotations_path = args.sbu_annotations_json_path
+
             ciders, img_ids = compute_cider_all_scores(
                 result_path=results_path,
-                annotations_path=args.coco_annotations_json_path
-                if dataset_name == "coco"
-                else args.flickr_annotations_json_path,
+                annotations_path=annotations_path,
                 return_img_ids=True,
             )
             # if cider improved, save the new predictions
