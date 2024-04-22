@@ -10,7 +10,6 @@ class CC3MDataset(Dataset):
     def __init__(self, img_root, annotations_path):
         self.full_annotation_list = json.load(open(annotations_path, "r"))
         self.img_root = img_root
-        self.img_path_list = os.listdir(self.img_root)
         print(self.__len__())
 
     def __len__(self):
