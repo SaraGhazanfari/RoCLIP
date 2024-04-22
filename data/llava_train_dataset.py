@@ -10,6 +10,7 @@ class CC3MDataset(Dataset):
     def __init__(self, img_root, annotations_path):
         self.full_annotation_list = json.load(open(annotations_path, "r"))
         self.img_root = img_root
+        self.img_path_list = os.listdir(self.img_root)
 
     def __len__(self):
         return len(self.full_annotation_list)
@@ -19,9 +20,9 @@ class CC3MDataset(Dataset):
 
     def get_from_id(self, question_id):
         count = 0
-        for row in self.full_annotation_list:
-            if str(int(question_id)) in row['id']:
-                image_path = self.get_img_path(img_name=row['image'])
+        for path in self.img_path_list:
+            if str(int(question_id)) in path:
+                image_path = path
                 count += 1
         print(count)
         return image_path
