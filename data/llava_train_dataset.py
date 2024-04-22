@@ -15,8 +15,6 @@ class CC3MDataset(Dataset):
         return len(self.full_annotation_list)
 
     def get_img_path(self, img_name):
-        print(self.img_root)
-        print(img_name)
         return os.path.join(self.img_root, img_name)
 
     def get_from_id(self, question_id):
@@ -27,7 +25,6 @@ class CC3MDataset(Dataset):
         return image
 
     def __getitem__(self, idx):
-        print(self.full_annotation_list[idx])
         img_path = self.get_img_path(self.full_annotation_list[idx]['image'])
         image = Image.open(img_path)
         image.load()
