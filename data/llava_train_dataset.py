@@ -15,7 +15,7 @@ class CC3MDataset(Dataset):
         return len(self.full_annotation_list)
 
     def get_img_path(self, img_name):
-        return os.path.join(self.img_root, img_name)
+        return os.path.join(self.img_root, 'GCC_train_' + img_name)
 
     def get_from_id(self, question_id):
         for row in self.full_annotation_list:
