@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
+from data.llava_train_dataset import CC3MDataset
 from open_flamingo.eval.eval_datasets import VQADataset
 from open_flamingo.eval.eval_model import BaseEvalModel
 from open_flamingo.eval.ok_vqa_utils import postprocess_ok_vqa_generation
@@ -101,7 +102,16 @@ def evaluate_vqa(
             dataset_name=dataset_name,
             is_tensor=True
         )
+    if dataset_name == 'cc3m':
+        train_dataset = CC3MDataset(
+            img_root=train_image_dir_path,
+            annotations_path=train_annotations_json_path,
+        )
 
+        test_dataset = CC3MDataset(
+            img_root=train_image_dir_path,
+            annotations_path=train_annotations_json_path,
+        )
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
 
     test_dataloader = prepare_eval_samples(
