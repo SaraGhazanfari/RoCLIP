@@ -20,7 +20,7 @@ class CC3MDataset(Dataset):
     def get_from_id(self, question_id):
         count = 0
         for row in self.full_annotation_list:
-            if int(question_id) in row['id']:
+            if str(int(question_id)) in row['id']:
                 image_path = self.get_img_path(img_name=row['image'])
                 count += 1
         print(count)
