@@ -61,6 +61,14 @@ def evaluate_captioning(
         )  # Note: calling this "train" for consistency with COCO but Flickr only has one split for images
         image_val_dir_path = None
         annotations_path = args.flickr_karpathy_json_path
+
+    elif dataset_name == "sbu":
+        standard_transform = transforms.Compose([
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+        ])
+        train_dataset = CompleteSBU(root='/data/sg7457', transform=standard_transform)
+        test_dataset = CompleteSBU(root='/data/sg7457', transform=standard_transform)
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
@@ -81,13 +89,6 @@ def evaluate_captioning(
             dataset_name=dataset_name,
         )
 
-    else:
-        standard_transform = transforms.Compose([
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-        ])
-        train_dataset = CompleteSBU(root='/data/sg7457', transform=standard_transform)
-        test_dataset = CompleteSBU(root='/data/sg7457', transform=standard_transform)
     if args.from_saved:
         assert (
                 dataset_name == "coco"
@@ -336,12 +337,16 @@ def evaluate_captioning(
             f.write(
                 json.dumps([{"image_id": k, "caption": captions_best_dict[k]} for k in captions_best_dict], indent=4)
             )
+    if dataset_name == "coco":
+        annotations_path = args.coco_annotations_json_path
+    elif dataset_name == 'flickr':
+        annotations_path = args.flickr_annotations_json_path
+    elif dataset_name == 'sbu':
+        annotations_path = args.sbu_annotations_json_path
 
     metrics = compute_cider(
         result_path=results_path,
-        annotations_path=args.coco_annotations_json_path
-        if dataset_name == "coco"
-        else args.flickr_annotations_json_path,
+        annotations_path=annotations_path
     )
     # delete the temporary file
     # os.remove(results_path)

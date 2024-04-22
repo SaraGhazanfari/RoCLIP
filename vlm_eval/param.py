@@ -50,10 +50,10 @@ parser.add_argument(
 # Per-dataset evaluation flags
 
 parser.add_argument(
-    "--eval_sub",
+    "--eval_sbu",
     action="store_true",
     default=False,
-    help="Whether to evaluate on SubCaption.",
+    help="Whether to evaluate on SBUCaption.",
 )
 
 parser.add_argument(
@@ -106,11 +106,11 @@ parser.add_argument(
 )
 
 # Dataset arguments
-## Subcaption Dataset
+## SBUcaption Dataset
 parser.add_argument(
     "--train-data",
     type=str,
-    help="Path to the train data of Subcaption directory.",
+    help="Path to the train data of SBUcaption directory.",
     default=None,
 )
 

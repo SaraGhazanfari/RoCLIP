@@ -8,7 +8,6 @@ from open_flamingo.eval.classification_utils import (
     TARGET_TO_SEED
 )
 from vlm_eval.captioning.captioning_eval import evaluate_captioning
-from vlm_eval.captioning.sub_eval import evaluate_sub_captioning
 from vlm_eval.captioning.vqa_eval import evaluate_vqa
 from vlm_eval.param import parser
 from vlm_eval.utils import *
@@ -64,7 +63,7 @@ def main():
 
     # create results file name
     eval_datasets_list = [
-        "subcaption" if args.eval_sub else "",
+        "sbu" if args.eval_sbu else "",
         "coco" if args.eval_coco else "",
         "vqav2" if args.eval_vqav2 else "",
         "ok_vqa" if args.eval_ok_vqa else "",
@@ -173,20 +172,19 @@ def main():
                 json.dump(results, f)
         del res, out_captions_json
 
-    if args.eval_sub:
-        print("Evaluating on SubCaption...")
-        eval_model.dataset_name = "subcaption"
+    if args.eval_sbu:
+        print("Evaluating on SBUCaption...")
+        eval_model.dataset_name = "sbu"
         for shot in args.shots:
             scores = {'cider': [], 'success_rate': []}
             for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
-                res, out_captions_json = evaluate_sub_captioning(
+                res, out_captions_json = evaluate_captioning(
                     args,
                     model_args=model_args,
                     eval_model=eval_model,
                     num_shots=shot,
                     seed=seed,
-                    dataset_name="subcaption",
-                    attack_config=attack_config
+                    dataset_name="sbu"
                 )
                 print(f"Shots {shot} Trial {trial} Score: {res}")
                 scores['cider'].append(res['cider'])
