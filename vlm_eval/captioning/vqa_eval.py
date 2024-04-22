@@ -217,6 +217,7 @@ def evaluate_vqa(
                     context_text = context_text.replace("<image>", "")
 
                 adv_ans = get_sample_answer(batch["answers"][i]) if not targeted else target_str
+
                 if effective_num_shots > 0:
                     batch_text.append(
                         context_text + eval_model.get_vqa_prompt(question=batch["question"][i])

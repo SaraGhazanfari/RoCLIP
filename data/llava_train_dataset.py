@@ -26,6 +26,6 @@ class CC3MDataset(Dataset):
             "image": image,
             "question": self.full_annotation_list[idx]['conversations'][0]['value'],
             "question_id": self.full_annotation_list[idx]['id'],
-            "answers": self.full_annotation_list[idx]['conversations'][1]['value']
+            "answers": [self.full_annotation_list[idx]['conversations'][1]['value']]
         }
         return results
