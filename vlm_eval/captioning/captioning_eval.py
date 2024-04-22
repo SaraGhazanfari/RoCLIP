@@ -63,6 +63,7 @@ def evaluate_captioning(
         annotations_path = args.flickr_karpathy_json_path
 
     elif dataset_name == "sbu":
+        print(args.train_data)
         train_dataset = CompleteSBU(root=args.train_data)
         test_dataset = CompleteSBU(root=args.train_data)
     else:
