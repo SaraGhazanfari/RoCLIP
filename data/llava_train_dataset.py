@@ -25,6 +25,7 @@ class CC3MDataset(Dataset):
                 image_path = path
                 count += 1
         print(count)
+        print(question_id)
         return image_path
 
     def __getitem__(self, idx):
