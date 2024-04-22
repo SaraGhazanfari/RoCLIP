@@ -7,7 +7,7 @@ from collections import defaultdict
 from open_flamingo.eval.classification_utils import (
     TARGET_TO_SEED
 )
-from vlm_eval.captioning.coco_flicker_eval import evaluate_captioning
+from vlm_eval.captioning.captioning_eval import evaluate_captioning
 from vlm_eval.captioning.sub_eval import evaluate_sub_captioning
 from vlm_eval.captioning.vqa_eval import evaluate_vqa
 from vlm_eval.param import parser
