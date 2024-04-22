@@ -63,8 +63,8 @@ def evaluate_captioning(
         annotations_path = args.flickr_karpathy_json_path
 
     elif dataset_name == "sbu":
-        train_dataset = CompleteSBU(root='/data/sg7457')
-        test_dataset = CompleteSBU(root='/data/sg7457')
+        train_dataset = CompleteSBU(root=args.train_dir)
+        test_dataset = CompleteSBU(root=args.train_dir)
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
