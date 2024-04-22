@@ -18,14 +18,16 @@ class CC3MDataset(Dataset):
         return os.path.join(self.img_root, 'GCC_train_' + img_name)
 
     def get_from_id(self, question_id):
+        count = 0
         for row in self.full_annotation_list:
-            if row['id'] == question_id:
+            if int(question_id) in row['id']:
                 image_path = self.get_img_path(img_name=row['image'])
-        image = torch.load(image_path)
-        return image
+                count += 1
+        print(count)
+        return image_path
 
     def __getitem__(self, idx):
-        img_path = self.get_img_path(self.full_annotation_list[idx]['image'])
+        img_path = self.get_img_path(self.get_from_id(self.full_annotation_list[idx]['id']))
         image = Image.open(img_path)
         image.load()
         results = {
