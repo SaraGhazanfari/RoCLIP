@@ -77,40 +77,40 @@ def evaluate_vqa(
         test_annotations_json_path = args.textvqa_test_annotations_json_path
     elif dataset_name != 'cc3m':
         raise ValueError(f"Unsupported dataset: {dataset_name}")
+    if dataset_name != 'cc3m':
+        train_dataset = VQADataset(
+            image_dir_path=train_image_dir_path,
+            question_path=train_questions_json_path,
+            annotations_path=train_annotations_json_path,
+            is_train=True,
+            dataset_name=dataset_name,
+        )
 
-    train_dataset = VQADataset(
-        image_dir_path=train_image_dir_path,
-        question_path=train_questions_json_path,
-        annotations_path=train_annotations_json_path,
-        is_train=True,
-        dataset_name=dataset_name,
-    )
-
-    test_dataset = VQADataset(
-        image_dir_path=test_image_dir_path,
-        question_path=test_questions_json_path,
-        annotations_path=test_annotations_json_path,
-        is_train=False,
-        dataset_name=dataset_name,
-    )
-    if args.from_saved:
-        perturbation_dataset = VQADataset(
-            image_dir_path=args.from_saved,
+        test_dataset = VQADataset(
+            image_dir_path=test_image_dir_path,
             question_path=test_questions_json_path,
             annotations_path=test_annotations_json_path,
             is_train=False,
             dataset_name=dataset_name,
-            is_tensor=True
         )
-    if dataset_name == 'cc3m':
+        if args.from_saved:
+            perturbation_dataset = VQADataset(
+                image_dir_path=args.from_saved,
+                question_path=test_questions_json_path,
+                annotations_path=test_annotations_json_path,
+                is_train=False,
+                dataset_name=dataset_name,
+                is_tensor=True
+            )
+    else:
         train_dataset = CC3MDataset(
             img_root=args.train_data,
-            annotations_path=train_annotations_json_path,
+            annotations_path=args.cc_annotations_json_path,
         )
 
         test_dataset = CC3MDataset(
-            img_root=train_image_dir_path,
-            annotations_path=train_annotations_json_path,
+            img_root=args.train_data,
+            annotations_path=args.cc_annotations_json_path,
         )
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
 
