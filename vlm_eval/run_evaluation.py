@@ -184,7 +184,8 @@ def main():
                     eval_model=eval_model,
                     num_shots=shot,
                     seed=seed,
-                    dataset_name="sbu"
+                    dataset_name="sbu",
+                    attack_config=attack_config,
                 )
                 print(f"Shots {shot} Trial {trial} Score: {res}")
                 scores['cider'].append(res['cider'])
