@@ -302,7 +302,7 @@ def evaluate_captioning(
                     adv_images_dict[img_id] = adv_images_cur_dict[img_id]
                     if isinstance(gt, int):
                         gt_dict.update({img_id: gt})
-                cider_threshold = {"coco": 10., "flickr": 2.}[dataset_name]
+                cider_threshold = {"coco": 10., "flickr": 2., "sbu": 2.}[dataset_name]
                 if cid < cider_threshold:
                     left_to_attack[img_id] = False
             # delete the temporary file
