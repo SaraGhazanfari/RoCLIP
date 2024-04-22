@@ -55,6 +55,12 @@ parser.add_argument(
     default=False,
     help="Whether to evaluate on SBUCaption.",
 )
+parser.add_argument(
+    "--eval_cc",
+    action="store_true",
+    default=False,
+    help="Whether to evaluate on COCO.",
+)
 
 parser.add_argument(
     "--eval_coco",

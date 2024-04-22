@@ -63,6 +63,7 @@ def main():
 
     # create results file name
     eval_datasets_list = [
+        'cc' if args.eval_cc else "",
         "sbu" if args.eval_sbu else "",
         "coco" if args.eval_coco else "",
         "vqav2" if args.eval_vqav2 else "",
@@ -205,6 +206,36 @@ def main():
             with open(results_file_name, "w") as f:
                 json.dump(results, f)
         del res, out_captions_json
+
+    if args.eval_cc:
+        print("Evaluating on CC-3M...")
+        eval_model.dataset_name = "cc3m"
+        for shot in args.shots:
+            scores = []
+            for seed, trial in zip(args.trial_seeds, range(args.num_trials)):
+                ok_vqa_score, out_captions_json = evaluate_vqa(
+                    args=args,
+                    model_args=model_args,
+                    eval_model=eval_model,
+                    num_shots=shot,
+                    seed=seed,
+                    dataset_name="cc3m",
+                    attack_config=attack_config,
+                )
+                print(f"Shots {shot} Trial {trial} OK-VQA score: {ok_vqa_score}")
+                scores.append(ok_vqa_score)
+
+            print(f"Shots {shot} Mean OK-VQA score: {np.nanmean(scores)}")
+            results["ok_vqa"].append(
+                {
+                    "shots": shot,
+                    "trials": scores,
+                    "mean": np.nanmean(scores),
+                    "captions": out_captions_json,
+                }
+            )
+        del ok_vqa_score, out_captions_json
+
 
     if args.eval_ok_vqa:
         print("Evaluating on OK-VQA...")
