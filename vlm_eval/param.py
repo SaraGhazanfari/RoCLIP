@@ -113,6 +113,13 @@ parser.add_argument(
     help="Path to the train data of SBUcaption directory.",
     default=None,
 )
+parser.add_argument(
+    "--sbu_annotations_json_path",
+    type=str,
+    help="Path to the flickr30/flickr30k_images directory.",
+    default=None,
+)
+
 
 ## Flickr30 Dataset
 parser.add_argument(
