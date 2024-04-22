@@ -148,9 +148,7 @@ class EvalModelLLAVA(BaseEvalModel):
     def get_vqa_prompt(self, question, answer=None) -> str:
         if self.dataset_name == "vizwiz":
             self.prompt_suffix = "\nWhen the provided information is insufficient, respond with 'Unanswerable'.\nAnswer the question using a single word or phrase."
-        elif self.dataset_name == "textvqa":
-            self.prompt_suffix = "\nAnswer the question using a single word or phrase."
-        elif self.dataset_name == "vqav2":
+        elif self.dataset_name in ["textvqa", "vqav2", "cc3m"]:
             self.prompt_suffix = "\nAnswer the question using a single word or phrase."
         else:
             raise ValueError(f"Unknown dataset: {self.dataset_name}")
