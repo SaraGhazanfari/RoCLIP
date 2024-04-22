@@ -6,7 +6,7 @@ from torchvision.datasets import SBU
 
 
 class CompleteSBU(SBU):
-    def __init__(self, root, transform):
+    def __init__(self, root, transform=None):
         super(CompleteSBU, self).__init__(root=root, transform=transform, download=False)
 
     def __getitem__(self, index: int) -> Dict:
