@@ -221,7 +221,7 @@ def main():
                     seed=seed,
                     dataset_name="cc3m",
                     attack_config=attack_config,
-                    max_generation_length=100
+                    max_generation_length=20
                 )
                 print(f"Shots {shot} Trial {trial} OK-VQA score: {ok_vqa_score}")
                 scores.append(ok_vqa_score)
