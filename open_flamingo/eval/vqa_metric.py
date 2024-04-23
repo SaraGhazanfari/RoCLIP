@@ -672,7 +672,7 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     # resultType, fileType) for fileType in fileTypes]
 
     # create vqa object and vqaRes object
-    if dataset == 'cc':
+    if dataset == 'cc3m':
         vqa = CCVQA(annotation_json_path)
         vqaRes = vqa.loadRes(result_json_path, annotation_json_path)
     else:
