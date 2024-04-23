@@ -222,6 +222,7 @@ class CCVQA(VQA):
         self.qqa = {}
         self.imgToQA = {}
         self.dataset = {}
+        print(annotations_path)
         self.dataset['annotations'] = json.load(open(annotations_path, "r"))
         self.createIndex()
 
@@ -674,7 +675,6 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     # create vqa object and vqaRes object
     if dataset == 'cc3m':
         vqa = CCVQA(annotation_json_path)
-        print(annotation_json_path)
         vqaRes = CCVQA(annotation_json_path)
         vqaRes.loadRes(result_json_path)
     else:
