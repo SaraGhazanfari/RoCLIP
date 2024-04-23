@@ -237,8 +237,11 @@ class CCVQA(VQA):
             ann["answer"] = ann['conversations'][1]['value']
             ann["question_id"] = ann['id']
             ann["image_id"] = ann['image']
+            print(ann)
+
             imgToQA[ann["image"]] += [ann]
             qa[ann["id"]] = ann
+            print(ann)
             qqa[ann["question_id"]] = ann['conversations'][0]['value']
         print("index created!")
 
