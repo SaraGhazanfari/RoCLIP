@@ -319,7 +319,7 @@ class CCVQA(VQA):
         )
 
         self.dataset["annotations"] = anns
-        self.createIndex()
+        self.createResIndex()
 
 
 class VQAEval:
