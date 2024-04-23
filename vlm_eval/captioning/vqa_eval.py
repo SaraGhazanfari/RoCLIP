@@ -103,6 +103,7 @@ def evaluate_vqa(
                 is_tensor=True
             )
     else:
+        test_questions_json_path = args.cc_test_questions_json_path
         train_dataset = CC3MDataset(
             img_root=args.train_data,
             annotations_path=args.cc_annotations_json_path,
