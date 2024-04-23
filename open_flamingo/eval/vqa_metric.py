@@ -502,6 +502,8 @@ class VQAEval:
             quesIds = [quesId for quesId in self.params["question_id"]]
         gts = {}
         res = {}
+        print(self.vqa.qa)
+        print(self.vqaRes.qa)
         for quesId in quesIds:
             gts[quesId] = self.vqa.qa[quesId]
             res[quesId] = self.vqaRes.qa[quesId]
