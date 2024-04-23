@@ -232,9 +232,9 @@ def evaluate_vqa(
                     batch_text_adv.append(
                         eval_model.get_vqa_prompt(question=batch["question"][i], answer=adv_ans)
                     )
-            print(batch_images)
+
             batch_images = eval_model._prepare_images(batch_images)
-            print(batch_images)
+            print(batch_images.shape)
             if args.from_saved:
                 assert args.batch_size == 1
                 assert init == "clean", "not implemented"
@@ -278,7 +278,7 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
-            print(batch_images)
+            print(batch_images.shape)
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
