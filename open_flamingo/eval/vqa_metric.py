@@ -222,7 +222,7 @@ class CCVQA(VQA):
         self.qqa = {}
         self.imgToQA = {}
         self.dataset = {}
-        print(annotations_path)
+        self.questions = [ann['conversations'][0]['value'] for ann in self.dataset["annotations"]]
         self.dataset['annotations'] = json.load(open(annotations_path, "r"))
         self.createIndex()
 
@@ -288,9 +288,6 @@ class CCVQA(VQA):
         :param   resFile (str)     : file name of result file
         :return: res (obj)         : result api object
         """
-        res = CCVQA()
-        res.questions = [ann['conversations'][0]['value'] for ann in self.dataset["annotations"]]
-
         print("Loading and preparing results...     ")
         time_t = datetime.datetime.utcnow()
         anns = json.load(open(resFile))
