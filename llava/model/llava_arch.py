@@ -113,6 +113,8 @@ class LlavaMetaForCausalLM(ABC):
         new_input_embeds = []
         new_labels = [] if labels is not None else None
         cur_image_idx = 0
+        print(input_ids)
+        print(IMAGE_TOKEN_INDEX)
         for batch_idx, cur_input_ids in enumerate(input_ids):
             if (cur_input_ids == IMAGE_TOKEN_INDEX).sum() == 0:
                 # multimodal LLM, but the current sample is not multimodal
