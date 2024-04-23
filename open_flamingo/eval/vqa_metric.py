@@ -238,6 +238,7 @@ class CCVQA(VQA):
             qa[ann["id"]] = ann
             ann["answer"] = ann['conversations'][1]['value']
             ann["question_id"] = ann['id']
+            ann["image_id"] = ann['image']
         for ann in self.dataset["annotations"]:
             qqa[ann["id"]] = ann['conversations'][0]['value']
         print("index created!")
@@ -256,13 +257,13 @@ class CCVQA(VQA):
 
     def getQuesIds(self):
         anns = self.dataset["annotations"]
-        ids = [ann["id"] for ann in anns]
+        ids = [ann["question_id"] for ann in anns]
         return ids
 
     def getImgIds(self):
 
         anns = self.dataset["annotations"]
-        ids = [ann["image"] for ann in anns]
+        ids = [ann["image_id"] for ann in anns]
         return ids
 
     def loadQA(self, ids=[]):
@@ -298,7 +299,7 @@ class CCVQA(VQA):
 
         for ann in anns:
             quesId = ann["question_id"]
-            ann["image"] = quesId
+            ann["image_id"] = quesId
         print(
             "DONE (t=%0.2fs)" % ((datetime.datetime.utcnow() - time_t).total_seconds())
         )
