@@ -251,7 +251,7 @@ class CCVQA(VQA):
         # create index
         print("creating index...")
         imgToQA = {ann["image_id"]: [] for ann in self.dataset["annotations"]}
-        qa = {ann["id"]: [] for ann in self.dataset["annotations"]}
+        qa = {ann["image_id"]: [] for ann in self.dataset["annotations"]}
         for ann in self.dataset["annotations"]:
             imgToQA[ann["image_id"]] += [ann]
             qa[ann["image_id"]] = ann
