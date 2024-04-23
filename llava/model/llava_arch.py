@@ -171,6 +171,9 @@ class LlavaMetaForCausalLM(ABC):
                 if labels is not None:
                     cur_new_labels.append(cur_labels)
             cur_new_input_embeds = [x.to(device=self.device) for x in cur_new_input_embeds]
+            print(len(cur_new_input_embeds))
+            for ie in cur_new_input_embeds:
+                print(ie.shape)
             cur_new_input_embeds = torch.cat(cur_new_input_embeds, dim=0)
             new_input_embeds.append(cur_new_input_embeds)
             if labels is not None:
