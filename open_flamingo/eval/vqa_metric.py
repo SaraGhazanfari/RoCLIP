@@ -1,10 +1,9 @@
 import copy
 import datetime
 import json
-import os
-import random
 import re
 import sys
+
 
 # Interface for accessing the VQA dataset.
 
@@ -192,7 +191,119 @@ class VQA:
             quesId = ann["question_id"]
             if res.dataset["task_type"] == "Multiple Choice":
                 assert (
-                    ann["answer"] in self.qqa[quesId]["multiple_choices"]
+                        ann["answer"] in self.qqa[quesId]["multiple_choices"]
+                ), "predicted answer is not one of the multiple choices"
+            qaAnn = self.qa[quesId]
+            ann["image_id"] = qaAnn["image_id"]
+            ann["question_type"] = qaAnn["question_type"]
+            if "answer_type" in ann:
+                ann["answer_type"] = qaAnn["answer_type"]
+        print(
+            "DONE (t=%0.2fs)" % ((datetime.datetime.utcnow() - time_t).total_seconds())
+        )
+
+        res.dataset["annotations"] = anns
+        res.createIndex()
+        return res
+
+
+class CCVQA(VQA):
+
+    def __init__(self, annotations_path=None):
+        """
+        Constructor of VQA helper class for reading and visualizing questions and answers.
+        :param annotation_file (str): location of VQA annotation file
+        :return:
+        """
+        # load dataset
+        self.dataset = {}
+        self.questions = {}
+        self.qa = {}
+        self.qqa = {}
+        self.imgToQA = {}
+        self.dataset = {}
+        self.dataset['annotations'] = json.load(open(annotations_path, "r"))
+        self.createIndex()
+
+    def createIndex(self):
+        # create index
+        print("creating index...")
+        imgToQA = {ann["image"]: [] for ann in self.dataset["annotations"]}
+        qa = {ann["id"]: [] for ann in self.dataset["annotations"]}
+        qqa = {ann["id"]: [] for ann in self.dataset["annotations"]}
+        for ann in self.dataset["annotations"]:
+            imgToQA[ann["image"]] += [ann]
+            qa[ann["id"]] = ann
+        for ann in self.dataset["annotations"]:
+            qqa[ann["id"]] = ann['conversations'][0]['value']
+        print("index created!")
+
+        # create class members
+        self.qa = qa
+        self.qqa = qqa
+        self.imgToQA = imgToQA
+
+    def info(self):
+        """
+        Print information about the VQA annotation file.
+        :return:
+        """
+        print('CC-3M dataset, chat box.')
+
+    def getQuesIds(self):
+        anns = self.dataset["annotations"]
+        ids = [ann["id"] for ann in anns]
+        return ids
+
+    def getImgIds(self):
+
+        anns = self.dataset["annotations"]
+        ids = [ann["image"] for ann in anns]
+        return ids
+
+    def loadQA(self, ids=[]):
+        if type(ids) == list:
+            return [self.qa[id] for id in ids]
+        elif type(ids) == int:
+            return [self.qa[ids]]
+
+    def showQA(self, anns):
+        """
+        Display the specified annotations.
+        :param anns (array of object): annotations to display
+        :return: None
+        """
+        if len(anns) == 0:
+            return 0
+        for ann in anns:
+            quesId = ann["question_id"]
+            print("Question: %s" % (self.qqa[quesId]["question"]))
+            for ans in ann["answers"]:
+                print("Answer %d: %s" % (ans["answer_id"], ans["answer"]))
+
+    def loadRes(self, resFile, annFile):
+        """
+        Load result file and return a result object.
+        :param   resFile (str)     : file name of result file
+        :return: res (obj)         : result api object
+        """
+        res = CCVQA()
+        res.questions = [ann['conversations'][0]['value'] for ann in json.load(open(annFile))]
+
+        print("Loading and preparing results...     ")
+        time_t = datetime.datetime.utcnow()
+        anns = json.load(open(resFile))
+        assert type(anns) == list, "results is not an array of objects"
+        annsQuesIds = [ann["question_id"] for ann in anns]
+        # print set of question ids that do not have corresponding annotations
+
+        # assert set(annsQuesIds) == set(self.getQuesIds()), \
+        # 'Results do not correspond to current VQA set. Either the results do not have predictions for all question ids in annotation file or there is atleast one question id that does not belong to the question ids in the annotation file.'
+        for ann in anns:
+            quesId = ann["question_id"]
+            if res.dataset["task_type"] == "Multiple Choice":
+                assert (
+                        ann["answer"] in self.qqa[quesId]["multiple_choices"]
                 ), "predicted answer is not one of the multiple choices"
             qaAnn = self.qa[quesId]
             ann["image_id"] = qaAnn["image_id"]
@@ -450,7 +561,7 @@ class VQAEval:
         outText = inText
         for p in self.punct:
             if (p + " " in inText or " " + p in inText) or (
-                re.search(self.commaStrip, inText) != None
+                    re.search(self.commaStrip, inText) != None
             ):
                 outText = outText.replace(p, "")
             else:
@@ -524,7 +635,8 @@ class VQAEval:
         sys.stdout.flush()
 
 
-def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_path, return_individual_scores=False):
+def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_path, return_individual_scores=False,
+                         dataset='vqa'):
     """Compute the VQA accuracy metric.
 
     Args:
@@ -560,8 +672,12 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     # resultType, fileType) for fileType in fileTypes]
 
     # create vqa object and vqaRes object
-    vqa = VQA(annotation_json_path, question_json_path)
-    vqaRes = vqa.loadRes(result_json_path, question_json_path)
+    if dataset == 'cc':
+        vqa = CCVQA(annotation_json_path)
+        vqaRes = vqa.loadRes(result_json_path, annotation_json_path)
+    else:
+        vqa = VQA(annotation_json_path, question_json_path)
+        vqaRes = vqa.loadRes(result_json_path, question_json_path)
 
     # create vqaEval object by taking vqa and vqaRes
     # n is precision of accuracy (number of places after decimal), default is 2
@@ -589,7 +705,7 @@ def postprocess_vqa_generation(predictions):
 if __name__ == '__main__':
     q = "/mnt/datasets/vizwiz/val_questions_vqa_format.json"
     a = "/mnt/datasets/vizwiz/val_annotations_vqa_format.json"
-    #r = "/mnt/cschlarmann37/vizwiz_theirs.json"
+    # r = "/mnt/cschlarmann37/vizwiz_theirs.json"
     r = input("Enter path to results file: ")
     # r = "/mnt/cschlarmann37/" + r
     print(f"Computing VQA accuracy for {r}")
