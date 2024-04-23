@@ -281,14 +281,14 @@ class CCVQA(VQA):
             for ans in ann["answers"]:
                 print("Answer %d: %s" % (ans["answer_id"], ans["answer"]))
 
-    def loadRes(self, resFile, annFile):
+    def loadRes(self, resFile):
         """
         Load result file and return a result object.
         :param   resFile (str)     : file name of result file
         :return: res (obj)         : result api object
         """
         res = CCVQA()
-        res.questions = [ann['conversations'][0]['value'] for ann in json.load(open(annFile))]
+        res.questions = [ann['conversations'][0]['value'] for ann in self.dataset["annotations"]]
 
         print("Loading and preparing results...     ")
         time_t = datetime.datetime.utcnow()
@@ -674,7 +674,8 @@ def compute_vqa_accuracy(result_json_path, question_json_path, annotation_json_p
     # create vqa object and vqaRes object
     if dataset == 'cc3m':
         vqa = CCVQA(annotation_json_path)
-        vqaRes = vqa.loadRes(result_json_path, annotation_json_path)
+        vqaRes = CCVQA(annotation_json_path)
+        vqaRes.loadRes(result_json_path)
     else:
         vqa = VQA(annotation_json_path, question_json_path)
         vqaRes = vqa.loadRes(result_json_path, question_json_path)
