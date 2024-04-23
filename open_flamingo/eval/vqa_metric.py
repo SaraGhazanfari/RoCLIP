@@ -236,6 +236,8 @@ class CCVQA(VQA):
         for ann in self.dataset["annotations"]:
             imgToQA[ann["image"]] += [ann]
             qa[ann["id"]] = ann
+            ann["answer"] = ann['conversations'][1]['value']
+            ann["question_id"] = ann['id']
         for ann in self.dataset["annotations"]:
             qqa[ann["id"]] = ann['conversations'][0]['value']
         print("index created!")
@@ -296,15 +298,7 @@ class CCVQA(VQA):
 
         for ann in anns:
             quesId = ann["question_id"]
-            if self.dataset["task_type"] == "Multiple Choice":
-                assert (
-                        ann["answer"] in self.qqa[quesId]["multiple_choices"]
-                ), "predicted answer is not one of the multiple choices"
-            qaAnn = self.qa[quesId]
-            ann["image_id"] = qaAnn["image_id"]
-            ann["question_type"] = qaAnn["question_type"]
-            if "answer_type" in ann:
-                ann["answer_type"] = qaAnn["answer_type"]
+            ann["image"] = quesId
         print(
             "DONE (t=%0.2fs)" % ((datetime.datetime.utcnow() - time_t).total_seconds())
         )
