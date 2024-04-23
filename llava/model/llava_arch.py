@@ -136,7 +136,9 @@ class LlavaMetaForCausalLM(ABC):
                 cur_new_labels = []
                 assert cur_labels.shape == cur_input_ids.shape
             while image_token_indices.numel() > 0:
-                cur_image_features = image_features[cur_image_idx]
+                #todo
+                #cur_image_features = image_features[cur_image_idx]
+                cur_image_features = image_features
                 image_token_start = image_token_indices[0]
                 if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
                     cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[:image_token_start-1]).detach())
