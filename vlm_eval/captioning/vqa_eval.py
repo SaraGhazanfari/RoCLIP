@@ -365,6 +365,7 @@ def evaluate_vqa(
         results_path,
         test_questions_json_path,
         test_annotations_json_path,
+        dataset=dataset_name
     )
 
     return acc, results_path
