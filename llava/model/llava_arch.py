@@ -119,7 +119,7 @@ class LlavaMetaForCausalLM(ABC):
                 # FIXME: this is a hacky fix, for deepspeed zero3 to work
                 half_len = cur_input_ids.shape[0] // 2
                 #todo
-                cur_image_features = image_features
+                cur_image_features = image_features.squeeze(0)
                 #cur_image_features = image_features[cur_image_idx]
                 cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids[:half_len])
                 cur_input_embeds_2 = self.get_model().embed_tokens(cur_input_ids[half_len:])
@@ -138,7 +138,7 @@ class LlavaMetaForCausalLM(ABC):
             while image_token_indices.numel() > 0:
                 #todo
                 #cur_image_features = image_features[cur_image_idx]
-                cur_image_features = image_features
+                cur_image_features = image_features.squeeze(0)
                 image_token_start = image_token_indices[0]
                 if getattr(self.config, 'tune_mm_mlp_adapter', False) and getattr(self.config, 'mm_use_im_start_end', False):
                     cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[:image_token_start-1]).detach())
