@@ -282,7 +282,7 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
-
+            print(batch_text)
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
