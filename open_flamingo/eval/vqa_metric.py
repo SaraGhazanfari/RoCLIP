@@ -236,11 +236,16 @@ class CCVQA(VQA):
         for ann in self.dataset["annotations"]:
             imgToQA[ann["image"]] += [ann]
             qa[ann["id"]] = ann
-            ann["answer"] = ann['conversations'][1]['value']
-            ann["question_id"] = ann['id']
-            ann["image_id"] = ann['image']
+            if 'conversations' in ann:
+                ann["answer"] = ann['conversations'][1]['value']
+            if 'id' in ann:
+                ann["question_id"] = ann['id']
+            if 'image' in ann:
+                ann["image_id"] = ann['image']
+
         for ann in self.dataset["annotations"]:
-            qqa[ann["id"]] = ann['conversations'][0]['value']
+            if 'conversations' in ann:
+                qqa[ann["question_id"]] = ann['conversations'][0]['value']
         print("index created!")
 
         # create class members
@@ -305,6 +310,7 @@ class CCVQA(VQA):
         )
 
         self.dataset["annotations"] = anns
+        self.createIndex()
 
 
 class VQAEval:
