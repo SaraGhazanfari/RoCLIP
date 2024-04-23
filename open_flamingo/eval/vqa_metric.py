@@ -501,14 +501,10 @@ class VQAEval:
     def evaluate(self, quesIds=None):
         if quesIds == None:
             quesIds = [quesId for quesId in self.params["question_id"]]
+        print(quesIds)
         gts = {}
         res = {}
-        for key, value in self.vqa.qa.items():
-            print(key, value)
-            break
-        for key, value in self.vqaRes.qa.items():
-            print(key, value)
-            break
+
 
         for quesId in quesIds:
             gts[quesId] = self.vqa.qa[quesId]
@@ -545,6 +541,7 @@ class VQAEval:
                 ]
                 matchingAns = [item for item in otherGTAns if item["answer"] == resAns]
                 acc = min(1, float(len(matchingAns)) / 3)
+                print(acc)
                 gtAcc.append(acc)
             quesType = gts[quesId]["question_type"] if "question_type" in gts[quesId] else "other"
             ansType = (
