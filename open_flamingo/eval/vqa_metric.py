@@ -546,7 +546,7 @@ class VQAEval:
                 matchingAns = [item for item in otherGTAns if item["answer"] == resAns]
                 acc = min(1, float(len(matchingAns)) / 3)
                 gtAcc.append(acc)
-            quesType = gts[quesId]["question_type"]
+            quesType = gts[quesId]["question_type"] if "question_type" in gts[quesId] else "other"
             ansType = (
                 gts[quesId]["answer_type"] if "answer_type" in gts[quesId] else "other"
             )
