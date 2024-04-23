@@ -502,10 +502,10 @@ class VQAEval:
             quesIds = [quesId for quesId in self.params["question_id"]]
         gts = {}
         res = {}
-        for key, value in self.vqa.qa:
+        for key, value in self.vqa.qa.items():
             print(key, value)
             break
-        for key, value in self.vqaRes.qa:
+        for key, value in self.vqaRes.qa.items():
             print(key, value)
             break
 
