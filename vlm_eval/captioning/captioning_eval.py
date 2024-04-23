@@ -203,7 +203,7 @@ def evaluate_captioning(
                         raise NotImplementedError
 
                 if dataset_name == 'cc3m':
-                    adv_ans = get_sample_answer(batch["answers"][i]) if not targeted else target_str
+                    adv_ans = get_sample_answer(batch["caption"][i]) if not targeted else target_str
                     if effective_num_shots > 0:
                         batch_text.append(
                             context_text + eval_model.get_vqa_prompt(question=batch["question"][i])
