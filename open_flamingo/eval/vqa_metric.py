@@ -222,8 +222,9 @@ class CCVQA(VQA):
         self.qqa = {}
         self.imgToQA = {}
         self.dataset = {}
-        self.questions = [ann['conversations'][0]['value'] for ann in self.dataset["annotations"]]
         self.dataset['annotations'] = json.load(open(annotations_path, "r"))
+        self.questions = [ann['conversations'][0]['value'] for ann in self.dataset["annotations"]]
+
         self.createIndex()
 
     def createIndex(self):
