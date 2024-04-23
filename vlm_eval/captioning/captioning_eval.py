@@ -6,6 +6,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
+from data.llava_train_dataset import CC3MCaptionDataset
 from data.sbu_dataset import CompleteSBU
 from open_flamingo.eval.coco_metric import (
     compute_cider,
@@ -65,6 +66,18 @@ def evaluate_captioning(
         print(args.train_data)
         train_dataset = CompleteSBU(root=args.train_data)
         test_dataset = CompleteSBU(root=args.train_data)
+
+    elif dataset_name == 'cc3m':
+        train_dataset = CC3MCaptionDataset(
+            img_root=args.train_data,
+            annotations_path=args.cc_annotations_json_path,
+        )
+
+        test_dataset = CC3MCaptionDataset(
+            img_root=args.train_data,
+            annotations_path=args.cc_annotations_json_path,
+        )
+
     else:
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
@@ -183,13 +196,36 @@ def evaluate_captioning(
                 if num_shots == 0:
                     context_text = context_text.replace("<image>", "")
 
-                adv_caption = batch["caption"][i] if not targeted else target_str
-                if effective_num_shots > 0:
-                    batch_text.append(context_text + eval_model.get_caption_prompt())
-                    batch_text_adv.append(context_text + eval_model.get_caption_prompt(adv_caption))
+                def get_sample_answer(answers):
+                    if len(answers) == 1:
+                        return answers[0]
+                    else:
+                        raise NotImplementedError
+
+                if dataset_name == 'cc3m':
+                    adv_ans = get_sample_answer(batch["answers"][i]) if not targeted else target_str
+                    if effective_num_shots > 0:
+                        batch_text.append(
+                            context_text + eval_model.get_vqa_prompt(question=batch["question"][i])
+                        )
+                        batch_text_adv.append(
+                            context_text + eval_model.get_vqa_prompt(question=batch["question"][i], answer=adv_ans)
+                        )
+                    else:
+                        batch_text.append(
+                            eval_model.get_vqa_prompt(question=batch["question"][i])
+                        )
+                        batch_text_adv.append(
+                            eval_model.get_vqa_prompt(question=batch["question"][i], answer=adv_ans)
+                        )
                 else:
-                    batch_text.append(eval_model.get_caption_prompt())
-                    batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
+                    adv_caption = batch["caption"][i] if not targeted else target_str
+                    if effective_num_shots > 0:
+                        batch_text.append(context_text + eval_model.get_caption_prompt())
+                        batch_text_adv.append(context_text + eval_model.get_caption_prompt(adv_caption))
+                    else:
+                        batch_text.append(eval_model.get_caption_prompt())
+                        batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
 
             batch_images = eval_model._prepare_images(batch_images)
 
@@ -287,6 +323,8 @@ def evaluate_captioning(
                 annotations_path = args.flickr_annotations_json_path
             elif dataset_name == "sbu":
                 annotations_path = args.sbu_annotations_json_path
+            elif dataset_name == "cc3m":
+                annotations_path = args.cc_annotations_json_path
 
             ciders, img_ids = compute_cider_all_scores(
                 result_path=results_path,
@@ -302,7 +340,7 @@ def evaluate_captioning(
                     adv_images_dict[img_id] = adv_images_cur_dict[img_id]
                     if isinstance(gt, int):
                         gt_dict.update({img_id: gt})
-                cider_threshold = {"coco": 10., "flickr": 2., "sbu": 2.}[dataset_name]
+                cider_threshold = {"coco": 10., "flickr": 2., "sbu": 2., "cc3m": 2.}[dataset_name]
                 if cid < cider_threshold:
                     left_to_attack[img_id] = False
             # delete the temporary file
@@ -345,6 +383,8 @@ def evaluate_captioning(
         annotations_path = args.flickr_annotations_json_path
     elif dataset_name == 'sbu':
         annotations_path = args.sbu_annotations_json_path
+    elif dataset_name == 'cc3m':
+        annotations_path = args.cc_annotations_json_path
 
     metrics = compute_cider(
         result_path=results_path,
