@@ -113,14 +113,14 @@ class LlavaMetaForCausalLM(ABC):
         new_input_embeds = []
         new_labels = [] if labels is not None else None
         cur_image_idx = 0
-        print(input_ids)
-        print(IMAGE_TOKEN_INDEX)
         for batch_idx, cur_input_ids in enumerate(input_ids):
             if (cur_input_ids == IMAGE_TOKEN_INDEX).sum() == 0:
                 # multimodal LLM, but the current sample is not multimodal
                 # FIXME: this is a hacky fix, for deepspeed zero3 to work
                 half_len = cur_input_ids.shape[0] // 2
-                cur_image_features = image_features[cur_image_idx]
+                #todo
+                cur_image_features = image_features
+                #cur_image_features = image_features[cur_image_idx]
                 cur_input_embeds_1 = self.get_model().embed_tokens(cur_input_ids[:half_len])
                 cur_input_embeds_2 = self.get_model().embed_tokens(cur_input_ids[half_len:])
                 cur_input_embeds = torch.cat([cur_input_embeds_1, cur_image_features[0:0], cur_input_embeds_2], dim=0)
