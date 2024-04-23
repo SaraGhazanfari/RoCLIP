@@ -106,15 +106,15 @@ def evaluate_vqa(
             )
     else:
         test_questions_json_path = args.cc_test_questions_json_path
-        test_annotations_json_path = args.cc_annotations_json_path
+        test_annotations_json_path = args.cc_questions_answers_json_path
         train_dataset = CC3MDataset(
             img_root=args.train_data,
-            annotations_path=args.cc_annotations_json_path,
+            annotations_path=args.cc_questions_answers_json_path,
         )
 
         test_dataset = CC3MDataset(
             img_root=args.train_data,
-            annotations_path=args.cc_annotations_json_path,
+            annotations_path=args.cc_questions_answers_json_path,
         )
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
 

@@ -133,6 +133,12 @@ parser.add_argument(
     default=None,
 )
 parser.add_argument(
+    "--cc_questions_answers_json_path",
+    type=str,
+    help="Path to the CC-3M annotations directory.",
+    default=None,
+)
+parser.add_argument(
     "--cc_test_questions_json_path",
     type=str,
     default=None,

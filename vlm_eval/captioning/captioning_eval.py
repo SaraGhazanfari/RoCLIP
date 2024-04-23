@@ -70,12 +70,12 @@ def evaluate_captioning(
     elif dataset_name == 'cc3m':
         train_dataset = CC3MCaptionDataset(
             img_root=args.train_data,
-            annotations_path=args.cc_annotations_json_path,
+            annotations_path=args.cc_questions_answers_json_path,
         )
 
         test_dataset = CC3MCaptionDataset(
             img_root=args.train_data,
-            annotations_path=args.cc_annotations_json_path,
+            annotations_path=args.cc_questions_answers_json_path,
         )
 
     else:
