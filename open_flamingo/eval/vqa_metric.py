@@ -234,7 +234,7 @@ class CCVQA(VQA):
         qa = {ann["id"]: [] for ann in self.dataset["annotations"]}
         qqa = {ann["id"]: [] for ann in self.dataset["annotations"]}
         for ann in self.dataset["annotations"]:
-            ann["answer"] = ann['conversations'][1]['value']
+            ann["answers"] = [ann['conversations'][1]['value']]
             ann["question_id"] = ann['id']
             ann["image_id"] = ann['image']
             imgToQA[ann["image"]] += [ann]
@@ -253,6 +253,7 @@ class CCVQA(VQA):
         imgToQA = {ann["image_id"]: [] for ann in self.dataset["annotations"]}
         qa = {ann["image_id"]: [] for ann in self.dataset["annotations"]}
         for ann in self.dataset["annotations"]:
+            ann["answers"] = [ann["answer"]]
             imgToQA[ann["image_id"]] += [ann]
             qa[ann["image_id"]] = ann
 
