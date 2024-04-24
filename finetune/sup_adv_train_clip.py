@@ -181,6 +181,7 @@ def main(args, leftovers):
     # model_orig.cpu()
     # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     # model = get_eval_model(args, model_args, adversarial="none")
+    print(model_args)
     model = EvalModelLLAVA(
         dict(
             vision_encoder_pretrained=model_args['vision_encoder_pretrained'],
