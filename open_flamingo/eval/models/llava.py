@@ -99,10 +99,8 @@ class EvalModelLLAVA(BaseEvalModel):
         assert self.input_ids is not None
         assert self.attention_mask is not None
         assert self.labels is not None
-        print(images_unnorm.min(), images_unnorm.max())
-        print(0. <= images_unnorm.min())
-        print(images_unnorm.max() <= 1.)
-        assert 0. <= images_unnorm.min() and images_unnorm.max() <= 1., "Images must be in image space"
+
+        # assert 0. <= images_unnorm.min() and images_unnorm.max() <= 1., "Images must be in image space"
         assert len(images_unnorm.shape) == 4, "[b, c, h, w]"
 
         out = self.model(

@@ -33,7 +33,7 @@ def pgd(
         perturbation.requires_grad = True
         with torch.enable_grad():
             out = forward(data_clean + perturbation)  # , output_normalize=output_normalize)
-            print(out)
+            print(f'*****************************LOSS: {out}*****************************')
             loss = loss_fn(out, targets) if loss_fn else out
             if verbose:
                 print(f'[{i}] {loss.item():.5f}')
