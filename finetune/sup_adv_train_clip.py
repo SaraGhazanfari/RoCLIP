@@ -185,7 +185,7 @@ def main(args, leftovers):
     model = EvalModelLLAVA(
         dict(
             vision_encoder_pretrained=model_args['vision_encoder_pretrained'],
-            precision=model_args['precision'],
+            precision='float32',
             **model_args,
         ),
     )
