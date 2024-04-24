@@ -1,7 +1,6 @@
 import sys
 
-from CLIP_eval.eval_utils import load_clip_model
-from train.datasets import COCOFlickrDataset, ImageNetDataset
+from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
 from vlm_eval.utils import get_eval_model
@@ -18,11 +17,9 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from training.scheduler import cosine_lr
-from torchvision import transforms
 from open_flamingo.eval.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
 import wandb
 from train.utils import init_wandb
-from train.sam_data import SamData
 from open_flamingo.eval.models.utils import unwrap_model
 from train.utils import str2bool
 
@@ -104,39 +101,29 @@ def main(args, leftovers):
         assert str(args.start_step) in args.optimizer_state
         assert args.pretrained in ['', 'none']
         args.pretrained = args.optimizer_state.replace('_opt', '')
-    model, _, _ = load_clip_model(args.clip_model_name, args.pretrained)
+    # model, _, _ = load_clip_model(args.clip_model_name, args.pretrained)
 
     # Remove the Normalize transform by creating a new Compose object
-    preprocessor_without_normalize = transforms.Compose(image_processor.transforms[:-1])
-    normalize = image_processor.transforms[-1]
-    del image_processor
+    # preprocessor_without_normalize = transforms.Compose(image_processor.transforms[:-1])
+    # normalize = image_processor.transforms[-1]
+    # del image_processor
 
     # get data
-    if args.dataset == 'imagenet':
-        dataset = ImageNetDataset(
-            root=args.imagenet_root + '/train',
-            transform=preprocessor_without_normalize,
-        )
 
-    elif args.dataset == 'segment_anything':
-        dataset = SamData('/data/naman_deep_singh/datasets/newSAM', transform=preprocessor_without_normalize)
+    image_dir_path = f'{args.imagenet_root}/train2014'
+    annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
+    model_args = {
+        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+    }
+    model = get_eval_model(args, model_args, adversarial="none")
+    dataset = COCOFlickrDataset(model=model,
+                                image_processor=model._prepare_images,
+                                image_dir_path=image_dir_path,
+                                annotations_path=annotations_path,
+                                transform=None,
+                                prefix='COCO_train2014_'
+                                )
 
-        print(dataset.__len__())
-    elif args.dataset == 'coco':
-        image_dir_path = f'{args.imagenet_root}/train2014'
-        annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
-
-        dataset = COCOFlickrDataset(model=model,
-                                    image_processor=model._prepare_images,
-                                    image_dir_path=image_dir_path,
-                                    annotations_path=annotations_path,
-                                    transform=None,
-                                    prefix='COCO_train2014_'
-                                    )
-    # todo dataset_eval = ImageNetDataset(
-    #     root=args.imagenet_root + '/val',
-    #     transform=preprocessor_without_normalize,
-    # )
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # todo dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
@@ -171,35 +158,10 @@ def main(args, leftovers):
             assert embedding_text_labels_norm.shape == (768, 1000), embedding_text_labels_norm.shape
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
-    model_args = {
-        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-    }
 
-    # model_orig.cpu()
-    # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
-    model = get_eval_model(args, model_args, adversarial="none")
-    # print(model_args)
-    # model = EvalModelLLAVA(model_args)
-    # print(f"[cast typ] {model.cast_dtype}")
     device_id = 0
     model.set_device(device_id)
-    # import copy
-    # model_orig = copy.deepcopy(model)
 
-    # eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
-    # model_orig = eval_model_orig
-
-    # if num_gpus > 1:
-    #     model_orig = torch.nn.DataParallel(model_orig)
-
-    # model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
-    #
-    # params = unwrap_model(model).model.parameters()
-    #
-    #
-    #
-    # eval_model.model.model.vision_tower._modules['vision_tower'].model = model
-    # model = eval_model
     params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
@@ -241,7 +203,6 @@ def main(args, leftovers):
             optimizer=optimizer,
             scheduler=scheduler,
             embedding_text_labels_norm=embedding_text_labels_norm,
-            normalize=normalize,
             args=args,
             epoch=epoch
         )
@@ -289,7 +250,7 @@ class ComputeLossWrapper:
 
 
 def train_one_epoch(
-        step_total, model, dataloader, optimizer, scheduler, normalize,
+        step_total, model, dataloader, optimizer, scheduler,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
     # model_orig.eval()
