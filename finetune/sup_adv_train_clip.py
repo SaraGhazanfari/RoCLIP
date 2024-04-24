@@ -179,11 +179,11 @@ def main(args, leftovers):
 
     # model_orig.cpu()
     # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
-    model_orig = get_eval_model(args, model_args, adversarial="none")
     model = get_eval_model(args, model_args, adversarial="none")
-    force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
+
+    model_orig = get_eval_model(args, model_args, adversarial="none")
     model_orig.set_device(device_id)
 
     # eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
