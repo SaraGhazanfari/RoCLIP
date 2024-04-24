@@ -185,7 +185,7 @@ def main(args, leftovers):
     model = EvalModelLLAVA(model_args)
     print(f"[cast typ] {model.cast_dtype}")
     device_id = 0
-    model.set_device(device_id)
+    model.set_device("cuda")
     # import copy
     # model_orig = copy.deepcopy(model)
 
