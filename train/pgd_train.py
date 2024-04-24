@@ -1,4 +1,5 @@
 import torch
+
 from vlm_eval.attacks.utils import project_perturbation, normalize_grad
 
 
@@ -22,15 +23,14 @@ def pgd(
     """
     # make sure data is in image space
     assert torch.max(data_clean) < 1. + 1e-6 and torch.min(data_clean) > -1e-6
-
+    data_clean = forward._prepare_images(data_clean).cuda()
     if perturbation is None:
         perturbation = torch.zeros_like(data_clean, requires_grad=True)
     velocity = torch.zeros_like(data_clean)
     for i in range(iterations):
         perturbation.requires_grad = True
         with torch.enable_grad():
-            batch_images = forward._prepare_images(data_clean + perturbation).cuda()
-            out = forward(batch_images)#, output_normalize=output_normalize)
+            out = forward(data_clean)  # , output_normalize=output_normalize)
             print(out)
             loss = loss_fn(out, targets) if loss_fn else out
             if verbose:
