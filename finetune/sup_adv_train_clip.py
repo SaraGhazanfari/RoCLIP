@@ -172,21 +172,24 @@ def main(args):
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
 
-    model_orig.cpu()
-    model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
+    # model_orig.cpu()
+    # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
+    #
+    # full_model_orig = get_eval_model(args, args, adversarial=args.attack)
+    # full_model_orig.vision_encoder = model_orig
+
     if num_gpus > 1:
         model_orig = torch.nn.DataParallel(model_orig)
     model_orig.cuda()
 
-    model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
-    eval_model = get_eval_model(args, args, adversarial=args.attack)
-    eval_model.vision_encoder = model
+    # model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
+
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
     model.cuda()
 
     # set optimizer (all params have requires_grad=True)
-    params = unwrap_model(model).model.parameters()
+    params = unwrap_model(model).model.visual.parameters()
 
     if args.opt == 'adamw':
         optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
