@@ -19,10 +19,8 @@ from torch.utils.data import DataLoader
 from training.scheduler import cosine_lr
 from torchvision import transforms
 from open_flamingo.eval.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
-from train.pgd_train import pgd
-from train.apgd_train import apgd_train as apgd
 import wandb
-from train.utils import init_wandb, AverageMeter
+from train.utils import init_wandb
 from train.sam_data import SamData
 from open_flamingo.eval.models.utils import unwrap_model
 from train.utils import str2bool
@@ -296,9 +294,10 @@ def train_one_epoch(
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
     epoch_start_time = time.time()
+    min_len = 100
+
     for i, (data, targets) in enumerate(dataset):
-
-
+        print(f'{i}/{len(dataset)}')
         batch_text_adv = []
         batch_text_adv.append(model.get_caption_prompt(targets))
         model.set_inputs(
@@ -306,7 +305,8 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-        print(model.input_ids.shape)
+        min_len = min(model.input_ids.shape[1], min_len)
+    print(min_len)
         # data = model._prepare_images([[data]]).half().cuda()
         # if args.attack == 'pgd':
         #     data_adv = pgd(
