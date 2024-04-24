@@ -45,7 +45,7 @@ def process_images(images, image_processor, model_cfg):
 
 def tokenizer_image_token(prompt, tokenizer, image_token_index=IMAGE_TOKEN_INDEX, return_tensors=None):
     prompt_chunks = [
-        tokenizer(chunk, padding="longest", return_tensors="pt", max_length=100).input_ids for chunk
+        tokenizer(chunk, padding="longest", truncation=True, return_tensors="pt", max_length=100).input_ids for chunk
         in prompt.split('<image>')]
 
     def insert_separator(X, sep):
