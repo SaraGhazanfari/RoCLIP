@@ -185,7 +185,8 @@ def main(args, leftovers):
 
     if num_gpus > 1:
         model_orig = torch.nn.DataParallel(model_orig)
-    model_orig.cuda()
+    device_id = 0
+    model_orig.set_device(device_id)
 
     model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
 
@@ -197,7 +198,9 @@ def main(args, leftovers):
 
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
-    model.cuda()
+    device_id = 0
+    model.set_device(device_id)
+
     # set optimizer (all params have requires_grad=True)
 
     if args.opt == 'adamw':
