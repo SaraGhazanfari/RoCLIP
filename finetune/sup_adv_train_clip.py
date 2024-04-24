@@ -191,8 +191,7 @@ def main(args, leftovers):
     params = unwrap_model(model).model.parameters()
 
     eval_model = get_eval_model(args, model_args, adversarial="none")
-    print( eval_model.model.model.vision_tower._modules.__dict__)
-    eval_model.model.model.vision_tower._modules.vision_tower.model = model
+    eval_model.model.model.vision_tower._modules['vision_tower'].model = model
 
 
     if num_gpus > 1:
