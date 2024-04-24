@@ -1,9 +1,10 @@
-from PIL import Image
-from io import BytesIO
 import base64
+from io import BytesIO
 
 import torch
+from PIL import Image
 from transformers import StoppingCriteria
+
 from llava.constants import IMAGE_TOKEN_INDEX
 
 
@@ -14,7 +15,7 @@ def load_image_from_base64(image):
 def expand2square(pil_img, background_color):
     width, height = pil_img.size
     if pil_img.mode == 'L' and len(background_color) > 1:  # grayscale but processor is for rgb
-        background_color = (background_color[0], )  # needed for pil
+        background_color = (background_color[0],)  # needed for pil
     if width == height:
         return pil_img
     elif width > height:
@@ -32,7 +33,7 @@ def process_images(images, image_processor, model_cfg):
     new_images = []
     if image_aspect_ratio == 'pad':
         for image in images:
-            image = expand2square(image, tuple(int(x*255) for x in image_processor.image_mean))
+            image = expand2square(image, tuple(int(x * 255) for x in image_processor.image_mean))
             image = image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
             new_images.append(image)
     else:
@@ -43,10 +44,12 @@ def process_images(images, image_processor, model_cfg):
 
 
 def tokenizer_image_token(prompt, tokenizer, image_token_index=IMAGE_TOKEN_INDEX, return_tensors=None):
-    prompt_chunks = [tokenizer(chunk).input_ids for chunk in prompt.split('<image>')]
+    prompt_chunks = [
+        tokenizer(chunk, padding="longest", truncation=True, return_tensors="pt", max_length=100).input_ids for chunk
+        in prompt.split('<image>')]
 
     def insert_separator(X, sep):
-        return [ele for sublist in zip(X, [sep]*len(X)) for ele in sublist][:-1]
+        return [ele for sublist in zip(X, [sep] * len(X)) for ele in sublist][:-1]
 
     input_ids = []
     offset = 0
@@ -71,8 +74,6 @@ def get_model_name_from_path(model_path):
         return model_paths[-2] + "_" + model_paths[-1]
     else:
         return model_paths[-1]
-
-
 
 
 class KeywordsStoppingCriteria(StoppingCriteria):
