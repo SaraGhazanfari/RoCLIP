@@ -1,7 +1,7 @@
 import sys
 
-from train.datasets import COCOFlickrDataset, ImageNetDataset
 from CLIP_eval.eval_utils import load_clip_model
+from train.datasets import COCOFlickrDataset, ImageNetDataset
 
 sys.path.append("open_flamingo")
 import os
@@ -33,7 +33,8 @@ parser.add_argument('--clip_model_name', type=str, default='ViT-L-14', help='ViT
 parser.add_argument('--pretrained', type=str, default='openai')
 parser.add_argument('--dataset', type=str, default='imagenet')
 parser.add_argument('--template', type=str, default='std')
-parser.add_argument('--imagenet_root', type=str, default='/mnt/datasets/imagenet', help='Imagenet dataset root directory')
+parser.add_argument('--imagenet_root', type=str, default='/mnt/datasets/imagenet',
+                    help='Imagenet dataset root directory')
 parser.add_argument('--output_normalize', type=str2bool, default=False, help='Whether the embedding is normalized')
 parser.add_argument('--start_step', type=int, default=0, help='Start step for training')
 parser.add_argument('--optimizer_state', type=str, default='', help='Optimizer state file path')
@@ -53,7 +54,8 @@ parser.add_argument('--inner_loss', type=str, default='l2', help='Inner loss fun
 parser.add_argument('--norm', type=str, default='linf', help='Norm for adversarial perturbation')
 parser.add_argument('--eps', type=float, default=4, help='Epsilon for adversarial perturbation')
 parser.add_argument('--iterations_adv', type=int, default=10, help='Iterations for adversarial attack')
-parser.add_argument('--stepsize_adv', type=float, default=1., help='Step size for adversarial attack (no effect for apgd)')
+parser.add_argument('--stepsize_adv', type=float, default=1.,
+                    help='Step size for adversarial attack (no effect for apgd)')
 parser.add_argument('--wandb', type=str2bool, default=True, help='Use Weights & Biases for logging')
 parser.add_argument('--experiment_name', type=str, default='')
 parser.add_argument('--overwrite', type=str2bool, default=False, help='Overwrite existing directory')
@@ -135,12 +137,12 @@ def main(args):
             annotations_path=annotations_path,
             transform=preprocessor_without_normalize
         )
-    dataset_eval = ImageNetDataset(
-        root=args.imagenet_root + '/val',
-        transform=preprocessor_without_normalize,
-    )
+    # todo dataset_eval = ImageNetDataset(
+    #     root=args.imagenet_root + '/val',
+    #     transform=preprocessor_without_normalize,
+    # )
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-    dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
+    # todo dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
     # Get text label embeddings of all ImageNet classes
     if args.template == 'std':
@@ -219,7 +221,7 @@ def main(args):
             model=model,
             model_orig=model_orig,
             dataloader=dataloader,
-            dataloader_eval=dataloader_eval,
+            # todo dataloader_eval=dataloader_eval,
             optimizer=optimizer,
             scheduler=scheduler,
             embedding_text_labels_norm=embedding_text_labels_norm,
@@ -237,6 +239,7 @@ def main(args):
     if args.output_dir.endswith('_temp'):
         # rename temp dir to final dir
         os.rename(args.output_dir, args.output_dir[:-5])
+
 
 class ClipVisionModel(torch.nn.Module):
     def __init__(self, model, args, normalize):
@@ -266,7 +269,8 @@ class ComputeLossWrapper:
             loss_str=self.loss_str, embedding=embedding, targets=targets,
             embedding_orig=self.embedding_orig, logit_scale=self.logit_scale,
             embedding_text_labels_norm=self.embedding_text_labels_norm, reduction=self.reduction
-            )
+        )
+
 
 def train_one_epoch(
         step_total, model, model_orig, dataloader, optimizer, scheduler, normalize,
@@ -296,7 +300,7 @@ def train_one_epoch(
             embedding_orig, embedding_text_labels_norm,
             reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
             logit_scale=100.
-            )
+        )
         model.eval()
 
         if args.attack == 'pgd':
@@ -337,7 +341,7 @@ def train_one_epoch(
             loss_clean = compute_loss(
                 loss_str=args.loss_clean, embedding=embedding_clean, targets=targets,
                 embedding_orig=embedding_orig, logit_scale=100., embedding_text_labels_norm=None
-                )
+            )
         else:
             loss_clean = 0.
 
@@ -352,7 +356,7 @@ def train_one_epoch(
             loss_str=args.loss, embedding=embedding_adv, targets=targets,
             embedding_orig=embedding_orig if not args.trades else embedding_clean_no_grad,
             logit_scale=100., embedding_text_labels_norm=embedding_text_labels_norm
-            )
+        )
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
         optimizer.step()
@@ -382,7 +386,7 @@ def train_one_epoch(
         cos_sim_meter.update(cos_sim.item(), n_samples)
 
         eval_logs = dict()
-        if (step_total-1) % args.eval_freq == 0:
+        if (step_total - 1) % args.eval_freq == 0:
             # we compute acc and racc (against supervised apgd) on validation data
             model.eval()
             data_eval, targets_eval = next(iter(dataloader_eval))
@@ -390,7 +394,7 @@ def train_one_epoch(
             loss_eval_wrapper = ComputeLossWrapper(
                 embedding_orig=None, embedding_text_labels_norm=embedding_text_labels_norm,
                 reduction='none', loss='ce', logit_scale=100.
-                )
+            )
             data_eval_adv = apgd(
                 model=model,
                 loss_fn=loss_eval_wrapper,
@@ -420,7 +424,7 @@ def train_one_epoch(
             del data_eval_adv, data_eval, targets_eval, embedding_adv_eval_norm, logits_eval_adv, embedding_eval_norm, logits_eval
 
         lr_ = optimizer.param_groups[0].get('lr')
-        if (step_total-1) % args.log_freq == 0:
+        if (step_total - 1) % args.log_freq == 0:
             log_str = f'[step] {step_total} [lr] {lr_:.6f} [loss] {loss.item():.6f} [cos-sim] {cos_sim.item():.3f}'
             if is_classification:
                 log_str += f' [acc] {acc:.2f} [racc] {racc:.2f}'
@@ -440,12 +444,12 @@ def train_one_epoch(
                 'avg/racc': racc_meter.avg,
             }
             log_data.update(eval_logs)
-            if (step_total-1) % (args.log_freq * 10) == 0:
+            if (step_total - 1) % (args.log_freq * 10) == 0:
                 # compute expected average epoch time in hours
-                batch_average_time = (time.time() - epoch_start_time) / (i + 1) / (60**2)
+                batch_average_time = (time.time() - epoch_start_time) / (i + 1) / (60 ** 2)
                 epoch_average_time = batch_average_time * len(dataloader)
                 this_epoch_remaining = epoch_average_time - \
-                                       (time.time() - epoch_start_time) / 60**2
+                                       (time.time() - epoch_start_time) / 60 ** 2
                 total_remaining = epoch_average_time * (args.total_epochs - epoch - i / len(dataloader))
                 print(f'[epoch average time] {epoch_average_time:.2f} [this epoch remaining] '
                       f'{this_epoch_remaining:.2f} [total remaining] {total_remaining:.2f}')
@@ -466,7 +470,8 @@ def train_one_epoch(
             torch.save(optimizer.state_dict(), f'{args.output_dir}/checkpoints/step_{step_total}_opt.pt')
         # every 200 steps, save a fallback model, which gets overwritten
         if step_total % 200 == 0:
-            torch.save(unwrap_model(model).model.state_dict(), f'{args.output_dir}/checkpoints/fallback_{step_total}.pt')
+            torch.save(unwrap_model(model).model.state_dict(),
+                       f'{args.output_dir}/checkpoints/fallback_{step_total}.pt')
             torch.save(optimizer.state_dict(), f'{args.output_dir}/checkpoints/fallback_{step_total}_opt.pt')
             # remove old fallback models
             for file in os.listdir(f'{args.output_dir}/checkpoints'):
@@ -501,6 +506,7 @@ def compute_loss(loss_str, embedding, targets, embedding_orig, logit_scale,
         raise ValueError(f'loss {loss_str} not supported')
     return loss
 
+
 def l2(out, targets, reduction='none'):
     # squared l2 - it does not divide by the latent dimension
     # should have shape (batch_size, embedding_size)
@@ -515,12 +521,14 @@ def l2(out, targets, reduction='none'):
         assert squared_error_batch.shape == (out.shape[0],), f'{squared_error_batch.shape} != {(out.shape[0],)}'
     return squared_error_batch
 
+
 def ce(out, targets, reduction='mean'):
     # out = logits
     assert out.shape[0] == targets.shape[0], (out.shape, targets.shape)
     assert out.shape[0] > 1
 
     return F.cross_entropy(out, targets, reduction=reduction)
+
 
 if __name__ == '__main__':
     # set seeds
@@ -532,7 +540,8 @@ if __name__ == '__main__':
     args.eps /= 255
     args.stepsize_adv /= 255
     # make sure there is no string in args that should be a bool
-    assert not any([isinstance(x, str) and x in ['True', 'False'] for x in args.__dict__.values()]), f'args contains a string that should be a bool: {args}'
+    assert not any([isinstance(x, str) and x in ['True', 'False'] for x in
+                    args.__dict__.values()]), f'args contains a string that should be a bool: {args}'
     assert args.eval_freq % args.log_freq == 0, 'eval_freq must be a multiple of log_freq'
 
     if args.devices != '':
