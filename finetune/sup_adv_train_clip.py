@@ -368,7 +368,7 @@ def train_one_epoch(
 
         loss = model(data_adv)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-        print(model.__dict__.keys())
+        print(model.model.__dict__.keys())
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
         optimizer.step()
