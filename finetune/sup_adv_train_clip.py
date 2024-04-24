@@ -180,8 +180,10 @@ def main(args, leftovers):
     # model_orig.cpu()
     model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     eval_model_orig = get_eval_model(args, model_args, adversarial="none")
+    eval_model = get_eval_model(args, model_args, adversarial="none")
 
     device_id = 0
+    eval_model.set_device(device_id)
     eval_model_orig.set_device(device_id)
 
     eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
@@ -194,9 +196,7 @@ def main(args, leftovers):
 
     params = unwrap_model(model).model.parameters()
 
-    eval_model = get_eval_model(args, model_args, adversarial="none")
-    device_id = 0
-    eval_model.set_device(device_id)
+
 
     eval_model.model.model.vision_tower._modules['vision_tower'].model = model
     model = eval_model
