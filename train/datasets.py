@@ -40,7 +40,7 @@ class COCOFlickrDataset(Dataset):
 
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
-        self.model.set_input(batch_text, past_key_values=None, to_device=True)
+        self.model.set_inputs(batch_text, past_key_values=None, to_device=True)
 
         caption = self.model.labels
         prompt = self.model.input_ids
