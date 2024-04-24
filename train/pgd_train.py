@@ -22,10 +22,8 @@ def pgd(
     Minimize or maximize given loss
     """
     # make sure data is in image space
-    print(torch.max(data_clean), torch.min(data_clean))
-    print(torch.max(data_clean) < 1. + 1e-6)
-    print(torch.min(data_clean) > -1e-6)
-    assert torch.max(data_clean) < 1. + 1e-6 and torch.min(data_clean) > -1e-6
+
+    assert torch.max(data_clean) <= 1. + 1e-6 and torch.min(data_clean) > -1e-6
 
     if perturbation is None:
         perturbation = torch.zeros_like(data_clean, requires_grad=True)
