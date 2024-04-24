@@ -191,7 +191,7 @@ def main(args, leftovers):
     params = unwrap_model(model).model.parameters()
 
     eval_model = get_eval_model(args, model_args, adversarial="none")
-    print(eval_model.model.model__dict__)
+    print(eval_model.model.model.__dict__)
     print(eval_model.model.model.vision_tower.__dict__)
 
 
