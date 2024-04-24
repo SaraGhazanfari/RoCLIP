@@ -295,30 +295,10 @@ def train_one_epoch(
     # model_orig.eval()
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
-    loss_meter = AverageMeter('loss')
-    cos_sim_meter = AverageMeter('cos-sim')
-    acc_meter = AverageMeter('acc')
-    racc_meter = AverageMeter('racc')
-
     epoch_start_time = time.time()
     for i, (data, targets) in enumerate(dataset):
-        is_classification = isinstance(targets, torch.Tensor)
-        # data = data.cuda()
-        # n_samples = data.shape[0]
-        if is_classification:
-            targets = targets.cuda()
 
-        # with torch.no_grad():
-        #     embedding_orig = model_orig(vision=data, output_normalize=args.output_normalize)
 
-        # loss for the attack
-        # loss_inner_wrapper = ComputeLossWrapper(
-        #     embedding_orig, embedding_text_labels_norm,
-        #     reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
-        #     logit_scale=100.
-        # )
-        # model.eval()
-        print(targets)
         batch_text_adv = []
         batch_text_adv.append(model.get_caption_prompt(targets[0]))
         model.set_inputs(
@@ -326,174 +306,55 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-
-        data = model._prepare_images([[data]]).half().cuda()
-        if args.attack == 'pgd':
-            data_adv = pgd(
-                forward=model,
-                loss_fn=None,
-                data_clean=data,
-                targets=targets,
-                norm=args.norm,
-                eps=args.eps,
-                iterations=args.iterations_adv,
-                stepsize=args.stepsize_adv,
-                output_normalize=args.output_normalize,
-                perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
-                mode='max',
-                verbose=False
-            )
-        elif args.attack == 'apgd':
-            # apgd currently always applies output normalization
-            data_adv = apgd(
-                model=model,
-                loss_fn=None,
-                x=data,
-                y=targets,
-                norm=args.norm,
-                eps=args.eps,
-                n_iter=args.iterations_adv,
-                verbose=True
-            )
-        elif args.attack == 'none':
-            data_adv = data
-
-        # del loss_inner_wrapper
-        unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
-
-        if args.clean_weight > 0.:
-            loss_clean = model(data)
-        else:
-            loss_clean = 0.
-
-        loss = model(data_adv)
-        print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-        loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-        loss_total.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-        step_total += 1
-        scheduler(step_total)
-
-        # with torch.no_grad():
-        #     # only for logging
-        #     embedding_orig.cuda()
-        #     cos_sim_clean = F.cosine_similarity(embedding_clean, embedding_orig, dim=1).mean()
-        #     cos_sim = F.cosine_similarity(embedding_adv, embedding_orig, dim=1).mean()
-        #     if is_classification:
-        #         logits_adv = embedding_adv @ embedding_text_labels_norm
-        #         racc = compute_acc(logits_adv, targets)
-        #         embedding_clean_norm = F.normalize(embedding_clean, dim=1)
-        #         logits_clean = embedding_clean_norm @ embedding_text_labels_norm
-        #         acc = compute_acc(logits_clean, targets)
-        #         acc_meter.update(acc, n_samples)
-        #         racc_meter.update(racc, n_samples)
-        #         del embedding_clean_norm, embedding_clean
-        #     else:
-        #         acc = None
-        #         racc = None
-
-        loss_meter.update(loss.item(), n_samples)
-        cos_sim_meter.update(cos_sim.item(), n_samples)
-
-        eval_logs = dict()
-        if (step_total - 1) % args.eval_freq == 0 and dataloader_eval:
-            # we compute acc and racc (against supervised apgd) on validation data
-            model.eval()
-            data_eval, targets_eval = next(iter(dataloader_eval))
-            data_eval, targets_eval = data_eval.cuda(), targets_eval.cuda()
-            loss_eval_wrapper = ComputeLossWrapper(
-                embedding_orig=None, embedding_text_labels_norm=embedding_text_labels_norm,
-                reduction='none', loss='ce', logit_scale=100.
-            )
-            data_eval_adv = apgd(
-                model=model,
-                loss_fn=loss_eval_wrapper,
-                x=data_eval,
-                y=targets_eval,
-                norm=args.norm,
-                eps=args.eps,
-                n_iter=50,
-                initial_stepsize=0.05 * args.eps if args.clean_weight > 0 else None,
-                verbose=False
-            )
-            with torch.no_grad():
-                embedding_adv_eval_norm = model(data_eval_adv, output_normalize=True)  # we set output_normalize to True
-                logits_eval_adv = embedding_adv_eval_norm @ embedding_text_labels_norm
-                racc_eval = compute_acc(logits_eval_adv, targets_eval)
-                embedding_eval_norm = model(data_eval, output_normalize=True)
-                logits_eval = embedding_eval_norm @ embedding_text_labels_norm
-                acc_eval = compute_acc(logits_eval, targets_eval)
-                # note we compute the cosine sim between clean and adv embedding,
-                # not between orig and adv embedding as for training
-                cos_sim_eval = F.cosine_similarity(embedding_adv_eval_norm, embedding_eval_norm, dim=1).mean()
-            eval_logs['eval/racc'] = racc_eval
-            eval_logs['eval/acc'] = acc_eval
-            eval_logs['eval/cos-sim'] = cos_sim_eval
-            print(f'[eval-acc] {acc_eval:.2f} [eval-racc] {racc_eval:.2f} [eval-cos-sim] {cos_sim_eval:.3f}')
-            model.train()
-            del data_eval_adv, data_eval, targets_eval, embedding_adv_eval_norm, logits_eval_adv, embedding_eval_norm, logits_eval
-
-        lr_ = optimizer.param_groups[0].get('lr')
-        if (step_total - 1) % args.log_freq == 0:
-            log_str = f'[step] {step_total} [lr] {lr_:.6f} [loss] {loss.item():.6f} [cos-sim] {cos_sim.item():.3f}'
-            if is_classification:
-                log_str += f' [acc] {acc:.2f} [racc] {racc:.2f}'
-            print(log_str)
-            log_data = {
-                'step': step_total,
-                'lr': lr_,
-                'loss': loss.item(),
-                'loss-total': loss_total.item(),
-                'cos-sim-clean': cos_sim_clean.item(),
-                'cos-sim': cos_sim.item(),
-                'acc': acc,
-                'racc': racc,
-                'avg/loss': loss_meter.avg,
-                'avg/cos-sim': cos_sim_meter.avg,
-                'avg/acc': acc_meter.avg,
-                'avg/racc': racc_meter.avg,
-            }
-            log_data.update(eval_logs)
-            if (step_total - 1) % (args.log_freq * 10) == 0:
-                # compute expected average epoch time in hours
-                batch_average_time = (time.time() - epoch_start_time) / (i + 1) / (60 ** 2)
-                epoch_average_time = batch_average_time * len(dataloader)
-                this_epoch_remaining = epoch_average_time - \
-                                       (time.time() - epoch_start_time) / 60 ** 2
-                total_remaining = epoch_average_time * (args.total_epochs - epoch - i / len(dataloader))
-                print(f'[epoch average time] {epoch_average_time:.2f} [this epoch remaining] '
-                      f'{this_epoch_remaining:.2f} [total remaining] {total_remaining:.2f}')
-
-                log_data.update({
-                    'time/total-remaining': total_remaining,
-                    'time/this-epoch-remaining': this_epoch_remaining,
-                    'time/epoch-average-time': epoch_average_time,
-                    'time/batch-average-time': batch_average_time,
-                    'other/epoch': epoch + i / len(dataloader),
-                })
-            wandb.log(log_data)
-
-        # save 10 models over the course of training
-        if args.save_checkpoints and (step_total % (args.steps // 10) == 0):
-            # save model and optimizer state_dict
-            torch.save(unwrap_model(model).model.state_dict(), f'{args.output_dir}/checkpoints/step_{step_total}.pt')
-            torch.save(optimizer.state_dict(), f'{args.output_dir}/checkpoints/step_{step_total}_opt.pt')
-        # every 200 steps, save a fallback model, which gets overwritten
-        if step_total % 200 == 0:
-            torch.save(unwrap_model(model).model.state_dict(),
-                       f'{args.output_dir}/checkpoints/fallback_{step_total}.pt')
-            torch.save(optimizer.state_dict(), f'{args.output_dir}/checkpoints/fallback_{step_total}_opt.pt')
-            # remove old fallback models
-            for file in os.listdir(f'{args.output_dir}/checkpoints'):
-                if file.startswith('fallback') and not str(step_total) in file:
-                    os.remove(f'{args.output_dir}/checkpoints/{file}')
-
-        if step_total >= args.steps:
-            break
-
-        torch.cuda.empty_cache()
-    return step_total
+        print(targets, batch_text_adv)
+        print(len(targets), len(batch_text_adv))
+        # data = model._prepare_images([[data]]).half().cuda()
+        # if args.attack == 'pgd':
+        #     data_adv = pgd(
+        #         forward=model,
+        #         loss_fn=None,
+        #         data_clean=data,
+        #         targets=targets,
+        #         norm=args.norm,
+        #         eps=args.eps,
+        #         iterations=args.iterations_adv,
+        #         stepsize=args.stepsize_adv,
+        #         output_normalize=args.output_normalize,
+        #         perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
+        #         mode='max',
+        #         verbose=False
+        #     )
+        # elif args.attack == 'apgd':
+        #     # apgd currently always applies output normalization
+        #     data_adv = apgd(
+        #         model=model,
+        #         loss_fn=None,
+        #         x=data,
+        #         y=targets,
+        #         norm=args.norm,
+        #         eps=args.eps,
+        #         n_iter=args.iterations_adv,
+        #         verbose=True
+        #     )
+        # elif args.attack == 'none':
+        #     data_adv = data
+        #
+        # # del loss_inner_wrapper
+        # unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
+        #
+        # if args.clean_weight > 0.:
+        #     loss_clean = model(data)
+        # else:
+        #     loss_clean = 0.
+        #
+        # loss = model(data_adv)
+        # print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
+        # loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
+        # loss_total.backward()
+        # optimizer.step()
+        # optimizer.zero_grad()
+        # step_total += 1
+        # scheduler(step_total)
 
 
 @torch.no_grad()
