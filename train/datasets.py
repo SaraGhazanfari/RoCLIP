@@ -39,7 +39,7 @@ class COCOFlickrDataset(Dataset):
         image = self.image_processor([[image]]).half()
 
         batch_text = []
-        batch_text.append(self.model.get_caption_prompt(caption))
+        batch_text.append(self.model.get_caption_prompt([caption]))
         caption = self.model.tokenizer(
             batch_text,
             padding="longest",
