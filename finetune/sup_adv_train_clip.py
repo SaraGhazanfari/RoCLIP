@@ -131,7 +131,7 @@ def main(args, leftovers):
             image_dir_path=image_dir_path,
             annotations_path=annotations_path,
             transform=None,
-            prefix=''
+            prefix='COCO_train2014_'
         )
     # todo dataset_eval = ImageNetDataset(
     #     root=args.imagenet_root + '/val',
