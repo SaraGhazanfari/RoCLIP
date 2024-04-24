@@ -177,29 +177,32 @@ def main(args, leftovers):
         leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     }
 
-    model_orig.cpu()
+    # model_orig.cpu()
     model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     eval_model_orig = get_eval_model(args, model_args, adversarial="none")
+
+    device_id = 0
+    eval_model_orig.set_device(device_id)
+
     eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
     model_orig = eval_model_orig
 
     if num_gpus > 1:
         model_orig = torch.nn.DataParallel(model_orig)
-    device_id = 0
-    model_orig.set_device(device_id)
 
     model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
 
     params = unwrap_model(model).model.parameters()
 
     eval_model = get_eval_model(args, model_args, adversarial="none")
+    device_id = 0
+    eval_model.set_device(device_id)
+
     eval_model.model.model.vision_tower._modules['vision_tower'].model = model
     model = eval_model
 
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
-    device_id = 0
-    model.set_device(device_id)
 
     # set optimizer (all params have requires_grad=True)
 
