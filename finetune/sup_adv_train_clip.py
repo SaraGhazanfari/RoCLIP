@@ -1,9 +1,8 @@
 import sys
 
 from CLIP_eval.eval_utils import load_clip_model
-from open_flamingo.eval.models.llava import EvalModelLLAVA
 from train.datasets import COCOFlickrDataset, ImageNetDataset
-from vlm_eval.utils import get_eval_model, force_cudnn_initialization
+from vlm_eval.utils import get_eval_model
 
 sys.path.append("open_flamingo")
 import os
@@ -329,7 +328,9 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-        model.image_processor.transforms = model.image_processor.transforms[:-1]
+        image_processor = unwrap_model(model).model.get_vision_tower().vision_tower.image_processor
+        unwrap_model(
+            model).model.get_vision_tower().vision_tower.image_processor.transforms = image_processor.transforms[:-1]
         data = model._prepare_images([[data]]).half().cuda()
         if args.attack == 'pgd':
             data_adv = pgd(
