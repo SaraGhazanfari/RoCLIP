@@ -1,6 +1,7 @@
 import sys
 
 from CLIP_eval.eval_utils import load_clip_model
+from open_flamingo.eval.models.llava import EvalModelLLAVA
 from train.datasets import COCOFlickrDataset, ImageNetDataset
 from vlm_eval.utils import get_eval_model, force_cudnn_initialization
 
@@ -179,7 +180,15 @@ def main(args, leftovers):
 
     # model_orig.cpu()
     # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
-    model = get_eval_model(args, model_args, adversarial="none")
+    # model = get_eval_model(args, model_args, adversarial="none")
+    model = EvalModelLLAVA(
+        dict(
+            vision_encoder_pretrained=args.vision_encoder_pretrained,
+            precision=args.precision,
+            **model_args,
+        ),
+    )
+    print(f"[cast typ] {model.cast_dtype}")
     device_id = 0
     model.set_device(device_id)
     # import copy
