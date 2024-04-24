@@ -182,8 +182,8 @@ def main(args, leftovers):
     model = get_eval_model(args, model_args, adversarial="none")
     device_id = 0
     model.set_device(device_id)
-
-    model_orig = model.copy()
+    import copy
+    model_orig = copy.deepcopy(model)
 
     # eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
     # model_orig = eval_model_orig
