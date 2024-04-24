@@ -132,7 +132,7 @@ def main(args, leftovers):
         dataset = COCOFlickrDataset(
             image_dir_path=image_dir_path,
             annotations_path=annotations_path,
-            transform=preprocessor_without_normalize,
+            transform=None,
             prefix=''
         )
     # todo dataset_eval = ImageNetDataset(

@@ -32,7 +32,9 @@ class COCOFlickrDataset(Dataset):
     def __getitem__(self, idx):
         image = Image.open(self.get_img_path(idx))
         caption = self.annotations[idx]["caption"]
-        return self.transform(image), caption
+        if self.transform:
+            image = self.transform(image)
+        return image, caption
 
 
 class ImageNetDataset(ImageFolder):
