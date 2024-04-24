@@ -317,7 +317,14 @@ def train_one_epoch(
         #     logit_scale=100.
         # )
         # model.eval()
-
+        print(targets)
+        batch_text_adv = []
+        batch_text_adv.append(model.get_caption_prompt(targets))
+        model.set_inputs(
+            batch_text=batch_text_adv,
+            past_key_values=None,
+            to_device=True,
+        )
         if args.attack == 'pgd':
             data_adv = pgd(
                 forward=model,
