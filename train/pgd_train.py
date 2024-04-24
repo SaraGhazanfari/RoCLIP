@@ -29,6 +29,7 @@ def pgd(
         perturbation = torch.zeros_like(data_clean, requires_grad=True)
     velocity = torch.zeros_like(data_clean)
     for i in range(iterations):
+        print(f'*****************************{i}*****************************')
         perturbation.requires_grad = True
         with torch.enable_grad():
             out = forward(data_clean + perturbation)  # , output_normalize=output_normalize)
