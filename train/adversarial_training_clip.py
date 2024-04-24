@@ -387,7 +387,7 @@ def train_one_epoch(
         cos_sim_meter.update(cos_sim.item(), n_samples)
 
         eval_logs = dict()
-        if (step_total - 1) % args.eval_freq == 0:
+        if (step_total - 1) % args.eval_freq == 0 and dataloader_eval:
             # we compute acc and racc (against supervised apgd) on validation data
             model.eval()
             data_eval, targets_eval = next(iter(dataloader_eval))
