@@ -2,7 +2,7 @@ import sys
 
 from CLIP_eval.eval_utils import load_clip_model
 from train.datasets import COCOFlickrDataset, ImageNetDataset
-from vlm_eval.utils import get_eval_model
+from vlm_eval.utils import get_eval_model, force_cudnn_initialization
 
 sys.path.append("open_flamingo")
 import os
@@ -181,7 +181,7 @@ def main(args, leftovers):
     model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     eval_model_orig = get_eval_model(args, model_args, adversarial="none")
     eval_model = get_eval_model(args, model_args, adversarial="none")
-
+    force_cudnn_initialization()
     device_id = 0
     eval_model.set_device(device_id)
     eval_model_orig.set_device(device_id)
