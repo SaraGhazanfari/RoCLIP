@@ -226,7 +226,7 @@ def evaluate_captioning(
                     else:
                         batch_text.append(eval_model.get_caption_prompt())
                         batch_text_adv.append(eval_model.get_caption_prompt(adv_caption))
-
+            print(batch_text_adv)
             batch_images = eval_model._prepare_images(batch_images)
 
             if args.from_saved:
