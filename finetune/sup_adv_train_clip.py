@@ -30,6 +30,8 @@ from train.utils import str2bool
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--model", type=str, help="Model name. `open_flamingo` and `llava` supported.",
+                    default="llava", choices=["open_flamingo", "llava"], )
 parser.add_argument('--clip_model_name', type=str, default='ViT-L-14', help='ViT-L-14, ViT-B-32')
 parser.add_argument('--pretrained', type=str, default='openai')
 parser.add_argument('--dataset', type=str, default='imagenet')
@@ -196,7 +198,6 @@ def main(args, leftovers):
     model.cuda()
 
     # set optimizer (all params have requires_grad=True)
-
 
     if args.opt == 'adamw':
         optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
