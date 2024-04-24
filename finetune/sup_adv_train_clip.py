@@ -325,7 +325,7 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-        data = model._prepare_images([data]).cuda()
+        data = model._prepare_images([[data]]).cuda()
         if args.attack == 'pgd':
             data_adv = pgd(
                 forward=model,
