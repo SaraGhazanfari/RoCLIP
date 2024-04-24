@@ -328,6 +328,10 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
+        print(unwrap_model(model).__dict__)
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+        print(unwrap_model(model).model.__dict__)
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
         print(unwrap_model(model).model.get_vision_tower().vision_tower.__dict__)
         image_processor = unwrap_model(model).model.get_vision_tower().vision_tower.image_processor
         unwrap_model(
