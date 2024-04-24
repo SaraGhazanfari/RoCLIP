@@ -300,7 +300,7 @@ def train_one_epoch(
 
 
         batch_text_adv = []
-        batch_text_adv.append(model.get_caption_prompt(targets[0]))
+        batch_text_adv.append(model.get_caption_prompt(targets))
         model.set_inputs(
             batch_text=batch_text_adv,
             past_key_values=None,
