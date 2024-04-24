@@ -2,12 +2,13 @@ import sys
 
 from CLIP_eval.eval_utils import load_clip_model
 from train.datasets import COCOFlickrDataset, ImageNetDataset
+from train.pgd_train import pgd
+from vlm_eval.attacks.apgd import apgd
 from vlm_eval.utils import get_eval_model
 
 sys.path.append("open_flamingo")
 import os
 import shutil
-import time
 import string
 import random
 
@@ -125,12 +126,13 @@ def main(args, leftovers):
         image_dir_path = f'{args.imagenet_root}/train2014'
         annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
 
-        dataset = COCOFlickrDataset(
-            image_dir_path=image_dir_path,
-            annotations_path=annotations_path,
-            transform=None,
-            prefix='COCO_train2014_'
-        )
+        dataset = COCOFlickrDataset(model=model,
+                                    image_processor=model._prepare_images,
+                                    image_dir_path=image_dir_path,
+                                    annotations_path=annotations_path,
+                                    transform=None,
+                                    prefix='COCO_train2014_'
+                                    )
     # todo dataset_eval = ImageNetDataset(
     #     root=args.imagenet_root + '/val',
     #     transform=preprocessor_without_normalize,
@@ -234,7 +236,7 @@ def main(args, leftovers):
             step_total,
             model=model,
             # model_orig=model_orig,
-            dataset=dataset,
+            dataloader=dataloader,
             # todo dataloader_eval=dataloader_eval,
             optimizer=optimizer,
             scheduler=scheduler,
@@ -287,73 +289,61 @@ class ComputeLossWrapper:
 
 
 def train_one_epoch(
-        step_total, model, dataset, optimizer, scheduler, normalize,
+        step_total, model, dataloader, optimizer, scheduler, normalize,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
     # model_orig.eval()
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
-    epoch_start_time = time.time()
-    min_len = 100
+    for i, (data, targets) in enumerate(dataloader):
 
-    for i, (data, targets) in enumerate(dataset):
-        print(f'{i}/{len(dataset)}')
-        batch_text_adv = []
-        batch_text_adv.append(model.get_caption_prompt(targets))
-        model.set_inputs(
-            batch_text=batch_text_adv,
-            past_key_values=None,
-            to_device=True,
-        )
-        min_len = min(model.input_ids.shape[1], min_len)
-    print(min_len)
-        # data = model._prepare_images([[data]]).half().cuda()
-        # if args.attack == 'pgd':
-        #     data_adv = pgd(
-        #         forward=model,
-        #         loss_fn=None,
-        #         data_clean=data,
-        #         targets=targets,
-        #         norm=args.norm,
-        #         eps=args.eps,
-        #         iterations=args.iterations_adv,
-        #         stepsize=args.stepsize_adv,
-        #         output_normalize=args.output_normalize,
-        #         perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
-        #         mode='max',
-        #         verbose=False
-        #     )
-        # elif args.attack == 'apgd':
-        #     # apgd currently always applies output normalization
-        #     data_adv = apgd(
-        #         model=model,
-        #         loss_fn=None,
-        #         x=data,
-        #         y=targets,
-        #         norm=args.norm,
-        #         eps=args.eps,
-        #         n_iter=args.iterations_adv,
-        #         verbose=True
-        #     )
-        # elif args.attack == 'none':
-        #     data_adv = data
-        #
-        # # del loss_inner_wrapper
-        # unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
-        #
-        # if args.clean_weight > 0.:
-        #     loss_clean = model(data)
-        # else:
-        #     loss_clean = 0.
-        #
-        # loss = model(data_adv)
-        # print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-        # loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-        # loss_total.backward()
-        # optimizer.step()
-        # optimizer.zero_grad()
-        # step_total += 1
-        # scheduler(step_total)
+        data, targets = data.cuda(), targets.cuda()
+        if args.attack == 'pgd':
+            data_adv = pgd(
+                forward=model,
+                loss_fn=None,
+                data_clean=data,
+                targets=targets,
+                norm=args.norm,
+                eps=args.eps,
+                iterations=args.iterations_adv,
+                stepsize=args.stepsize_adv,
+                output_normalize=args.output_normalize,
+                perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
+                mode='max',
+                verbose=False
+            )
+        elif args.attack == 'apgd':
+            # apgd currently always applies output normalization
+            data_adv = apgd(
+                model=model,
+                loss_fn=None,
+                x=data,
+                y=targets,
+                norm=args.norm,
+                eps=args.eps,
+                n_iter=args.iterations_adv,
+                verbose=True
+            )
+        elif args.attack == 'none':
+            data_adv = data
+
+        # del loss_inner_wrapper
+        unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
+
+        if args.clean_weight > 0.:
+            loss_clean = model(data)
+        else:
+            loss_clean = 0.
+
+        loss = model(data_adv)
+        print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
+        loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
+        loss_total.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        step_total += 1
+        scheduler(step_total)
 
 
 @torch.no_grad()

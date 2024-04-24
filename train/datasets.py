@@ -8,12 +8,16 @@ from torchvision.datasets import ImageFolder
 class COCOFlickrDataset(Dataset):
     def __init__(
             self,
+            model,
+            image_processor,
             image_dir_path,
             annotations_path,
             transform=None,
             is_flickr=False,
             prefix=None,
     ):
+        self.model = model
+        self.image_processor = image_processor
         self.image_dir_path = image_dir_path
         self.annotations = json.load(open(annotations_path))["annotations"]
         self.is_flickr = is_flickr
@@ -32,10 +36,19 @@ class COCOFlickrDataset(Dataset):
     def __getitem__(self, idx):
         image = Image.open(self.get_img_path(idx))
         caption = self.annotations[idx]["caption"]
-        if self.transform:
-            image = self.transform(image)
-        else:
-            image.load()
+        image = self.image_processor(image).half()
+
+        batch_text = []
+        batch_text.append(self.model.get_caption_prompt(caption))
+        caption = self.model.tokenizer(
+            batch_text,
+            padding="longest",
+            truncation=True,
+            return_tensors="pt",
+            max_length=2000,
+        )["input_ids"][:100]
+        print(image.shape)
+        print(caption.shape)
         return image, caption
 
 
