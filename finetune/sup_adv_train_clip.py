@@ -191,7 +191,7 @@ def main(args, leftovers):
     params = unwrap_model(model).model.parameters()
 
     eval_model = get_eval_model(args, model_args, adversarial="none")
-    print(eval_model)
+    print(eval_model.__dict__)
 
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
