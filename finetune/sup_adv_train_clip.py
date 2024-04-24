@@ -235,7 +235,7 @@ def main(args, leftovers):
             step_total,
             model=model,
             # model_orig=model_orig,
-            dataloader=dataloader,
+            dataset=dataset,
             # todo dataloader_eval=dataloader_eval,
             optimizer=optimizer,
             scheduler=scheduler,
@@ -288,7 +288,7 @@ class ComputeLossWrapper:
 
 
 def train_one_epoch(
-        step_total, model, dataloader, optimizer, scheduler, normalize,
+        step_total, model, dataset, optimizer, scheduler, normalize,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
     # model_orig.eval()
@@ -300,7 +300,7 @@ def train_one_epoch(
     racc_meter = AverageMeter('racc')
 
     epoch_start_time = time.time()
-    for i, (data, targets) in enumerate(dataloader):
+    for i, (data, targets) in enumerate(dataset):
         is_classification = isinstance(targets, torch.Tensor)
         data = data.cuda()
         n_samples = data.shape[0]
