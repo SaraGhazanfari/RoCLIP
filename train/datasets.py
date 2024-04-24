@@ -24,12 +24,6 @@ class COCOFlickrDataset(Dataset):
         self.transform = transform
         self.prefix = prefix
 
-        self.caption_list = [self.model.get_caption_prompt(ann["caption"]) for ann in self.annotations]
-        print(len(self.caption_list))
-        print(self.caption_list[0])
-        self.caption_list = self.model.tokenizer(self.caption_list, padding="longest",
-                                                 truncation=True, return_tensors="pt", max_length=100)
-
     def __len__(self):
         return len(self.annotations)
 
