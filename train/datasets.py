@@ -23,7 +23,8 @@ class COCOFlickrDataset(Dataset):
         self.is_flickr = is_flickr
         self.transform = transform
         self.prefix = prefix
-        self.caption_list = self.model._prepare_text([ann["caption"] for ann in self.annotations])
+        self.caption_list = self.model._prepare_text(
+            [self.model.get_caption_prompt(ann["caption"]) for ann in self.annotations])
 
     def __len__(self):
         return len(self.annotations)
