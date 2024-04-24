@@ -23,8 +23,7 @@ class COCOFlickrDataset(Dataset):
         self.is_flickr = is_flickr
         self.transform = transform
         self.prefix = prefix
-        self.caption_list = self.model._prepare_text(
-            [self.annotations[idx]["caption"] for idx in range(self.annotations)])
+        self.caption_list = self.model._prepare_text([ann["caption"] for ann in self.annotations])
 
     def __len__(self):
         return len(self.annotations)
@@ -37,7 +36,7 @@ class COCOFlickrDataset(Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.get_img_path(idx))
-        caption = self.caption_list[idx] #self.annotations[idx]["caption"]
+        caption = self.caption_list[idx]  # self.annotations[idx]["caption"]
         image = self.image_processor([[image]]).half()
 
         # batch_text = []
