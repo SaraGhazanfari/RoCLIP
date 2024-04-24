@@ -303,7 +303,7 @@ def train_one_epoch(
     for i, (data, targets) in enumerate(dataset):
         is_classification = isinstance(targets, torch.Tensor)
         # data = data.cuda()
-        n_samples = data.shape[0]
+        # n_samples = data.shape[0]
         if is_classification:
             targets = targets.cuda()
 
