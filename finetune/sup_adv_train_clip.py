@@ -304,7 +304,7 @@ def train_one_epoch(
         if args.attack == 'pgd':
             data_adv = pgd(
                 forward=model,
-                loss_fn=loss_inner_wrapper,
+                loss_fn=None,
                 data_clean=data,
                 targets=targets,
                 norm=args.norm,

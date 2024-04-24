@@ -290,14 +290,7 @@ def evaluate_captioning(
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
-            print(eval_model.get_logits(
-                batch_images=batch_images,
-                batch_text=batch_text,
-                min_generation_length=min_generation_length,
-                max_generation_length=max_generation_length,
-                num_beams=num_beams,
-                length_penalty=length_penalty,
-            ).shape)
+            print(eval_model.get_logits().shape)
             new_predictions = [
                 postprocess_captioning_generation(out).replace('"', "") for out in outputs
             ]
