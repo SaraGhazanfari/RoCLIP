@@ -34,6 +34,8 @@ class COCOFlickrDataset(Dataset):
         caption = self.annotations[idx]["caption"]
         if self.transform:
             image = self.transform(image)
+        else:
+            image.load()
         return image, caption
 
 
