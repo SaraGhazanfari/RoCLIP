@@ -39,14 +39,9 @@ class COCOFlickrDataset(Dataset):
         image = self.image_processor([[image]]).half()
 
         batch_text = []
-        batch_text.append(self.model.get_caption_prompt([caption]))
-        caption = self.model.tokenizer(
-            batch_text,
-            padding="longest",
-            truncation=True,
-            return_tensors="pt",
-            max_length=2000,
-        )["input_ids"][:100]
+        batch_text.append(self.model.get_caption_prompt(caption))
+        print(batch_text)
+        caption = self.model._prepare_text(batch_text)
         print(image.shape)
         print(caption.shape)
         return image, caption
