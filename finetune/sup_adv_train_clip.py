@@ -173,31 +173,31 @@ def main(args, leftovers):
             assert embedding_text_labels_norm.shape == (768, 1000), embedding_text_labels_norm.shape
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
+    model_args = {
+        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+    }
 
-    # model_orig.cpu()
-    # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
-    #
-    # full_model_orig = get_eval_model(args, args, adversarial=args.attack)
-    # full_model_orig.vision_encoder = model_orig
+    model_orig.cpu()
+    model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
+    eval_model_orig = get_eval_model(args, model_args, adversarial="none")
+    eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
+    model_orig = eval_model_orig
 
     if num_gpus > 1:
         model_orig = torch.nn.DataParallel(model_orig)
     model_orig.cuda()
 
     model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
-    model_args = {
-        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-    }
+
     params = unwrap_model(model).model.parameters()
 
     eval_model = get_eval_model(args, model_args, adversarial="none")
     eval_model.model.model.vision_tower._modules['vision_tower'].model = model
-
+    model = eval_model
 
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
     model.cuda()
-
     # set optimizer (all params have requires_grad=True)
 
     if args.opt == 'adamw':
