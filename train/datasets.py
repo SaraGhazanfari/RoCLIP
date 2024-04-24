@@ -36,7 +36,7 @@ class COCOFlickrDataset(Dataset):
     def __getitem__(self, idx):
         image = Image.open(self.get_img_path(idx))
         caption = self.annotations[idx]["caption"]
-        image = self.image_processor(image).half()
+        image = self.image_processor([[image]]).half()
 
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
