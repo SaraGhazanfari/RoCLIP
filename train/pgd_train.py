@@ -22,7 +22,7 @@ def pgd(
     """
     # make sure data is in image space
     assert torch.max(data_clean) < 1. + 1e-6 and torch.min(data_clean) > -1e-6
-
+    print(targets)
     if perturbation is None:
         perturbation = torch.zeros_like(data_clean, requires_grad=True)
     velocity = torch.zeros_like(data_clean)
