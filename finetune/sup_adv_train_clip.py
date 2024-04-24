@@ -316,7 +316,7 @@ def train_one_epoch(
         #     reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
         #     logit_scale=100.
         # )
-        model.eval()
+        # model.eval()
 
         if args.attack == 'pgd':
             data_adv = pgd(
