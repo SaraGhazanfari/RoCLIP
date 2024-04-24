@@ -111,8 +111,6 @@ def main(args, leftovers):
     preprocessor_without_normalize = transforms.Compose(image_processor.transforms[:-1])
     normalize = image_processor.transforms[-1]
     del image_processor
-    print(f'[preprocessor_without_normalize] {preprocessor_without_normalize}')
-    print(f'[normalize] {normalize}')
 
     # get data
     if args.dataset == 'imagenet':
@@ -328,8 +326,6 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-
-        print(unwrap_model(model).image_processor)
 
         data = model._prepare_images([[data]]).half().cuda()
         if args.attack == 'pgd':
