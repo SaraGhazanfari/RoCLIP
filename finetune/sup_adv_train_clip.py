@@ -124,8 +124,8 @@ def main(args, leftovers):
 
         print(dataset.__len__())
     elif args.dataset == 'coco':
-        image_dir_path = f'{args.imagenet_root}/train2017'
-        annotations_path = f'{args.imagenet_root}/annotations/captions_train2017.json'
+        image_dir_path = f'{args.imagenet_root}'
+        annotations_path = f'/scratch/sg7457/code/RoCLIP/annotations/captions_train2014.json'
 
         dataset = COCOFlickrDataset(
             image_dir_path=image_dir_path,
