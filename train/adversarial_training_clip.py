@@ -127,14 +127,9 @@ def main(args):
 
         print(dataset.__len__())
     elif args.dataset == 'coco':
-        if os.path.exists('/mnt/datasets/coco'):
-            image_dir_path = '/mnt/datasets/coco/train2017'
-            annotations_path = '/mnt/datasets/coco/annotations/captions_train2017.json'
-        elif os.path.exists('/mnt/lustre'):
-            image_dir_path = '/mnt/lustre/hein/cschlarmann37/datasets/coco/train2017'
-            annotations_path = '/mnt/lustre/hein/cschlarmann37/datasets/coco/annotations/captions_train2017.json'
-        else:
-            raise ValueError('COCO dataset not found')
+        image_dir_path = f'{args.imagenet_root}/train2017'
+        annotations_path = f'{args.imagenet_root}/captions_train2017.json'
+
         dataset = COCOFlickrDataset(
             image_dir_path=image_dir_path,
             annotations_path=annotations_path,
