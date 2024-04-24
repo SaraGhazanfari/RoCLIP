@@ -182,14 +182,14 @@ def main(args, leftovers):
     model = get_eval_model(args, model_args, adversarial="none")
     device_id = 0
     model.set_device(device_id)
-    import copy
-    model_orig = copy.deepcopy(model)
+    # import copy
+    # model_orig = copy.deepcopy(model)
 
     # eval_model_orig.model.model.vision_tower._modules['vision_tower'].model = model_orig
     # model_orig = eval_model_orig
 
-    if num_gpus > 1:
-        model_orig = torch.nn.DataParallel(model_orig)
+    # if num_gpus > 1:
+    #     model_orig = torch.nn.DataParallel(model_orig)
 
     # model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
     #
@@ -234,7 +234,7 @@ def main(args, leftovers):
         step_total = train_one_epoch(
             step_total,
             model=model,
-            model_orig=model_orig,
+            # model_orig=model_orig,
             dataloader=dataloader,
             # todo dataloader_eval=dataloader_eval,
             optimizer=optimizer,
@@ -288,10 +288,10 @@ class ComputeLossWrapper:
 
 
 def train_one_epoch(
-        step_total, model, model_orig, dataloader, optimizer, scheduler, normalize,
+        step_total, model, dataloader, optimizer, scheduler, normalize,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
-    model_orig.eval()
+    # model_orig.eval()
     model.train()
 
     loss_meter = AverageMeter('loss')
@@ -307,15 +307,15 @@ def train_one_epoch(
         if is_classification:
             targets = targets.cuda()
 
-        with torch.no_grad():
-            embedding_orig = model_orig(vision=data, output_normalize=args.output_normalize)
+        # with torch.no_grad():
+        #     embedding_orig = model_orig(vision=data, output_normalize=args.output_normalize)
 
         # loss for the attack
-        loss_inner_wrapper = ComputeLossWrapper(
-            embedding_orig, embedding_text_labels_norm,
-            reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
-            logit_scale=100.
-        )
+        # loss_inner_wrapper = ComputeLossWrapper(
+        #     embedding_orig, embedding_text_labels_norm,
+        #     reduction='none' if args.attack == 'apgd' else 'mean', loss=args.inner_loss,
+        #     logit_scale=100.
+        # )
         model.eval()
 
         if args.attack == 'pgd':
@@ -337,7 +337,7 @@ def train_one_epoch(
             # apgd currently always applies output normalization
             data_adv = apgd(
                 model=model,
-                loss_fn=loss_inner_wrapper,
+                loss_fn=None,
                 x=data,
                 y=targets,
                 norm=args.norm,
@@ -348,30 +348,30 @@ def train_one_epoch(
         elif args.attack == 'none':
             data_adv = data
 
-        del loss_inner_wrapper
+        # del loss_inner_wrapper
         model.train()
 
         embedding_clean = model(data, output_normalize=args.output_normalize)
-        if args.clean_weight > 0.:
-            loss_clean = compute_loss(
-                loss_str=args.loss_clean, embedding=embedding_clean, targets=targets,
-                embedding_orig=embedding_orig, logit_scale=100., embedding_text_labels_norm=None
-            )
-        else:
-            loss_clean = 0.
+        # if args.clean_weight > 0.:
+        #     loss_clean = compute_loss(
+        #         loss_str=args.loss_clean, embedding=embedding_clean, targets=targets,
+        #         embedding_orig=embedding_orig, logit_scale=100., embedding_text_labels_norm=None
+        #     )
+        # else:
+        #     loss_clean = 0.
 
         embedding_adv = model(data_adv, output_normalize=args.output_normalize)
         del data, data_adv
 
-        if args.trades:
-            embedding_clean_no_grad = embedding_clean.detach().clone()
-            embedding_orig.cpu()
+        # if args.trades:
+        #     embedding_clean_no_grad = embedding_clean.detach().clone()
+        #     embedding_orig.cpu()
 
-        loss = compute_loss(
-            loss_str=args.loss, embedding=embedding_adv, targets=targets,
-            embedding_orig=embedding_orig if not args.trades else embedding_clean_no_grad,
-            logit_scale=100., embedding_text_labels_norm=embedding_text_labels_norm
-        )
+        # loss = compute_loss(
+        #     loss_str=args.loss, embedding=embedding_adv, targets=targets,
+        #     embedding_orig=embedding_orig if not args.trades else embedding_clean_no_grad,
+        #     logit_scale=100., embedding_text_labels_norm=embedding_text_labels_norm
+        # )
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
         optimizer.step()
