@@ -199,7 +199,7 @@ def main(args, leftovers):
     #
     # eval_model.model.model.vision_tower._modules['vision_tower'].model = model
     # model = eval_model
-    params = model.model.get_vision_tower().model.parameters()
+    params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
 
