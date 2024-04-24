@@ -359,29 +359,15 @@ def train_one_epoch(
             data_adv = data
 
         # del loss_inner_wrapper
-        model.train()
+        unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
-        embedding_clean = model(data, output_normalize=args.output_normalize)
-        # if args.clean_weight > 0.:
-        #     loss_clean = compute_loss(
-        #         loss_str=args.loss_clean, embedding=embedding_clean, targets=targets,
-        #         embedding_orig=embedding_orig, logit_scale=100., embedding_text_labels_norm=None
-        #     )
-        # else:
-        #     loss_clean = 0.
+        if args.clean_weight > 0.:
+            loss_clean = model(data)
+        else:
+            loss_clean = 0.
 
-        embedding_adv = model(data_adv, output_normalize=args.output_normalize)
-        del data, data_adv
-
-        # if args.trades:
-        #     embedding_clean_no_grad = embedding_clean.detach().clone()
-        #     embedding_orig.cpu()
-
-        # loss = compute_loss(
-        #     loss_str=args.loss, embedding=embedding_adv, targets=targets,
-        #     embedding_orig=embedding_orig if not args.trades else embedding_clean_no_grad,
-        #     logit_scale=100., embedding_text_labels_norm=embedding_text_labels_norm
-        # )
+        loss = model(data_adv)
+        print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
         optimizer.step()
@@ -389,23 +375,23 @@ def train_one_epoch(
         step_total += 1
         scheduler(step_total)
 
-        with torch.no_grad():
-            # only for logging
-            embedding_orig.cuda()
-            cos_sim_clean = F.cosine_similarity(embedding_clean, embedding_orig, dim=1).mean()
-            cos_sim = F.cosine_similarity(embedding_adv, embedding_orig, dim=1).mean()
-            if is_classification:
-                logits_adv = embedding_adv @ embedding_text_labels_norm
-                racc = compute_acc(logits_adv, targets)
-                embedding_clean_norm = F.normalize(embedding_clean, dim=1)
-                logits_clean = embedding_clean_norm @ embedding_text_labels_norm
-                acc = compute_acc(logits_clean, targets)
-                acc_meter.update(acc, n_samples)
-                racc_meter.update(racc, n_samples)
-                del embedding_clean_norm, embedding_clean
-            else:
-                acc = None
-                racc = None
+        # with torch.no_grad():
+        #     # only for logging
+        #     embedding_orig.cuda()
+        #     cos_sim_clean = F.cosine_similarity(embedding_clean, embedding_orig, dim=1).mean()
+        #     cos_sim = F.cosine_similarity(embedding_adv, embedding_orig, dim=1).mean()
+        #     if is_classification:
+        #         logits_adv = embedding_adv @ embedding_text_labels_norm
+        #         racc = compute_acc(logits_adv, targets)
+        #         embedding_clean_norm = F.normalize(embedding_clean, dim=1)
+        #         logits_clean = embedding_clean_norm @ embedding_text_labels_norm
+        #         acc = compute_acc(logits_clean, targets)
+        #         acc_meter.update(acc, n_samples)
+        #         racc_meter.update(racc, n_samples)
+        #         del embedding_clean_norm, embedding_clean
+        #     else:
+        #         acc = None
+        #         racc = None
 
         loss_meter.update(loss.item(), n_samples)
         cos_sim_meter.update(cos_sim.item(), n_samples)
