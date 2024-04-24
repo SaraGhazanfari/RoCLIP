@@ -67,7 +67,7 @@ parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Sav
 parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
 
 
-def main(args):
+def main(args, leftovers):
     # setup wandb
     if args.wandb:
         init_wandb(
@@ -182,14 +182,21 @@ def main(args):
         model_orig = torch.nn.DataParallel(model_orig)
     model_orig.cuda()
 
-    # model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
+    model = ClipVisionModel(model=model.visual, args=args, normalize=normalize)
+    model_args = {
+        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+    }
+    params = unwrap_model(model).model.parameters()
+
+    eval_model = get_eval_model(args, model_args, adversarial="none")
+    print(eval_model)
 
     if num_gpus > 1:
         model = torch.nn.DataParallel(model)
     model.cuda()
 
     # set optimizer (all params have requires_grad=True)
-    params = unwrap_model(model).model.visual.parameters()
+
 
     if args.opt == 'adamw':
         optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
@@ -537,7 +544,7 @@ if __name__ == '__main__':
     np.random.seed(0)
 
     # Parse command-line arguments
-    args = parser.parse_args()
+    args, leftovers = parser.parse_known_args()
     args.eps /= 255
     args.stepsize_adv /= 255
     # make sure there is no string in args that should be a bool
@@ -561,4 +568,4 @@ if __name__ == '__main__':
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     args.output_dir = os.path.join(args.output_dir, args.finetuned_model_name)
     # run
-    main(args)
+    main(args, leftovers)
