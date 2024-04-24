@@ -330,6 +330,8 @@ def train_one_epoch(
         )
         print(unwrap_model(model).__dict__.keys())
         print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+        print(unwrap_model(model).image_processor)
+        print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
         print(unwrap_model(model).model.__dict__.keys())
         print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
         print(unwrap_model(model).model.get_vision_tower().vision_tower.__dict__)
