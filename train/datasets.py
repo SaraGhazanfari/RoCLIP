@@ -28,7 +28,7 @@ class COCOFlickrDataset(Dataset):
         print(len(self.caption_list))
         print(self.caption_list[0])
         self.caption_list = self.model.tokenizer(self.caption_list, padding="longest",
-            truncation=True, return_tensors="pt", max_length=100)
+                                                 truncation=True, return_tensors="pt", max_length=100)
 
     def __len__(self):
         return len(self.annotations)
@@ -44,13 +44,16 @@ class COCOFlickrDataset(Dataset):
         caption = self.caption_list[idx]  # self.annotations[idx]["caption"]
         image = self.image_processor([[image]]).half()
 
-        # batch_text = []
-        # batch_text.append(self.model.get_caption_prompt(caption))
-        # print(batch_text)
-        # caption = self.model._prepare_text(batch_text)
+        batch_text = []
+        batch_text.append(self.model.get_caption_prompt(caption))
+        self.model.set_input(batch_text, past_key_values=None, to_device=True)
+
+        caption = self.model.labels
+        prompt = self.model.input_ids
         print(image.shape)
         print(caption.shape)
-        return image,
+        print(prompt.shape)
+        return image, caption, prompt
 
 
 class ImageNetDataset(ImageFolder):
