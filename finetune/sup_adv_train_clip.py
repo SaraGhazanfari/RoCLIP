@@ -182,12 +182,7 @@ def main(args, leftovers):
     # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
     # model = get_eval_model(args, model_args, adversarial="none")
     print(model_args)
-    model = EvalModelLLAVA(
-        dict(
-            vision_encoder_pretrained=model_args['vision_encoder_pretrained'],
-            **model_args,
-        ),
-    )
+    model = EvalModelLLAVA(model_args)
     print(f"[cast typ] {model.cast_dtype}")
     device_id = 0
     model.set_device(device_id)
