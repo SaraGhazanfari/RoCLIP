@@ -32,12 +32,11 @@ def force_cudnn_initialization():
 
 def get_eval_model(args, model_args, adversarial):
     if args.model == "open_flamingo":
-        eval_model = EvalModelAdv(model_args, adversarial=adversarial)
+        return EvalModelAdv(model_args, adversarial=adversarial)
     elif args.model == "llava":
-        eval_model = EvalModelLLAVA(model_args)
+        return EvalModelLLAVA(model_args)
     else:
         raise ValueError(f"Unsupported model: {args.model}")
-    return eval_model
 
 
 def get_query_set(train_dataset, query_set_size, seed):
