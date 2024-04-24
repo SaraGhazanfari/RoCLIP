@@ -180,12 +180,12 @@ def main(args, leftovers):
 
     # model_orig.cpu()
     # model_orig = ClipVisionModel(model=model_orig.visual, args=args, normalize=normalize)
-    # model = get_eval_model(args, model_args, adversarial="none")
-    print(model_args)
-    model = EvalModelLLAVA(model_args)
-    print(f"[cast typ] {model.cast_dtype}")
+    model = get_eval_model(args, model_args, adversarial="none")
+    # print(model_args)
+    # model = EvalModelLLAVA(model_args)
+    # print(f"[cast typ] {model.cast_dtype}")
     device_id = 0
-    model.set_device("cuda")
+    model.set_device(device_id)
     # import copy
     # model_orig = copy.deepcopy(model)
 
@@ -329,7 +329,7 @@ def train_one_epoch(
             past_key_values=None,
             to_device=True,
         )
-        data = model._prepare_images([[data]]).cuda()
+        data = model._prepare_images([[data]]).half().cuda()
         if args.attack == 'pgd':
             data_adv = pgd(
                 forward=model,
