@@ -296,7 +296,7 @@ def train_one_epoch(
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
     # model_orig.eval()
-    model.module.model.get_vision_tower().vision_tower.model.train()
+    unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
     loss_meter = AverageMeter('loss')
     cos_sim_meter = AverageMeter('cos-sim')
