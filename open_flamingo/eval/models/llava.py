@@ -193,3 +193,6 @@ class EvalModelLLAVA(BaseEvalModel):
 
     def children(self):
         return self.model.model.children()
+
+    def modules(self):
+        return self.model.model.modules()
