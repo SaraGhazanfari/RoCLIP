@@ -157,7 +157,7 @@ def main(args, leftovers):
 
     params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
-        model = torch.nn.DataParallel(model, device_ids=range(num_gpus))
+        model = torch.nn.DataParallel(model.model, device_ids=range(num_gpus))
 
     # set optimizer (all params have requires_grad=True)
 
@@ -236,7 +236,7 @@ def train_one_epoch(
         step_total, model, dataloader, optimizer, scheduler,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
-    unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
+    unwrap_model(model).get_vision_tower().vision_tower.model.train()
     start_time, end_time = time.time(), time.time()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
@@ -250,7 +250,7 @@ def train_one_epoch(
 
         if args.attack == 'pgd':
             data_adv = pgd(
-                forward=model.model,
+                forward=model,
                 loss_fn=None,
                 data_clean=data,
                 targets=labels,
