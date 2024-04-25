@@ -244,7 +244,8 @@ def train_one_epoch(
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
 
-        data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
+        data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
+            'cuda:0'), attention_mask.to('cuda:0')
         # unwrap_model(model).input_ids = input_ids
         # unwrap_model(model).labels = labels
         # unwrap_model(model).attention_mask = attention_mask
