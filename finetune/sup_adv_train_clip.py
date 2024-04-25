@@ -258,13 +258,7 @@ def train_one_epoch(
         model.attention_mask = attention_mask
         model.past_key_values = None
 
-        from pynvml import *
-        nvmlInit()
-        h = nvmlDeviceGetHandleByIndex(0)
-        info = nvmlDeviceGetMemoryInfo(h)
-        print(f'total    : {info.total}')
-        print(f'free     : {info.free}')
-        print(f'used     : {info.used}')
+        print(torch.cuda.mem_get_info())
 
         if args.attack == 'pgd':
             data_adv = pgd(
