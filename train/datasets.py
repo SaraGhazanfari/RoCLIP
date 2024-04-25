@@ -56,6 +56,7 @@ class COCOFlickrDataset(Dataset):
         print(labels.shape)
         print(attention_mask.shape)
         print(past_key_values.shape)
+        print(self.model.tokenizer.pad_token_id)
         return image, lang_x, labels, attention_mask, past_key_values
 
 
