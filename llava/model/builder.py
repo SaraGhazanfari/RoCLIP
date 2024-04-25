@@ -106,13 +106,10 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             raise ValueError(f"Unknown dtype {dtype}, must be float16 or float32")
 
     if 'llava' in model_name.lower():
-        print(109)
         # Load LLaVA model
         if 'lora' in model_name.lower() and model_base is None:
-            print(111)
             warnings.warn('There is `lora` in model name but no `model_base` is provided. If you are loading a LoRA model, please provide the `model_base` argument. Detailed instruction: https://github.com/haotian-liu/LLaVA#launch-a-model-worker-lora-weights-unmerged.')
         if 'lora' in model_name.lower() and model_base is not None:
-            print(114)
             lora_cfg_pretrained = AutoConfig.from_pretrained(model_path)
             tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
             print('Loading LLaVA from base model...')
@@ -147,7 +144,6 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             model = model.merge_and_unload()
             print('Model is loaded...')
         elif model_base is not None:
-            print(149)
             # this may be mm projector only
             print('Loading LLaVA from base model...')
             if 'mpt' in model_name.lower():
@@ -165,7 +161,6 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             mm_projector_weights = {k: v.to(kwargs["torch_dtype"]) for k, v in mm_projector_weights.items()}
             model.load_state_dict(mm_projector_weights, strict=False)
         else:
-            print(168)
             if 'mpt' in model_name.lower():
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
@@ -198,7 +193,6 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
     image_processor = None
 
     if 'llava' in model_name.lower():
-        print(201)
         mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
         mm_use_im_patch_token = getattr(model.config, "mm_use_im_patch_token", True)
         if mm_use_im_patch_token:
@@ -208,10 +202,10 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         model.resize_token_embeddings(len(tokenizer))
 
         vision_tower = model.get_vision_tower()
-        vision_tower.set_device(device)
+        # vision_tower.set_device(device)
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
         if not vision_tower.is_loaded:
-            vision_tower.load_model(non_llava, pretrained_rob_path).to(device=device)
+            vision_tower.load_model(non_llava, pretrained_rob_path)#.to(device=device)
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
