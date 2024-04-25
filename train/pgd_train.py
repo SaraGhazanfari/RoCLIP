@@ -62,11 +62,7 @@ def pgd(
                 data_clean + perturbation, 0, 1
             ) - data_clean  # clamp to image space
             assert not perturbation.isnan().any()
-            # assert torch.max(data_clean + perturbation) < 1. + 1e-6 and torch.min(
-            #     data_clean + perturbation
-            # ) > -1e-6
+        loss.detach().clone(), out.detach().clone()
+        del loss, out
 
-            # assert (ctorch.compute_norm(perturbation, p=self.norm) <= self.eps + 1e-6).all()
-    # todo return best perturbation
-    # problem is that model currently does not output expanded loss
     return data_clean + perturbation.detach()
