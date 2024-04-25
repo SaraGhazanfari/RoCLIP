@@ -110,6 +110,9 @@ class LlavaMetaForCausalLM(ABC):
             image_features = torch.split(image_features, split_sizes, dim=0)
             image_features = [x.flatten(0, 1) for x in image_features]
         else:
+            print(images.device)
+            print(self.get_model().get_vision_tower().device)
+            print(self.get_model().mm_projector.device)
             image_features = self.encode_images(images)
 
         new_input_embeds = []
