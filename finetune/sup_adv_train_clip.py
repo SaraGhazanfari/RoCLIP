@@ -251,9 +251,9 @@ def train_one_epoch(
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
-        print(torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
+        print(torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         model.input_ids = input_ids
         model.labels = labels
         model.attention_mask = attention_mask
