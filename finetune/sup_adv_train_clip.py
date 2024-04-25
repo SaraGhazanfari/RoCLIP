@@ -297,6 +297,10 @@ def train_one_epoch(
         print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         loss = model(data_adv)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
+        for param in model.parameters():
+            print('-----------------------------')
+            print(param)
+            print('-----------------------------')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
         optimizer.step()
@@ -310,7 +314,7 @@ def train_one_epoch(
         del data_adv, loss, loss_total, data, input_ids, labels, attention_mask, model.input_ids, \
             model.labels, model.attention_mask
         torch.cuda.empty_cache()
-        print('1', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+        print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
 
 
 @torch.no_grad()
