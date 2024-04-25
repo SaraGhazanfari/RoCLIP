@@ -102,14 +102,6 @@ def main(args, leftovers):
         assert str(args.start_step) in args.optimizer_state
         assert args.pretrained in ['', 'none']
         args.pretrained = args.optimizer_state.replace('_opt', '')
-    # model, _, _ = load_clip_model(args.clip_model_name, args.pretrained)
-
-    # Remove the Normalize transform by creating a new Compose object
-    # preprocessor_without_normalize = transforms.Compose(image_processor.transforms[:-1])
-    # normalize = image_processor.transforms[-1]
-    # del image_processor
-
-    # get data
 
     image_dir_path = f'{args.imagenet_root}/train2014'
     annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
@@ -254,7 +246,6 @@ def train_one_epoch(
         step_total, model, dataloader, optimizer, scheduler,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
-    # model_orig.eval()
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
     start_time, end_time = time.time(), time.time()
 
@@ -296,10 +287,6 @@ def train_one_epoch(
             )
         elif args.attack == 'none':
             data_adv = data
-
-        # del loss_inner_wrapper
-        unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
-
         if args.clean_weight > 0.:
             loss_clean = model(data)
         else:
@@ -315,7 +302,7 @@ def train_one_epoch(
         scheduler(step_total)
         end_time = time.time()
         data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
-        del data_adv, loss, loss_total
+        del data_adv, loss, loss_total, data, input_ids, labels, attention_mask
         torch.cuda.empty_cache()
 
 
