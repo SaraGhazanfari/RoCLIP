@@ -157,7 +157,7 @@ def main(args, leftovers):
 
     params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
-        model = torch.nn.DataParallel(model)
+        model = torch.nn.DataParallel(model, device_ids=range(num_gpus))
 
     # set optimizer (all params have requires_grad=True)
 
