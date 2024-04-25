@@ -243,14 +243,14 @@ def train_one_epoch(
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
-        unwrap_model(model).input_ids = input_ids
-        unwrap_model(model).labels = labels
-        unwrap_model(model).attention_mask = attention_mask
-        unwrap_model(model).past_key_values = None
+        # unwrap_model(model).input_ids = input_ids
+        # unwrap_model(model).labels = labels
+        # unwrap_model(model).attention_mask = attention_mask
+        # unwrap_model(model).past_key_values = None
 
         if args.attack == 'pgd':
             data_adv = pgd(
-                forward=model,
+                forward=model.model,
                 loss_fn=None,
                 data_clean=data,
                 targets=labels,
@@ -261,7 +261,8 @@ def train_one_epoch(
                 output_normalize=args.output_normalize,
                 perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
                 mode='max',
-                verbose=False
+                verbose=False,
+                input_ids=input_ids, labels=labels, attention_mask=attention_mask
             )
         elif args.attack == 'apgd':
             # apgd currently always applies output normalization
