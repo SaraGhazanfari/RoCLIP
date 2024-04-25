@@ -187,3 +187,6 @@ class EvalModelLLAVA(BaseEvalModel):
 
     def parameters(self):
         return self.model.model.parameters()
+
+    def buffers(self):
+        return self.model.model.buffers()
