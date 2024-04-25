@@ -316,6 +316,7 @@ def train_one_epoch(
         end_time = time.time()
         del data_adv
         del loss
+        del loss_total
 
 
 @torch.no_grad()
