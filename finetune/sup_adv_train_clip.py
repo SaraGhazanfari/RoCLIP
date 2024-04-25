@@ -253,7 +253,6 @@ def train_one_epoch(
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
-        print('1', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         model.input_ids = input_ids
         model.labels = labels
         model.attention_mask = attention_mask
@@ -288,11 +287,8 @@ def train_one_epoch(
             )
         elif args.attack == 'none':
             data_adv = data
-        print('2', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
         model.model.zero_grad()
-        for param in model.model.parameters():
-            print(param.grad)
         end_time = time.time()
 
 
