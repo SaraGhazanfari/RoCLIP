@@ -34,6 +34,7 @@ class COCOFlickrDataset(Dataset):
             return f"{self.image_dir_path}/{self.prefix}{self.annotations[idx]['image_id']:012d}.jpg"
 
     def __getitem__(self, idx):
+        # self.tokenizer.pad_token_id
         image = Image.open(self.get_img_path(idx))
         caption = self.annotations[idx]["caption"]
         image = self.image_processor([[image]]).half()
@@ -44,9 +45,10 @@ class COCOFlickrDataset(Dataset):
 
         caption = self.model.labels
         prompt = self.model.input_ids
+
         print(image.shape)
-        print(caption.shape)
-        print(prompt.shape)
+        print(caption)
+        print(prompt)
         return image, caption, prompt
 
 
