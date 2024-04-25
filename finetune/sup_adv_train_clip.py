@@ -187,18 +187,8 @@ def main(args, leftovers):
     step_total = args.start_step
     epoch = 0
     while step_total < args.steps:
-        step_total = train_one_epoch(
-            step_total,
-            model=model,
-            # model_orig=model_orig,
-            dataloader=dataloader,
-            # todo dataloader_eval=dataloader_eval,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            embedding_text_labels_norm=embedding_text_labels_norm,
-            args=args,
-            epoch=epoch
-        )
+        train_one_epoch(step_total, model=model, dataloader=dataloader, optimizer=optimizer, scheduler=scheduler,
+                        embedding_text_labels_norm=embedding_text_labels_norm, args=args, epoch=epoch)
         print(f'Epoch {epoch} done.')
         epoch += 1
 
