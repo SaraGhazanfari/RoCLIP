@@ -43,13 +43,20 @@ class COCOFlickrDataset(Dataset):
         batch_text.append(self.model.get_caption_prompt(caption))
         self.model.set_inputs(batch_text, past_key_values=None, to_device=True)
 
-        caption = self.model.labels
-        prompt = self.model.input_ids
-
-        print(image.shape)
-        print(caption)
-        print(prompt)
-        return image, caption, prompt
+        lang_x = self.model.lang_x
+        labels = self.model.labels
+        attention_mask = self.model.attention_mask
+        past_key_values = self.model.past_key_values
+        print(lang_x)
+        print(labels)
+        print(attention_mask)
+        print(past_key_values)
+        print('-------------------------------')
+        print(lang_x.shape)
+        print(labels.shape)
+        print(attention_mask.shape)
+        print(past_key_values.shape)
+        return image, lang_x, labels, attention_mask, past_key_values
 
 
 class ImageNetDataset(ImageFolder):
