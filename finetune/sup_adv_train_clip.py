@@ -317,7 +317,6 @@ def train_one_epoch(
         data_adv.detach()
         loss.detach()
         loss_total.detach()
-        loss_clean.detach()
         del data_adv
         del loss
         del loss_total
