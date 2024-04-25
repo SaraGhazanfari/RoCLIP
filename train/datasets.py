@@ -1,5 +1,6 @@
 import json
 
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
@@ -34,7 +35,7 @@ class COCOFlickrDataset(Dataset):
             return f"{self.image_dir_path}/{self.prefix}{self.annotations[idx]['image_id']:012d}.jpg"
 
     def __getitem__(self, idx):
-        # self.tokenizer.pad_token_id
+        #
         image = Image.open(self.get_img_path(idx))
         caption = self.annotations[idx]["caption"]
         image = self.image_processor([[image]]).half()
@@ -42,22 +43,21 @@ class COCOFlickrDataset(Dataset):
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
         self.model.set_inputs(batch_text, past_key_values=None, to_device=True)
+        max_length = 100
+        input_ids = self.model.input_ids[:max_length]
+        labels = self.model.labels[:max_length]
+        attention_mask = self.model.attention_mask[:max_length]
 
-        input_ids = self.model.input_ids
-        labels = self.model.labels
-        attention_mask = self.model.attention_mask
-        past_key_values = self.model.past_key_values
-        print(input_ids)
-        print(labels)
-        print(attention_mask)
-        print(past_key_values)
-        print('-------------------------------')
-        print(input_ids.shape)
-        print(labels.shape)
-        print(attention_mask.shape)
-        print(past_key_values.shape)
-        print(self.model.tokenizer.pad_token_id)
-        return image, input_ids, labels, attention_mask, past_key_values
+        if len(input_ids) < max_length:
+            pad_token_tensor = torch.tensor([self.model.tokenizer.pad_token_id] * (max_length - (len(input_ids))))
+            print(pad_token_tensor.shape)
+            attention_mask_tensor = torch.tensor([False] * (max_length - (len(input_ids))))
+            print(attention_mask_tensor.shape)
+            input_ids = torch.cat((input_ids, pad_token_tensor), dim=1)
+            labels = torch.cat((labels, pad_token_tensor), dim=1)
+            attention_mask = torch.cat((attention_mask, attention_mask_tensor), dim=1)
+        print(image.shape, input_ids.shape, labels.shape, attention_mask.shape)
+        return image, input_ids, labels, attention_mask
 
 
 class ImageNetDataset(ImageFolder):
