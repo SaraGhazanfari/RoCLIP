@@ -190,3 +190,6 @@ class EvalModelLLAVA(BaseEvalModel):
 
     def buffers(self):
         return self.model.model.buffers()
+
+    def children(self):
+        return self.model.model.children()
