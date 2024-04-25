@@ -256,15 +256,19 @@ def train_one_epoch(
     # model_orig.eval()
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
-    for i, (data, targets) in enumerate(dataloader):
+    for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
 
-        data, targets = data.cuda(), targets.cuda()
+        data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
+        model.input_ids = input_ids
+        model.labels = labels
+        model.attention_mask = attention_mask
+
         if args.attack == 'pgd':
             data_adv = pgd(
                 forward=model,
                 loss_fn=None,
                 data_clean=data,
-                targets=targets,
+                targets=labels,
                 norm=args.norm,
                 eps=args.eps,
                 iterations=args.iterations_adv,
@@ -280,7 +284,7 @@ def train_one_epoch(
                 model=model,
                 loss_fn=None,
                 x=data,
-                y=targets,
+                y=labels,
                 norm=args.norm,
                 eps=args.eps,
                 n_iter=args.iterations_adv,

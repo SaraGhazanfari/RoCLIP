@@ -47,19 +47,13 @@ class COCOFlickrDataset(Dataset):
         input_ids = self.model.input_ids[:, :max_length]
         labels = self.model.labels[:, :max_length]
         attention_mask = self.model.attention_mask[:, :max_length]
-
-        print(image.shape, input_ids.shape, labels.shape, attention_mask.shape)
-
         if input_ids.shape[1] < max_length:
             pad_token_tensor = torch.tensor(
-                [self.model.tokenizer.pad_token_id] * (max_length - input_ids.shape[1] + 1)).unsqueeze(0)
-            print(pad_token_tensor.shape)
-            attention_mask_tensor = torch.tensor([False] * (max_length - input_ids.shape[1] + 1)).unsqueeze(0)
-            print(attention_mask_tensor.shape)
+                [self.model.tokenizer.pad_token_id] * (max_length - input_ids.shape[1])).unsqueeze(0)
+            attention_mask_tensor = torch.tensor([False] * (max_length - input_ids.shape[1])).unsqueeze(0)
             input_ids = torch.cat((input_ids, pad_token_tensor), dim=1)
             labels = torch.cat((labels, pad_token_tensor), dim=1)
             attention_mask = torch.cat((attention_mask, attention_mask_tensor), dim=1)
-        print(image.shape, input_ids.shape, labels.shape, attention_mask.shape)
         return image, input_ids, labels, attention_mask
 
 
