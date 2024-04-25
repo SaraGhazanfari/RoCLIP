@@ -112,7 +112,7 @@ class LlavaMetaForCausalLM(ABC):
         else:
             print(images.device)
             print(self.get_model().get_vision_tower().device)
-            print(self.get_model().mm_projector.device)
+            print(self.get_model().mm_projector)
             image_features = self.encode_images(images)
 
         new_input_embeds = []
