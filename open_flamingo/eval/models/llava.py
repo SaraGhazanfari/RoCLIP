@@ -184,3 +184,6 @@ class EvalModelLLAVA(BaseEvalModel):
         conv.append_message(conv.roles[1], caption)
 
         return conv
+
+    def parameters(self):
+        return self.model.model.parameters()

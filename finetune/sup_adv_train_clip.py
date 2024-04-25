@@ -118,7 +118,7 @@ def main(args, leftovers):
                                 )
 
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-    # todo dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
+    # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
     # Get text label embeddings of all ImageNet classes
     if args.template == 'std':
