@@ -248,9 +248,10 @@ def train_one_epoch(
 ):
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
     start_time, end_time = time.time(), time.time()
-    print(torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
+        print(torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
         model.input_ids = input_ids
