@@ -259,7 +259,7 @@ def train_one_epoch(
     start_time, end_time = time.time(), time.time()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
-        print(f'{i}/{len(dataloader)} Time:{int((end_time - start_time) / 60)}')
+        print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
         model.input_ids = input_ids
@@ -315,6 +315,7 @@ def train_one_epoch(
         scheduler(step_total)
         end_time = time.time()
         del data_adv
+        del loss
 
 
 @torch.no_grad()
