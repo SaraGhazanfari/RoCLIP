@@ -302,7 +302,8 @@ def train_one_epoch(
         scheduler(step_total)
         end_time = time.time()
         data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
-        del data_adv, loss, loss_total, data, input_ids, labels, attention_mask
+        del data_adv, loss, loss_total, data, input_ids, labels, attention_mask, model.input_ids, \
+            model.labels, model.attention_mask
         torch.cuda.empty_cache()
 
 
