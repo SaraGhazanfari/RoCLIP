@@ -314,9 +314,9 @@ def train_one_epoch(
         step_total += 1
         scheduler(step_total)
         end_time = time.time()
-        data_adv.detach()
-        loss.detach()
-        loss_total.detach()
+        data_adv.detach().clone()
+        loss.detach().clone()
+        loss_total.detach().clone()
         del data_adv
         del loss
         del loss_total
