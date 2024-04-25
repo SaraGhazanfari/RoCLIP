@@ -243,10 +243,10 @@ def train_one_epoch(
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
-        model.input_ids = input_ids
-        model.labels = labels
-        model.attention_mask = attention_mask
-        model.past_key_values = None
+        unwrap_model(model).input_ids = input_ids
+        unwrap_model(model).labels = labels
+        unwrap_model(model).attention_mask = attention_mask
+        unwrap_model(model).past_key_values = None
         print(input_ids.shape)
 
         if args.attack == 'pgd':
