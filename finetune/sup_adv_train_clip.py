@@ -247,6 +247,7 @@ def train_one_epoch(
         model.labels = labels
         model.attention_mask = attention_mask
         model.past_key_values = None
+        print(input_ids.shape)
 
         if args.attack == 'pgd':
             data_adv = pgd(
