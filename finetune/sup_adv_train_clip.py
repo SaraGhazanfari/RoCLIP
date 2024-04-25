@@ -253,7 +253,7 @@ def train_one_epoch(
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
-        print(torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+        print('1', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         model.input_ids = input_ids
         model.labels = labels
         model.attention_mask = attention_mask
@@ -288,11 +288,13 @@ def train_one_epoch(
             )
         elif args.attack == 'none':
             data_adv = data
+        print('2', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         if args.clean_weight > 0.:
             loss_clean = model(data)
         else:
             loss_clean = 0.
 
+        print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         loss = model(data_adv)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
@@ -302,10 +304,13 @@ def train_one_epoch(
         step_total += 1
         scheduler(step_total)
         end_time = time.time()
+
+        print('4', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
         del data_adv, loss, loss_total, data, input_ids, labels, attention_mask, model.input_ids, \
             model.labels, model.attention_mask
         torch.cuda.empty_cache()
+        print('1', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
 
 
 @torch.no_grad()
