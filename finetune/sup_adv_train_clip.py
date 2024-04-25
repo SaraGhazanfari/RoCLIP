@@ -277,8 +277,8 @@ def train_one_epoch(
             )
         elif args.attack == 'none':
             data_adv = data
-        calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
-        model.model.zero_grad()
+        # calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
+        # model.model.zero_grad()
         end_time = time.time()
 
 
