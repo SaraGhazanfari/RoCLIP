@@ -257,7 +257,7 @@ def train_one_epoch(
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
-
+        print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
         model.input_ids = input_ids
         model.labels = labels
