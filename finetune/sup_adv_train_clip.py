@@ -1,4 +1,5 @@
 import sys
+import time
 
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
@@ -255,9 +256,11 @@ def train_one_epoch(
 ):
     # model_orig.eval()
     unwrap_model(model).model.get_vision_tower().vision_tower.model.train()
+    start_time, end_time = time.time(), time.time()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
-        print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
+        print(f'{i}/{len(dataloader)} Time:{int((end_time - start_time) / 60)}')
+        start_time = time.time()
         data, input_ids, labels, attention_mask = data.cuda(), input_ids.cuda(), labels.cuda(), attention_mask.cuda()
         model.input_ids = input_ids
         model.labels = labels
@@ -310,6 +313,8 @@ def train_one_epoch(
         optimizer.zero_grad()
         step_total += 1
         scheduler(step_total)
+        end_time = time.time()
+        del data_adv
 
 
 @torch.no_grad()
