@@ -297,7 +297,7 @@ def train_one_epoch(
         print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         loss = model(data_adv)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-        for param in model.parameters():
+        for param in model.model.parameters():
             print('-----------------------------')
             print(param)
             print('-----------------------------')
