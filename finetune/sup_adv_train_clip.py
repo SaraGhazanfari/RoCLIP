@@ -122,6 +122,7 @@ def init_distributed_mode(args):
 
 
 def main(args, leftovers):
+    print(leftovers)
     # setup wandb
     if args.wandb:
         init_wandb(
