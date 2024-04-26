@@ -97,7 +97,8 @@ class TinyLLAVA:
         elif args.precision == 'float32':
             kwargs['torch_dtype'] = torch.float32
         processor = AutoProcessor.from_pretrained(model_id)
-        print(processor)
+        self.image_processor = processor.image_processor
+        self.tokenizer = processor.tokenizer
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
