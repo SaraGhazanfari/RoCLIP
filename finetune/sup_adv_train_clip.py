@@ -6,7 +6,8 @@ from torch.nn import DataParallel
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
-from vlm_eval.utils import get_eval_model
+
+# from vlm_eval.utils import get_eval_model
 
 sys.path.append("open_flamingo")
 import os
@@ -76,6 +77,17 @@ parser.add_argument("--temperature", type=float)
 parser.add_argument("--num_beams", type=int)
 parser.add_argument("--precision", type=str)
 parser.add_argument("--vision_encoder_pretrained", type=str)
+
+
+class TinyLLAVA:
+    def __init__(self, args):
+        from transformers import LlavaForConditionalGeneration
+        model_id = "bczhou/tiny-llava-v1-hf"
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        )
 
 
 def setup_for_distributed(is_master):
@@ -170,7 +182,7 @@ def main(args, leftovers):
     # model_args = {
     #     leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     # }
-    model = get_eval_model(args, args.__dict__, adversarial="none")
+    model = TinyLLAVA(args)  # get_eval_model(args, args.__dict__, adversarial="none")
     dataset = COCOFlickrDataset(model=model,
                                 image_processor=model._prepare_images,
                                 image_dir_path=image_dir_path,
