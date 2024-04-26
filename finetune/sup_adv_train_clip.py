@@ -90,7 +90,7 @@ class TinyLLAVA:
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
-        vision_tower = self.model.vision_tower()
+        vision_tower = self.model.vision_tower
         vision_tower.to(device=device, dtype=args.precision)
         self.image_process = vision_tower.image_processor
 
