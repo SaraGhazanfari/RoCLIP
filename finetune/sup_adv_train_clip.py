@@ -4,7 +4,7 @@ import time
 from typing import List
 
 from torch.nn import DataParallel
-from transformers import AutoProcessor
+from transformers import AutoProcessor, AutoConfig
 
 from llava.constants import IGNORE_INDEX, DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates
@@ -103,6 +103,7 @@ class TinyLLAVA:
         processor = AutoProcessor.from_pretrained(model_id)
         self.image_processor = processor.image_processor
         self.tokenizer = processor.tokenizer
+        self.config = AutoConfig.from_pretrained(model_id)
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
