@@ -69,6 +69,11 @@ parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Sav
 parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
+# leftovers
+parser.add_argument("--model_path", type=str)
+parser.add_argument("--temperature", type=str)
+parser.add_argument("--precision", type=str)
+parser.add_argument("--vision_encoder_pretrained", type=str)
 
 
 def setup_for_distributed(is_master):
@@ -122,7 +127,7 @@ def init_distributed_mode(args):
 
 
 def main(args, leftovers):
-    print(leftovers)
+
     # setup wandb
     if args.wandb:
         init_wandb(
@@ -161,10 +166,10 @@ def main(args, leftovers):
 
     image_dir_path = f'{args.imagenet_root}/train2014'
     annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
-    model_args = {
-        leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-    }
-    model = get_eval_model(args, model_args, adversarial="none")
+    # model_args = {
+    #     leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
+    # }
+    model = get_eval_model(args, args.__dict__, adversarial="none")
     dataset = COCOFlickrDataset(model=model,
                                 image_processor=model._prepare_images,
                                 image_dir_path=image_dir_path,
@@ -411,7 +416,7 @@ if __name__ == '__main__':
     np.random.seed(0)
 
     # Parse command-line arguments
-    args, leftovers = parser.parse_known_args()
+    args = parser.parse_args()  # parse_known_args()
     args.eps /= 255
     args.stepsize_adv /= 255
     # make sure there is no string in args that should be a bool
@@ -435,4 +440,4 @@ if __name__ == '__main__':
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     args.output_dir = os.path.join(args.output_dir, args.finetuned_model_name)
     # run
-    main(args, leftovers)
+    main(args, args)
