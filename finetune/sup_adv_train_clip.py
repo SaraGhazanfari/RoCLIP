@@ -90,8 +90,13 @@ class TinyLLAVA:
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
+        kwargs = {}
+        if args.precision == 'float16':
+            kwargs['torch_dtype'] = torch.float16
+        elif args.precision == 'float32':
+            kwargs['torch_dtype'] = torch.float32
         vision_tower = self.model.vision_tower
-        vision_tower.to(device=device, dtype=args.precision)
+        vision_tower.to(device=device, dtype=kwargs['torch_dtype'])
         self.image_process = vision_tower.image_processor
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
