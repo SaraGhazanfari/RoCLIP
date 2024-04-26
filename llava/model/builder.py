@@ -83,7 +83,7 @@ class ClipVisionModel(torch.nn.Module):
 
 def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_path=None, dtype=None, device_map="auto", device="cuda"):
     kwargs = {"device_map": device_map}
-
+    kwargs = {}
     load_8bit=False
     load_4bit=False
     if load_8bit:
