@@ -110,7 +110,7 @@ class EvalModelLLAVA(BaseEvalModel):
             labels=self.labels,
             images=self.normalizer(images_unnorm),
         )
-        return torch.mean(out.loss).unsqueeze(0)
+        return out.loss.unsqueeze(0)
 
     def set_inputs(
             self,
