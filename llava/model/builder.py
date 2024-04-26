@@ -13,26 +13,24 @@
 #    limitations under the License.
 
 import os
-import warnings
 import shutil
+import warnings
 
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
 import torch
-from llava.model import *
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
+
 from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
-
-
+from llava.model import *
 
 
 def map_keys(model, pretrained_ckpt_loc):
-    
     ckpt = torch.load(pretrained_ckpt_loc, map_location='cpu')
     print(ckpt.keys())
     print(ckpt['proj'].size())
     i = 0
     for name, param in model.named_parameters():
         # print(ckpt.keys())
-        i+=1
+        i += 1
         print(name, param.size())
         # if param.requires_grad:
     print(i)
@@ -42,8 +40,7 @@ def map_keys(model, pretrained_ckpt_loc):
             for p in range(2):
                 self.downsample_layers[i][p].weight.copy_(ckpt[f'downsample_layers.{i}.{p}.weight'])
                 self.downsample_layers[i][p].bias.copy_(ckpt[f'downsample_layers.{i}.{p}.bias'])
-       
-        
+
         for j in range(4):
             for k in range(stt[j]):
                 self.stages[j][k].gamma.copy_(ckpt[f'stages.{j}.{k}.gamma'])
@@ -80,12 +77,12 @@ class ClipVisionModel(torch.nn.Module):
             return embedding
 
 
-
-def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_path=None, dtype=None, device_map="auto", device="cuda"):
+def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_path=None, dtype=None, device_map="auto",
+                          device="cuda"):
     kwargs = {"device_map": device_map}
     kwargs = {}
-    load_8bit=False
-    load_4bit=False
+    load_8bit = False
+    load_4bit = False
     if load_8bit:
         kwargs['load_in_8bit'] = True
     elif load_4bit:
@@ -108,20 +105,25 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
     if 'llava' in model_name.lower():
         # Load LLaVA model
         if 'lora' in model_name.lower() and model_base is None:
-            warnings.warn('There is `lora` in model name but no `model_base` is provided. If you are loading a LoRA model, please provide the `model_base` argument. Detailed instruction: https://github.com/haotian-liu/LLaVA#launch-a-model-worker-lora-weights-unmerged.')
+            warnings.warn(
+                'There is `lora` in model name but no `model_base` is provided. If you are loading a LoRA model, please provide the `model_base` argument. Detailed instruction: https://github.com/haotian-liu/LLaVA#launch-a-model-worker-lora-weights-unmerged.')
         if 'lora' in model_name.lower() and model_base is not None:
             lora_cfg_pretrained = AutoConfig.from_pretrained(model_path)
             tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
             print('Loading LLaVA from base model...')
-            model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lora_cfg_pretrained, **kwargs)
+            model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True,
+                                                          config=lora_cfg_pretrained, **kwargs)
             token_num, tokem_dim = model.lm_head.out_features, model.lm_head.in_features
             if model.lm_head.weight.shape[0] != token_num:
-                model.lm_head.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim, device=model.device, dtype=model.dtype))
-                model.model.embed_tokens.weight = torch.nn.Parameter(torch.empty(token_num, tokem_dim, device=model.device, dtype=model.dtype))
+                model.lm_head.weight = torch.nn.Parameter(
+                    torch.empty(token_num, tokem_dim, device=model.device, dtype=model.dtype))
+                model.model.embed_tokens.weight = torch.nn.Parameter(
+                    torch.empty(token_num, tokem_dim, device=model.device, dtype=model.dtype))
 
             print('Loading additional LLaVA weights...')
             if os.path.exists(os.path.join(model_path, 'non_lora_trainables.bin')):
-                non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'), map_location='cpu')
+                non_lora_trainables = torch.load(os.path.join(model_path, 'non_lora_trainables.bin'),
+                                                 map_location='cpu')
             else:
                 # this is probably from HF Hub
                 from huggingface_hub import hf_hub_download
@@ -131,10 +133,13 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
                         filename=filename,
                         subfolder=subfolder)
                     return torch.load(cache_file, map_location='cpu')
+
                 non_lora_trainables = load_from_hf(model_path, 'non_lora_trainables.bin')
-            non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in non_lora_trainables.items()}
+            non_lora_trainables = {(k[11:] if k.startswith('base_model.') else k): v for k, v in
+                                   non_lora_trainables.items()}
             if any(k.startswith('model.model.') for k in non_lora_trainables):
-                non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in non_lora_trainables.items()}
+                non_lora_trainables = {(k[6:] if k.startswith('model.') else k): v for k, v in
+                                       non_lora_trainables.items()}
             model.load_state_dict(non_lora_trainables, strict=False)
 
             from peft import PeftModel
@@ -148,14 +153,17 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             print('Loading LLaVA from base model...')
             if 'mpt' in model_name.lower():
                 if not os.path.isfile(os.path.join(model_path, 'configuration_mpt.py')):
-                    shutil.copyfile(os.path.join(model_base, 'configuration_mpt.py'), os.path.join(model_path, 'configuration_mpt.py'))
+                    shutil.copyfile(os.path.join(model_base, 'configuration_mpt.py'),
+                                    os.path.join(model_path, 'configuration_mpt.py'))
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=True)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
-                model = LlavaMPTForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
+                model = LlavaMPTForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained,
+                                                            **kwargs)
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path)
-                model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
+                model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained,
+                                                              **kwargs)
 
             mm_projector_weights = torch.load(os.path.join(model_path, 'mm_projector.bin'), map_location='cpu')
             mm_projector_weights = {k: v.to(kwargs["torch_dtype"]) for k, v in mm_projector_weights.items()}
@@ -165,7 +173,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
             else:
-                tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
+                tokenizer = AutoTokenizer.from_pretrained(model_path)  # , use_fast=False)
                 model = LlavaLlamaForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
     else:
         # Load language model
@@ -173,7 +181,8 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             # PEFT model
             from peft import PeftModel
             tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
-            model = AutoModelForCausalLM.from_pretrained(model_base, torch_dtype=kwargs["torch_dtype"], low_cpu_mem_usage=True, device_map="auto")
+            model = AutoModelForCausalLM.from_pretrained(model_base, torch_dtype=kwargs["torch_dtype"],
+                                                         low_cpu_mem_usage=True, device_map="auto")
             print(f"Loading LoRA weights from {model_path}")
             model = PeftModel.from_pretrained(model, model_path)
             print(f"Merging weights")
@@ -185,7 +194,8 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             use_fast = False
             if 'mpt' in model_name.lower():
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
-                model = AutoModelForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, trust_remote_code=True, **kwargs)
+                model = AutoModelForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, trust_remote_code=True,
+                                                             **kwargs)
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                 model = AutoModelForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
@@ -205,7 +215,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         # vision_tower.set_device(device)
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
         if not vision_tower.is_loaded:
-            vision_tower.load_model(non_llava, pretrained_rob_path)#.to(device=device)
+            vision_tower.load_model(non_llava, pretrained_rob_path)  # .to(device=device)
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
