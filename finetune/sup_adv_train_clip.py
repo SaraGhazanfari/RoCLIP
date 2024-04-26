@@ -1,6 +1,7 @@
 import sys
 import time
 
+from torch.nn import DataParallel
 from torch.nn.parallel import DistributedDataParallel
 
 from train.datasets import COCOFlickrDataset
@@ -180,7 +181,7 @@ def main(args, leftovers):
                                 prefix='COCO_train2014_'
                                 )
 
-    init_distributed_mode(args)
+    # init_distributed_mode(args)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
@@ -222,7 +223,7 @@ def main(args, leftovers):
 
     params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
-        model = DistributedDataParallel(model.model, device_ids=args.gpu)
+        model = DataParallel(model.model, device_ids=range(num_gpus))
     print(model.module.device)
     # set optimizer (all params have requires_grad=True)
 
