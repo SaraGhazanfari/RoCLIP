@@ -66,7 +66,7 @@ parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
 parser.add_argument('--output_dir', type=str, default='', help='Output directory')
 parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
-parser.add_argument('--device', type=int, default='', help='Device IDs for CUDA')
+parser.add_argument('--device', type=str, default='', help='Device IDs for CUDA')
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
 
