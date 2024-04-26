@@ -3,6 +3,7 @@ import time
 from typing import List
 
 from torch.nn import DataParallel
+from transformers import AutoProcessor
 
 from llava.mm_utils import process_images
 from train.datasets import COCOFlickrDataset
@@ -95,10 +96,8 @@ class TinyLLAVA:
             kwargs['torch_dtype'] = torch.float16
         elif args.precision == 'float32':
             kwargs['torch_dtype'] = torch.float32
-        vision_tower = self.model.vision_tower
-        vision_tower.to(device=device, dtype=kwargs['torch_dtype'])
-        print( vision_tower)
-        self.image_process = vision_tower.image_processor
+        processor = AutoProcessor.from_pretrained(model_id)
+        print(processor)
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
