@@ -104,7 +104,7 @@ class TinyLLAVA:
         self.image_processor = processor.image_processor
         self.tokenizer = processor.tokenizer
         self.config = AutoConfig.from_pretrained(model_id)
-        self.config.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
+        self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
@@ -138,7 +138,7 @@ class TinyLLAVA:
     def get_caption_prompt(self, caption=None) -> str:
         qs = "Provide a short caption for this image."
 
-        if self.model.config.mm_use_im_start_end:
+        if self.mm_use_im_start_end:
             qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
         else:
             qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
