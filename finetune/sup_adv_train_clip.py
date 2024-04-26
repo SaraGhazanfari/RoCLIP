@@ -179,7 +179,7 @@ def main(args, leftovers):
                                 prefix='COCO_train2014_'
                                 )
 
-    init_distributed_mode(args)
+    # init_distributed_mode(args)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
