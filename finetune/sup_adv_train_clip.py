@@ -1,3 +1,4 @@
+import copy
 import sys
 import time
 from typing import List
@@ -5,7 +6,9 @@ from typing import List
 from torch.nn import DataParallel
 from transformers import AutoProcessor
 
-from llava.mm_utils import process_images
+from llava.constants import IGNORE_INDEX, DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.conversation import conv_templates
+from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
@@ -86,6 +89,7 @@ class TinyLLAVA:
     def __init__(self, args, device):
         from transformers import LlavaForConditionalGeneration
         model_id = "bczhou/tiny-llava-v1-hf"
+        self.conv_mode = "vicuna_v1"
         self.model = LlavaForConditionalGeneration.from_pretrained(
             model_id,
             torch_dtype=torch.float16,
@@ -104,6 +108,39 @@ class TinyLLAVA:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
         image_tensor = process_images(batch[0], self.image_processor, self.model.config)
         return image_tensor
+
+    def _prepare_text(
+            self,
+            convs,
+            past_key_values: torch.Tensor = None,
+            to_device: bool = False,
+    ):
+        input_ids = [
+            tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
+        ]
+        input_ids = torch.stack(input_ids, dim=0)
+
+        context_only = convs[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
+        context_len = len(self.tokenizer.encode(context_only))
+
+        labels = copy.deepcopy(input_ids)
+        labels[:, :context_len] = IGNORE_INDEX
+        attention_mask = input_ids.ne(self.tokenizer.pad_token_id)
+        return input_ids, labels, attention_mask, past_key_values
+
+    def get_caption_prompt(self, caption=None) -> str:
+        qs = "Provide a short caption for this image."
+
+        if self.model.config.mm_use_im_start_end:
+            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+        else:
+            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+
+        conv = conv_templates[self.conv_mode].copy()
+        conv.append_message(conv.roles[0], qs)
+        conv.append_message(conv.roles[1], caption)
+
+        return conv
 
 
 def setup_for_distributed(is_master):

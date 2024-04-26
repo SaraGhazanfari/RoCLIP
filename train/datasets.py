@@ -42,11 +42,11 @@ class COCOFlickrDataset(Dataset):
 
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
-        self.model.set_inputs(batch_text, past_key_values=None, to_device=True)
+        input_ids, labels, attention_mask, past_key_values = self.model._prepare_text(batch_text, past_key_values=None, to_device=True)
         max_length = 100
-        input_ids = self.model.input_ids[0, :max_length]
-        labels = self.model.labels[0, :max_length]
-        attention_mask = self.model.attention_mask[0, :max_length]
+        input_ids = input_ids[0, :max_length]
+        labels = labels[0, :max_length]
+        attention_mask = attention_mask[0, :max_length]
         if input_ids.shape[0] < max_length:
             pad_token_tensor = torch.tensor(
                 [self.model.tokenizer.pad_token_id] * (max_length - input_ids.shape[0]))
