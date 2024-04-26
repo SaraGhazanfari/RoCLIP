@@ -185,8 +185,8 @@ class EvalModelLLAVA(BaseEvalModel):
         return conv
 
 
-class TinyLLava(EvalModelLLAVA):
-    def __init__(self):
+class TinyLLAVA(EvalModelLLAVA):
+    def __init__(self, args):
         from transformers import LlavaForConditionalGeneration
         model_id = "bczhou/tiny-llava-v1-hf"
         self.model = LlavaForConditionalGeneration.from_pretrained(

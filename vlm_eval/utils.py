@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 
-from open_flamingo.eval.models.llava import EvalModelLLAVA
+from open_flamingo.eval.models.llava import EvalModelLLAVA, TinyLLAVA
 from open_flamingo.eval.models.of_eval_model_adv import EvalModelAdv
 
 
