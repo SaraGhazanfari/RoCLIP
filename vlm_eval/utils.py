@@ -35,6 +35,8 @@ def get_eval_model(args, model_args, adversarial):
         return EvalModelAdv(model_args, adversarial=adversarial)
     elif args.model == "llava":
         return EvalModelLLAVA(model_args)
+    elif args.model =='tiny-llava':
+        return TinyLLAVA(model_args)
     else:
         raise ValueError(f"Unsupported model: {args.model}")
 

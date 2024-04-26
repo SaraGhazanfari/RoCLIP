@@ -2,7 +2,6 @@ import sys
 import time
 
 from torch.nn import DataParallel
-from torch.nn.parallel import DistributedDataParallel
 
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
@@ -130,7 +129,6 @@ def init_distributed_mode(args):
 
 
 def main(args, leftovers):
-
     # setup wandb
     if args.wandb:
         init_wandb(

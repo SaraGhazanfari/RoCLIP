@@ -51,7 +51,7 @@ class EvalModelLLAVA(BaseEvalModel):
 
         self.stop_str = conv_templates[self.conv_mode].sep if conv_templates[
                                                                   self.conv_mode].sep_style != SeparatorStyle.TWO else \
-        conv_templates[self.conv_mode].sep2
+            conv_templates[self.conv_mode].sep2
         self.stop_token_id = self.tokenizer.convert_tokens_to_ids(self.stop_str)
 
     @torch.no_grad()
@@ -142,7 +142,7 @@ class EvalModelLLAVA(BaseEvalModel):
             tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
         ]
         input_ids = torch.stack(input_ids, dim=0)
-        #input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
+        # input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
         return input_ids
 
     def get_vqa_prompt(self, question, answer=None) -> str:
@@ -184,14 +184,13 @@ class EvalModelLLAVA(BaseEvalModel):
 
         return conv
 
-    def parameters(self):
-        return self.model.model.parameters()
 
-    def buffers(self):
-        return self.model.model.buffers()
-
-    def children(self):
-        return self.model.model.children()
-
-    def modules(self):
-        return self.model.model.modules()
+class TinyLLava(EvalModelLLAVA):
+    def __init__(self):
+        from transformers import LlavaForConditionalGeneration
+        model_id = "bczhou/tiny-llava-v1-hf"
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        )
