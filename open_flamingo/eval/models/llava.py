@@ -102,7 +102,6 @@ class EvalModelLLAVA(BaseEvalModel):
 
         # assert 0. <= images_unnorm.min() and images_unnorm.max() <= 1., "Images must be in image space"
         assert len(images_unnorm.shape) == 4, "[b, c, h, w]"
-        print(self.input_ids.shape)
         out = self.model(
             input_ids=self.input_ids,
             attention_mask=self.attention_mask,
@@ -111,7 +110,7 @@ class EvalModelLLAVA(BaseEvalModel):
             labels=self.labels,
             images=self.normalizer(images_unnorm),
         )
-        return out.loss.unsqueeze(0)
+        return torch.mean(out.loss).unsqueeze(0)
 
     def set_inputs(
             self,

@@ -216,8 +216,7 @@ def main(args, leftovers):
             assert embedding_text_labels_norm.shape == (768, 1000), embedding_text_labels_norm.shape
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
-    print(model.model)
-    print(model.model.device)
+
     device_id = 0
     model.set_device(device_id)
 
