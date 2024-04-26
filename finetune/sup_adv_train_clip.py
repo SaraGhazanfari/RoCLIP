@@ -109,6 +109,11 @@ class TinyLLAVA:
         image_tensor = process_images(batch[0], self.image_processor, self.model.config)
         return image_tensor
 
+    def set_device(self, device):
+        """Set device for model."""
+        self.device = device
+        self.model = self.model.to(device)
+
     def _prepare_text(
             self,
             convs,
