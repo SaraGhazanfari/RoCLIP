@@ -36,7 +36,7 @@ def pgd(
                           attention_mask=attention_mask,
                           past_key_values=None,
                           inputs_embeds=None,
-                          labels=labels)  # , output_normalize=output_normalize)
+                          labels=labels).loss.unsqueeze(0)
             print(f'*****************************LOSS: {out}*****************************')
             loss = loss_fn(out, targets) if loss_fn else out
             if verbose:
