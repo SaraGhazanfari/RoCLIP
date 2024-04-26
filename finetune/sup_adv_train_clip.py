@@ -287,8 +287,8 @@ def main(args, leftovers):
 
     device_id = 0
     model.set_device(device_id)
-
-    params = model.model.get_vision_tower().vision_tower.model.parameters()
+    print(model.model.vision_tower)
+    params = model.model.vision_tower.model.parameters()
     if num_gpus > 1:
         model = DataParallel(model.model, device_ids=range(num_gpus))
     # set optimizer (all params have requires_grad=True)
