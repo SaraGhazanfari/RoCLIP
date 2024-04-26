@@ -1,8 +1,10 @@
 import sys
 import time
+from typing import List
 
 from torch.nn import DataParallel
 
+from llava.mm_utils import process_images
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
@@ -80,7 +82,7 @@ parser.add_argument("--vision_encoder_pretrained", type=str)
 
 
 class TinyLLAVA:
-    def __init__(self, args):
+    def __init__(self, args, device):
         from transformers import LlavaForConditionalGeneration
         model_id = "bczhou/tiny-llava-v1-hf"
         self.model = LlavaForConditionalGeneration.from_pretrained(
@@ -88,6 +90,14 @@ class TinyLLAVA:
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
+        vision_tower = self.model.get_vision_tower()
+        vision_tower.to(device=device, dtype=args.precision)
+        self.image_process = vision_tower.image_processor
+
+    def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
+        assert len(batch) == 1, "Only support batch size 1 (yet)"
+        image_tensor = process_images(batch[0], self.image_processor, self.model.config)
+        return image_tensor
 
 
 def setup_for_distributed(is_master):

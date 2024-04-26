@@ -183,14 +183,3 @@ class EvalModelLLAVA(BaseEvalModel):
         conv.append_message(conv.roles[1], caption)
 
         return conv
-
-
-class TinyLLAVA(EvalModelLLAVA):
-    def __init__(self, args):
-        from transformers import LlavaForConditionalGeneration
-        model_id = "bczhou/tiny-llava-v1-hf"
-        self.model = LlavaForConditionalGeneration.from_pretrained(
-            model_id,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
