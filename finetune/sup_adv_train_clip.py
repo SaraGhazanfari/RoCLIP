@@ -69,6 +69,7 @@ parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Sav
 parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
+parser.add_argument("--local_rank", default=0, type=int, help="Please ignore and do not set this argument.")
 # leftovers
 parser.add_argument("--model_path", type=str)
 parser.add_argument("--temperature", type=float)
