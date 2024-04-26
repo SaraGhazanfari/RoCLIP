@@ -323,7 +323,7 @@ def train_one_epoch(
                 output_normalize=args.output_normalize,
                 perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
                 mode='max',
-                verbose=False,
+                verbose=True,
                 input_ids=input_ids, labels=labels, attention_mask=attention_mask
             )
         elif args.attack == 'apgd':
