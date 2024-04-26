@@ -16,7 +16,7 @@ def pgd(
         perturbation=None,
         mode='min',
         momentum=0.9,
-        verbose=False, input_ids=None, labels=None, attention_mask=None
+        verbose=True, input_ids=None, labels=None, attention_mask=None
 ):
     """
     Minimize or maximize given loss
@@ -37,7 +37,6 @@ def pgd(
                           past_key_values=None,
                           inputs_embeds=None,
                           labels=labels)
-            print(f'*****************************LOSS: {out}*****************************')
             loss = loss_fn(out, targets) if loss_fn else torch.mean(out.loss).unsqueeze(0)
             if verbose:
                 print(f'[{i}] {loss.item():.5f}')
