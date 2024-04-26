@@ -367,7 +367,7 @@ def train_one_epoch(
         step_total, model, dataloader, optimizer, scheduler,
         embedding_text_labels_norm, args, epoch, dataloader_eval=None
 ):
-    unwrap_model(model).get_vision_tower().vision_tower.model.train()
+    unwrap_model(model).vision_tower.vision_model.train()
     start_time, end_time = time.time(), time.time()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
