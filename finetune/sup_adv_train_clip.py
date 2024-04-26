@@ -71,7 +71,8 @@ parser.add_argument("--dist_url", default="env://", type=str, help="""url used t
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
 # leftovers
 parser.add_argument("--model_path", type=str)
-parser.add_argument("--temperature", type=str)
+parser.add_argument("--temperature", type=float)
+parser.add_argument("--num_beams", type=int)
 parser.add_argument("--precision", type=str)
 parser.add_argument("--vision_encoder_pretrained", type=str)
 
