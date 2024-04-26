@@ -192,7 +192,7 @@ def main(args, leftovers):
     # model_args = {
     #     leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     # }
-    model = TinyLLAVA(args)  # get_eval_model(args, args.__dict__, adversarial="none")
+    model = TinyLLAVA(args, main_device)  # get_eval_model(args, args.__dict__, adversarial="none")
     dataset = COCOFlickrDataset(model=model,
                                 image_processor=model._prepare_images,
                                 image_dir_path=image_dir_path,
