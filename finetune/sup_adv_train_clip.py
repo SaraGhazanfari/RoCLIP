@@ -1,6 +1,8 @@
 import sys
 import time
 
+from torch.nn.parallel import DistributedDataParallel
+
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
@@ -25,6 +27,7 @@ from open_flamingo.eval.models.utils import unwrap_model
 from train.utils import str2bool
 
 import argparse
+import torch.distributed as dist
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, help="Model name. `open_flamingo` and `llava` supported.",
@@ -63,7 +66,59 @@ parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
 parser.add_argument('--output_dir', type=str, default='', help='Output directory')
 parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
-parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
+parser.add_argument('--device', type=int, default='', help='Device IDs for CUDA')
+parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
+    distributed training; see https://pytorch.org/docs/stable/distributed.html""")
+
+
+def setup_for_distributed(is_master):
+    """
+    This function disables printing when not in master process
+    """
+    import builtins as __builtin__
+    builtin_print = __builtin__.print
+
+    def print(*args, **kwargs):
+        force = kwargs.pop('force', False)
+        if is_master or force:
+            builtin_print(*args, **kwargs)
+
+    __builtin__.print = print
+
+
+def init_distributed_mode(args):
+    # launched with torch.distributed.launch
+    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
+        args.rank = int(os.environ["RANK"])
+        args.world_size = int(os.environ['WORLD_SIZE'])
+        args.gpu = int(os.environ['LOCAL_RANK'])
+    # launched with submitit on a slurm cluster
+    elif 'SLURM_PROCID' in os.environ:
+        args.rank = int(os.environ['SLURM_PROCID'])
+        args.gpu = args.rank % torch.cuda.device_count()
+    # launched naively with `python main_dino.py`
+    # we manually add MASTER_ADDR and MASTER_PORT to env variables
+    elif torch.cuda.is_available():
+        print('Will run the code on one GPU.')
+        args.rank, args.gpu, args.world_size = 0, 0, 8
+        os.environ['MASTER_ADDR'] = '127.0.0.1'
+        os.environ['MASTER_PORT'] = '29500'
+    else:
+        print('Does not support training without GPU.')
+        sys.exit(1)
+
+    dist.init_process_group(
+        backend="nccl",
+        init_method=args.dist_url,
+        world_size=args.world_size,
+        rank=args.rank,
+    )
+
+    torch.cuda.set_device(args.gpu)
+    print('| distributed init (rank {}): {}'.format(
+        args.rank, args.dist_url), flush=True)
+    dist.barrier()
+    setup_for_distributed(args.rank == 0)
 
 
 def main(args, leftovers):
@@ -117,6 +172,7 @@ def main(args, leftovers):
                                 prefix='COCO_train2014_'
                                 )
 
+    init_distributed_mode(args)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 
@@ -158,7 +214,7 @@ def main(args, leftovers):
 
     params = model.model.get_vision_tower().vision_tower.model.parameters()
     if num_gpus > 1:
-        model = torch.nn.DataParallel(model.model, device_ids=range(num_gpus))
+        model = DistributedDataParallel(model.model, device_ids=args.device)
     print(model.module.device)
     # set optimizer (all params have requires_grad=True)
 
@@ -246,10 +302,6 @@ def train_one_epoch(
 
         data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
             'cuda:0'), attention_mask.to('cuda:0')
-        # unwrap_model(model).input_ids = input_ids
-        # unwrap_model(model).labels = labels
-        # unwrap_model(model).attention_mask = attention_mask
-        # unwrap_model(model).past_key_values = None
 
         if args.attack == 'pgd':
             data_adv = pgd(
