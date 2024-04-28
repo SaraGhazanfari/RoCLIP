@@ -89,6 +89,7 @@ class TinyLLAVA:
     def __init__(self, args, device):
         from transformers import LlavaForConditionalGeneration
         self.conv_mode = "vicuna_v1"
+        args.model_path = "bczhou/tiny-llava-v1-hf"
         self.model = LlavaForConditionalGeneration.from_pretrained(
             args.model_path,
             torch_dtype=torch.float16,
@@ -383,9 +384,10 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         else:
             loss_clean = 0.
         print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-        loss = torch.mean(
-            model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
-                  inputs_embeds=None, labels=labels).loss)
+        out = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
+                    inputs_embeds=None, labels=labels)
+        print(out)
+        loss = torch.mean(out.loss)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
         loss_total.backward()
