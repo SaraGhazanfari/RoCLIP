@@ -11,6 +11,7 @@ from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
+from vlm_eval.utils import force_cudnn_initialization
 
 # from vlm_eval.utils import get_eval_model
 
@@ -286,7 +287,7 @@ def main(args, leftovers):
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
 
-    # force_cudnn_initialization()
+    force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
