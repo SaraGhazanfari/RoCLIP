@@ -59,7 +59,7 @@ parser.add_argument('--opt', type=str, default='adamw', help='Optimizer type; sg
 parser.add_argument('--momentum_sgd', type=float, default=0.9, help='Momentum for SGD optimizer')
 parser.add_argument('--lr', type=float, default=1e-6, help='Learning rate')
 parser.add_argument('--wd', type=float, default=1e-4, help='Weight decay')
-parser.add_argument('--attack', type=str, default='apgd', help='Adversarial attack type')
+parser.add_argument('--attack', type=str, default=None, help='Adversarial attack type')
 parser.add_argument('--inner_loss', type=str, default='l2', help='Inner loss function for adversarial training')
 parser.add_argument('--norm', type=str, default='linf', help='Norm for adversarial perturbation')
 parser.add_argument('--eps', type=float, default=4, help='Epsilon for adversarial perturbation')
