@@ -290,7 +290,7 @@ def main(args, leftovers):
     step_total = args.start_step
     epoch = 0
     while step_total < args.steps:
-        train_one_epoch(model=model.model, dataloader=dataloader, args=args)
+        train_one_epoch(model=model, dataloader=dataloader, args=args)
         print(f'Epoch {epoch} done.')
         epoch += 1
 
