@@ -88,10 +88,9 @@ parser.add_argument("--vision_encoder_pretrained", type=str)
 class TinyLLAVA:
     def __init__(self, args, device):
         from transformers import LlavaForConditionalGeneration
-        model_id = "bczhou/tiny-llava-v1-hf"
         self.conv_mode = "vicuna_v1"
         self.model = LlavaForConditionalGeneration.from_pretrained(
-            model_id,
+            args.model_path,
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
@@ -100,10 +99,10 @@ class TinyLLAVA:
             kwargs['torch_dtype'] = torch.float16
         elif args.precision == 'float32':
             kwargs['torch_dtype'] = torch.float32
-        processor = AutoProcessor.from_pretrained(model_id)
+        processor = AutoProcessor.from_pretrained(args.model_path)
         self.image_processor = processor.image_processor
         self.tokenizer = processor.tokenizer
-        self.config = AutoConfig.from_pretrained(model_id)
+        self.config = AutoConfig.from_pretrained(args.model_path)
         setattr(self.config, 'image_aspect_ratio', 'pad')
         self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
 
