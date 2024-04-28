@@ -257,7 +257,7 @@ def main(args, leftovers):
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     force_cudnn_initialization()
     device_id = 0
-    # model.set_device(device_id)
+    model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
     # if num_gpus > 1:
     #     model = DataParallel(model.model, device_ids=range(num_gpus))
@@ -342,8 +342,8 @@ def train_one_epoch(model, dataloader, args):
         start_time = time.time()
         print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
         print(input_ids[0])
-        # data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
-        #     'cuda:0'), attention_mask.to('cuda:0')
+        data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
+            'cuda:0'), attention_mask.to('cuda:0')
 
         if args.attack == 'pgd':
             data_adv = pgd(
