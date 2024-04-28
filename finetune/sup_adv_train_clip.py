@@ -87,10 +87,10 @@ parser.add_argument("--vision_encoder_pretrained", type=str)
 
 class TinyLLAVA:
     def __init__(self, args, device):
-        from transformers import LlavaForConditionalGeneration
+        from transformers import LlavaForConditionalGeneration, LlamaForCausalLM
         self.conv_mode = "vicuna_v1"
         args.model_path = "bczhou/tiny-llava-v1-hf"
-        self.model = LlavaForConditionalGeneration.from_pretrained(
+        self.model = LlamaForCausalLM.from_pretrained(
             args.model_path,
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
