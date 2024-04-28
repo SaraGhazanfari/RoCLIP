@@ -42,7 +42,6 @@ class COCOFlickrDataset(Dataset):
 
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
-        print(batch_text)
         input_ids, labels, attention_mask, past_key_values = self.model._prepare_text(batch_text, past_key_values=None,
                                                                                       to_device=True)
         max_length = 100
