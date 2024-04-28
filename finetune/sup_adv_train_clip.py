@@ -3,6 +3,7 @@ import sys
 import time
 from typing import List
 
+from torch.nn import DataParallel
 from transformers import AutoProcessor, AutoConfig
 
 from llava.constants import DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
@@ -259,8 +260,8 @@ def main(args, leftovers):
     device_id = 0
     model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
-    # if num_gpus > 1:
-    #     model = DataParallel(model.model, device_ids=range(num_gpus))
+    if num_gpus > 1:
+        model = DataParallel(model.model, device_ids=range(num_gpus))
     # set optimizer (all params have requires_grad=True)
 
     if args.opt == 'adamw':
@@ -340,8 +341,6 @@ def train_one_epoch(model, dataloader, args):
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
         print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
         start_time = time.time()
-        print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
-        print(input_ids[0])
         data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
             'cuda:0'), attention_mask.to('cuda:0')
 
