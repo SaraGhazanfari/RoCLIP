@@ -290,7 +290,8 @@ def main(args, leftovers):
     step_total = args.start_step
     epoch = 0
     while step_total < args.steps:
-        train_one_epoch(model=model, dataloader=dataloader, args=args)
+        train_one_epoch(model=model, dataloader=dataloader, args=args, optimizer=optimizer, scheduler=scheduler,
+                        step_total=step_total)
         print(f'Epoch {epoch} done.')
         epoch += 1
 
@@ -334,7 +335,7 @@ class ComputeLossWrapper:
         )
 
 
-def train_one_epoch(model, dataloader, args):
+def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
     unwrap_model(model).vision_tower.vision_model.train()
     start_time, end_time = time.time(), time.time()
 
@@ -374,8 +375,8 @@ def train_one_epoch(model, dataloader, args):
             )
         elif args.attack == 'none':
             data_adv = data
-        # calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
-        # model.model.zero_grad()
+        calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
+        model.model.zero_grad()
         end_time = time.time()
 
 
