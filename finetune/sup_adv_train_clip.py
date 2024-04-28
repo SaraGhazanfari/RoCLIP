@@ -11,7 +11,6 @@ from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
-from vlm_eval.utils import force_cudnn_initialization
 
 # from vlm_eval.utils import get_eval_model
 
@@ -27,7 +26,6 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from training.scheduler import cosine_lr
-from open_flamingo.eval.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABEL
 import wandb
 from train.utils import init_wandb
 from open_flamingo.eval.models.utils import unwrap_model
@@ -288,8 +286,7 @@ def main(args, leftovers):
     step_total = args.start_step
     epoch = 0
     while step_total < args.steps:
-        train_one_epoch(step_total, model=model.model, dataloader=dataloader, optimizer=optimizer, scheduler=scheduler,
-                        embedding_text_labels_norm=embedding_text_labels_norm, args=args, epoch=epoch)
+        train_one_epoch(model=model.model, dataloader=dataloader, args=args)
         print(f'Epoch {epoch} done.')
         epoch += 1
 
@@ -333,10 +330,7 @@ class ComputeLossWrapper:
         )
 
 
-def train_one_epoch(
-        step_total, model, dataloader, optimizer, scheduler,
-        embedding_text_labels_norm, args, epoch, dataloader_eval=None
-):
+def train_one_epoch(model, dataloader, args):
     unwrap_model(model).vision_tower.vision_model.train()
     start_time, end_time = time.time(), time.time()
 
