@@ -375,7 +375,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
                 n_iter=args.iterations_adv,
                 verbose=True
             )
-        elif args.attack == 'none':
+        elif not args.attack:
             data_adv = data
         if args.clean_weight > 0.:
             loss_clean = torch.mean(
