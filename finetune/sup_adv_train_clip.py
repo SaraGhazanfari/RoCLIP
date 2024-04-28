@@ -392,7 +392,8 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         out = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
                     inputs_embeds=None, labels=labels)
         print(out.__dict__.keys())
-        print(out.logits.shape)
+        print(labels)
+        print(torch.argmax(out.logits.squeeze(0)), dim=0)
         loss = torch.mean(out.loss)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
