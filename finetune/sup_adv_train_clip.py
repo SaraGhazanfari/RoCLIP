@@ -252,7 +252,7 @@ def main(args, leftovers):
     # init_distributed_mode(args)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-    # force_cudnn_initialization()
+    force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
