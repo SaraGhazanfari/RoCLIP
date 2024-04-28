@@ -402,6 +402,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         model.zero_grad()
         end_time = time.time()
+        return
 
 
 def calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total):
