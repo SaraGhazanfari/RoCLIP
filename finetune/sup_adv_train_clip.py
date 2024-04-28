@@ -5,7 +5,7 @@ from typing import List
 
 from transformers import AutoProcessor, AutoConfig
 
-from llava.constants import IGNORE_INDEX, DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.constants import DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
 from llava.conversation import conv_templates
 from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
@@ -105,6 +105,7 @@ class TinyLLAVA:
         self.config = AutoConfig.from_pretrained(model_id)
         setattr(self.config, 'image_aspect_ratio', 'pad')
         self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
+
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
         assert len(batch) == 1, "Only support batch size 1 (yet)"
         image_tensor = process_images(batch[0], self.image_processor, self.config)
@@ -122,7 +123,8 @@ class TinyLLAVA:
             to_device: bool = False,
     ):
         input_ids = [
-            tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
+            tokenizer_image_token(conv.get_prompt(), self.tokenizer, image_token_index=self.config.image_token_index,
+                                  return_tensors='pt') for conv in convs
         ]
         input_ids = torch.stack(input_ids, dim=0)
 
@@ -130,8 +132,8 @@ class TinyLLAVA:
         context_len = len(self.tokenizer.encode(context_only))
 
         labels = copy.deepcopy(input_ids)
-        labels[:, :context_len] = IGNORE_INDEX
-        attention_mask = input_ids.ne(self.tokenizer.pad_token_id)
+        labels[:, :context_len] = self.config.ignore_index
+        attention_mask = input_ids.ne(self.config.pad_token_id)
         return input_ids, labels, attention_mask, past_key_values
 
     def get_caption_prompt(self, caption=None) -> str:
