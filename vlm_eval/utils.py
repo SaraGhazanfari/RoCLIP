@@ -3,9 +3,6 @@ import random
 import numpy as np
 import torch
 
-from open_flamingo.eval.models.llava import EvalModelLLAVA, TinyLLAVA
-from open_flamingo.eval.models.of_eval_model_adv import EvalModelAdv
-
 
 def get_random_indices(num_samples, query_set_size, full_dataset, seed):
     if num_samples + query_set_size > len(full_dataset):
@@ -31,12 +28,12 @@ def force_cudnn_initialization():
 
 
 def get_eval_model(args, model_args, adversarial):
+    from open_flamingo.eval.models.llava import EvalModelLLAVA
+    from open_flamingo.eval.models.of_eval_model_adv import EvalModelAdv
     if args.model == "open_flamingo":
         return EvalModelAdv(model_args, adversarial=adversarial)
     elif args.model == "llava":
         return EvalModelLLAVA(model_args)
-    elif args.model =='tiny-llava':
-        return TinyLLAVA(model_args)
     else:
         raise ValueError(f"Unsupported model: {args.model}")
 
