@@ -104,6 +104,7 @@ class TinyLLAVA:
         self.tokenizer = processor.tokenizer
         self.config = AutoConfig.from_pretrained(model_id)
         setattr(self.config, 'image_aspect_ratio', 'pad')
+        print(self.config)
         self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
 
     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
