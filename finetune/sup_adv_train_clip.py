@@ -11,6 +11,7 @@ from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
+from vlm_eval.utils import force_cudnn_initialization
 
 # from vlm_eval.utils import get_eval_model
 
