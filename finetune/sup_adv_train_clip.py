@@ -377,7 +377,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
             data_adv = data
         if args.clean_weight > 0.:
             loss_clean = torch.mean(
-                model(data, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
+                model(pixel_values=data, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
                       inputs_embeds=None, labels=labels).loss)
         else:
             loss_clean = 0.
