@@ -36,7 +36,7 @@ def pgd(
                           attention_mask=attention_mask,
                           past_key_values=None,
                           inputs_embeds=None,
-                          labels=labels)
+                          labels=labels, padding_idx=forward.tokenizer.pad_token_id)
             loss = loss_fn(out, targets) if loss_fn else torch.mean(out.loss).unsqueeze(0)
             if verbose:
                 print(f'[{i}] {loss.item():.5f}')
