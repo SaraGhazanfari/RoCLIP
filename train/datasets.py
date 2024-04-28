@@ -58,7 +58,7 @@ class COCOFlickrDataset(Dataset):
 
         if labels.shape[0] < label_max_length:
             pad_token_tensor = torch.tensor(
-                [self.model.config.pad_token_id] * (label_max_length - input_ids.shape[0]))
+                [self.model.config.pad_token_id] * (label_max_length - labels.shape[0]))
             labels = torch.cat((labels, pad_token_tensor), dim=0)
         return image, input_ids, labels, attention_mask
 
