@@ -391,7 +391,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         out = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
                     inputs_embeds=None, labels=labels)
-        print(out.__dict__)
+        print(out.__dict__.keys())
         loss = torch.mean(out.loss)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
