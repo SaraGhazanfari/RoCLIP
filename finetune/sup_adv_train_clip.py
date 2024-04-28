@@ -94,9 +94,6 @@ class TinyLLAVA:
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         )
-        print(self.model)
-        print('---------------------')
-        print(self.model.model)
         kwargs = {}
         if args.precision == 'float16':
             kwargs['torch_dtype'] = torch.float16
