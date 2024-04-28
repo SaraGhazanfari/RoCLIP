@@ -347,6 +347,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
             'cuda:0'), attention_mask.to('cuda:0')
         print('-----------------------')
+        print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
         print(labels)
         print('-----------------------')
 
