@@ -375,7 +375,25 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
             )
         elif args.attack == 'none':
             data_adv = data
-        calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total)
+        if args.clean_weight > 0.:
+            loss_clean = model(data)
+        else:
+            loss_clean = 0.
+        print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+        loss = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
+                     inputs_embeds=None, labels=labels)
+        print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
+        loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
+        loss_total.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        step_total += 1
+        scheduler(step_total)
+        print('4', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+        data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
+        del data_adv, loss, loss_total, data
+        torch.cuda.empty_cache()
+        print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         model.model.zero_grad()
         end_time = time.time()
 
