@@ -135,7 +135,7 @@ class TinyLLAVA:
         labels = copy.deepcopy(input_ids)#[:, context_len:]
         labels[:, :context_len] = self.config.ignore_index
         attention_mask = input_ids.ne(self.config.pad_token_id)
-        return input_ids, labels, attention_mask, past_key_values
+        return input_ids[:, :context_len], labels, attention_mask, past_key_values
 
     def get_caption_prompt(self, caption=None) -> str:
         qs = "Provide a short caption for this image."
@@ -296,6 +296,7 @@ def main(args, leftovers):
                         step_total=step_total)
         print(f'Epoch {epoch} done.')
         epoch += 1
+        return
 
     # save final model
     torch.save(unwrap_model(model).model.state_dict(), f'{args.output_dir}/checkpoints/final.pt')
@@ -390,7 +391,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
         out = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
                     inputs_embeds=None, labels=labels)
-        print(out)
+        print(out.__dict__)
         loss = torch.mean(out.loss)
         print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
         loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
