@@ -11,7 +11,6 @@ from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
-from vlm_eval.utils import force_cudnn_initialization
 
 # from vlm_eval.utils import get_eval_model
 
@@ -113,8 +112,8 @@ class TinyLLAVA:
 
     def set_device(self, device):
         """Set device for model."""
-        self.device = device
-        self.model = self.model.to(device)
+        self.device = f"cuda:{device}"
+        self.model = self.model.to(self.device)
 
     def _prepare_text(
             self,
