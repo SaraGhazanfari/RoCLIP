@@ -44,17 +44,22 @@ class COCOFlickrDataset(Dataset):
         batch_text.append(self.model.get_caption_prompt(caption))
         input_ids, labels, attention_mask, past_key_values = self.model._prepare_text(batch_text, past_key_values=None,
                                                                                       to_device=True)
-        max_length = 100
-        input_ids = input_ids[0, :max_length]
-        labels = labels[0, :max_length]
-        attention_mask = attention_mask[0, :max_length]
-        if input_ids.shape[0] < max_length:
+        prompt_max_length = 100
+        label_max_length = 20
+        input_ids = input_ids[0, :prompt_max_length]
+        labels = labels[0, :label_max_length]
+        attention_mask = attention_mask[0, :prompt_max_length]
+        if input_ids.shape[0] < prompt_max_length:
             pad_token_tensor = torch.tensor(
-                [self.model.config.pad_token_id] * (max_length - input_ids.shape[0]))
-            attention_mask_tensor = torch.tensor([False] * (max_length - input_ids.shape[0]))
+                [self.model.config.pad_token_id] * (prompt_max_length - input_ids.shape[0]))
+            attention_mask_tensor = torch.tensor([False] * (prompt_max_length - input_ids.shape[0]))
             input_ids = torch.cat((input_ids, pad_token_tensor), dim=0)
-            labels = torch.cat((labels, pad_token_tensor), dim=0)
             attention_mask = torch.cat((attention_mask, attention_mask_tensor), dim=0)
+
+        if labels.shape[0] < label_max_length:
+            pad_token_tensor = torch.tensor(
+                [self.model.config.pad_token_id] * (label_max_length - input_ids.shape[0]))
+            labels = torch.cat((labels, pad_token_tensor), dim=0)
         return image, input_ids, labels, attention_mask
 
 
