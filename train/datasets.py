@@ -45,7 +45,7 @@ class COCOFlickrDataset(Dataset):
         input_ids, labels, attention_mask, past_key_values = self.model._prepare_text(batch_text, past_key_values=None,
                                                                                       to_device=True)
         prompt_max_length = 100
-        label_max_length = 20
+        label_max_length = 100
         input_ids = input_ids[0, :prompt_max_length]
         labels = labels[0, :label_max_length]
         attention_mask = attention_mask[0, :prompt_max_length]
