@@ -132,8 +132,8 @@ class TinyLLAVA:
         context_only = convs[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
         context_len = len(self.tokenizer.encode(context_only))
 
-        labels = copy.deepcopy(input_ids)[:, context_len:]
-        # labels[:, :context_len] = self.config.ignore_index
+        labels = copy.deepcopy(input_ids)#[:, context_len:]
+        labels[:, :context_len] = self.config.ignore_index
         attention_mask = input_ids.ne(self.config.pad_token_id)
         return input_ids, labels, attention_mask, past_key_values
 
