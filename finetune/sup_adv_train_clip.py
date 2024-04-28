@@ -395,7 +395,7 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         del data_adv, loss, loss_total, data
         torch.cuda.empty_cache()
         print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-        model.model.zero_grad()
+        model.zero_grad()
         end_time = time.time()
 
 
