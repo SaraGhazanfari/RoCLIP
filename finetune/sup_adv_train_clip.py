@@ -346,8 +346,9 @@ def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
         start_time = time.time()
         data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
             'cuda:0'), attention_mask.to('cuda:0')
-
+        print('-----------------------')
         print(labels)
+        print('-----------------------')
 
         if args.attack == 'pgd':
             data_adv = pgd(
