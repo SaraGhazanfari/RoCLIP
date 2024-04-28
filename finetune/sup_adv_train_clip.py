@@ -53,7 +53,7 @@ parser.add_argument('--warmup', type=int, default=14000, help='Warmup steps')
 parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--loss', type=str, default='l2', help='ce, l2')
 parser.add_argument('--loss_clean', type=str, default='none', help='ce, l2')
-parser.add_argument('--clean_weight', type=float, default=0.1, help='Weight for clean loss')
+parser.add_argument('--clean_weight', type=float, default=0.0, help='Weight for clean loss')
 parser.add_argument('--trades', type=str2bool, default=False, help='Use TRADES')
 parser.add_argument('--opt', type=str, default='adamw', help='Optimizer type; sgd, adamw')
 parser.add_argument('--momentum_sgd', type=float, default=0.9, help='Momentum for SGD optimizer')
@@ -262,6 +262,8 @@ def main(args, leftovers):
     params = model.model.vision_tower.vision_model.parameters()
     if num_gpus > 1:
         model = DataParallel(model.model, device_ids=range(num_gpus))
+    else:
+        model = model.model
     # set optimizer (all params have requires_grad=True)
 
     if args.opt == 'adamw':
