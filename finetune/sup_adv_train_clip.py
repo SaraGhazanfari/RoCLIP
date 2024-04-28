@@ -254,40 +254,7 @@ def main(args, leftovers):
     # init_distributed_mode(args)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
     # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-
-    # Get text label embeddings of all ImageNet classes
-    if args.template == 'std':
-        template = 'This is a photo of a {}'
-    elif args.template == 'blurry':
-        template = 'This is a blurry photo of a {}'
-    else:
-        raise ValueError(f'Unknown template: {args.template}')
-    print(f'template: {template}')
-    texts = [template.format(c) for c in IMAGENET_1K_CLASS_ID_TO_LABEL.values()]
-    text_tokens = open_clip.tokenize(texts)
-    model_orig.to(main_device)
-    with torch.no_grad():
-        embedding_text_labels_norm = []
-        for el in (text_tokens[:500], text_tokens[500:]):
-            # we need to split the text tokens into two batches because otherwise we run out of memory
-            # note that we are accessing the model directly here, not the CustomModel wrapper
-            # thus its always normalizing the text embeddings
-            embedding_text_labels_norm.append(
-                model_orig.encode_text(el.to(main_device), normalize=True).detach().cpu()
-            )
-        embedding_text_labels_norm = torch.cat(embedding_text_labels_norm).T.to(main_device)
-        assert torch.allclose(
-            F.normalize(embedding_text_labels_norm, dim=0),
-            embedding_text_labels_norm
-        )
-        if args.clip_model_name == 'ViT-B-32':
-            assert embedding_text_labels_norm.shape == (512, 1000), embedding_text_labels_norm.shape
-        elif args.clip_model_name in ('ViT-L-14', 'ViT-L-14-336'):
-            assert embedding_text_labels_norm.shape == (768, 1000), embedding_text_labels_norm.shape
-        else:
-            raise ValueError(f'Unknown model: {args.clip_model_name}')
-
-    force_cudnn_initialization()
+    # force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
