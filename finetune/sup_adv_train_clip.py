@@ -287,7 +287,7 @@ def main(args, leftovers):
         else:
             raise ValueError(f'Unknown model: {args.clip_model_name}')
 
-    force_cudnn_initialization()
+    # force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
     params = model.model.vision_tower.vision_model.parameters()
