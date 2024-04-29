@@ -200,7 +200,7 @@ class LLaVAFinetune:
                     output_normalize=args.output_normalize,
                     perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
                     mode='max',
-                    verbose=True,
+                    verbose=False,
                     input_ids=input_ids, labels=labels, attention_mask=attention_mask
                 )
             elif args.attack == 'apgd':
@@ -228,8 +228,11 @@ class LLaVAFinetune:
             out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None,
                              inputs_embeds=None, labels=labels)
-            print('pred', self.tokenizer.decode(torch.argmax(out.logits, dim=1)))
             print('gt', self.tokenizer.decode(labels))
+            print(torch.argmax(out.logits, dim=1).shape)
+            print(torch.argmax(out.logits, dim=1))
+            print('pred', self.tokenizer.decode(torch.argmax(out.logits, dim=1)))
+
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
