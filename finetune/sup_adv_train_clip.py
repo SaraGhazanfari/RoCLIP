@@ -55,8 +55,7 @@ def set_config(args):
         args.train_dir = f'{path}/{folder}'
         os.makedirs(args.train_dir)
         args.ckpt = f'{args.train_dir}/checkpoints'
-        os.makedirs(args.aug_ckpt)
-        os.makedirs(args.head_ckpt)
+        os.makedirs(args.ckpt)
     else:
         args.train_dir = f'{path}/{args.train_dir}'
         args.ckpt = f'{args.train_dir}/checkpoints'
@@ -350,7 +349,7 @@ if __name__ == '__main__':
     )
     args.dist_url = get_init_file().as_uri()
     args.cmd = f"python3 {' '.join(sys.argv)}"
-    set_config(args)
+    args = set_config(args)
     finetune = LLaVAFinetune(args)
     job = executor.submit(finetune)
     job_id = job.job_id
