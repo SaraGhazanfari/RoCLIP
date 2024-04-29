@@ -99,7 +99,7 @@ parser.add_argument('--experiment_name', type=str, default='')
 parser.add_argument('--overwrite', type=str2bool, default=False, help='Overwrite existing directory')
 parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
-parser.add_argument('--output_dir', type=str, default=None, help='Output directory')
+parser.add_argument('--train_dir', type=str, default=None, help='Output directory')
 parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
 
 # distributed setting
@@ -141,11 +141,6 @@ class LLaVAFinetune:
             )
         else:
             wandb.init(mode='disabled')
-
-        # setup dirs
-        if self.args.overwrite:
-            shutil.rmtree(self.args.output_dir, ignore_errors=True)
-        os.makedirs(os.path.join(self.args.output_dir, 'checkpoints'), exist_ok=False)
 
         if self.args.optimizer_state != '':
             assert self.args.start_step > 0
@@ -190,8 +185,8 @@ class LLaVAFinetune:
                    f'{self.args.ckpt}/final.pt')
         torch.save(self.optimizer.state_dict(), f'{self.args.ckpt}/final_opt.pt')
 
-        if self.args.output_dir.endswith('_temp'):
-            os.rename(self.args.output_dir, self.args.output_dir[:-5])
+        if self.args.train_dir.endswith('_temp'):
+            os.rename(self.args.train_dir, self.args.train_dir[:-5])
 
     def _get_optimizer(self, params):
         if self.args.opt == 'adamw':
@@ -336,7 +331,6 @@ if __name__ == '__main__':
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
     args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.experiment_name}_{random_str}'
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
-    args.output_dir = os.path.join(args.output_dir, args.finetuned_model_name)
     ncpus = 40
     # default: set tasks_per_node equal to number of gpus
     tasks_per_node = args.ngpus
