@@ -15,7 +15,6 @@ from finetune.datasets import COCOFlickrDataset
 from finetune.param import parser
 from finetune.pgd_train import pgd
 from finetune.utils import init_wandb
-from llava.constants import IGNORE_INDEX
 from vlm_eval.attacks.apgd import apgd
 from vlm_eval.utils import force_cudnn_initialization, get_eval_model
 
@@ -31,6 +30,10 @@ from training.scheduler import cosine_lr
 import wandb
 
 from open_flamingo.eval.models.utils import unwrap_model
+
+
+def postprocess_captioning_generation(predictions):
+    return predictions.split("Output", 1)[0]
 
 
 def get_init_file():
@@ -229,15 +232,12 @@ class LLaVAFinetune:
             out = self.model.generate(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                                       past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
                                       length_penalty=-2.0, labels=labels)
-            print(out)
-            print(out.shape)
-            for batch_idx in range(labels.shape[0]):
-                temp = labels[batch_idx]
-                temp = [t.item() for t in temp if t != IGNORE_INDEX]
-                print(temp)
-                print(out[batch_idx])
-                print('gt', self.tokenizer.decode(temp))
-                print('pred', self.tokenizer.decode(out[batch_idx]))
+
+            labels = labels[:, len(input_ids[0]):]
+            out = out[:, len(input_ids[0]):]
+            # postprocess_captioning_generation()
+            print('gt', self.tokenizer.batch_decode(labels, skip_special_tokens=True))
+            print('pred', self.tokenizer.batch_decode(out, skip_special_tokens=True))
 
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
