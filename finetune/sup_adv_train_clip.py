@@ -219,13 +219,13 @@ class LLaVAFinetune:
                 data_adv = data
             if args.clean_weight > 0.:
                 loss_clean = torch.mean(
-                    self.model(pixel_values=data, input_ids=input_ids, attention_mask=attention_mask,
+                    self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
                                past_key_values=None,
                                inputs_embeds=None, labels=labels).loss)
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            out = self.model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask,
+            out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None,
                              inputs_embeds=None, labels=labels)
             loss = torch.mean(out.loss)
