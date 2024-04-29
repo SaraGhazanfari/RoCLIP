@@ -227,7 +227,7 @@ class LLaVAFinetune:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
             out = self.model.generate(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
-                             past_key_values=None, min_generation_length=0, max_generation_length=20, num_beams=3,
+                             past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
                              length_penalty=-2.0, labels=labels)
 
             for batch_idx in range(labels.shape[0]):
