@@ -236,7 +236,8 @@ class LLaVAFinetune:
                 temp = labels[batch_idx]
                 temp = [t.item() for t in temp if t != IGNORE_INDEX]
                 print(temp)
-                print(out[batch_idx])
+                out[batch_idx, out[batch_idx] == -200] = 1
+
                 print('gt', self.tokenizer.decode(temp))
                 for token_idx in range(out[batch_idx].shape[0]):
                     print(out[batch_idx, token_idx])
