@@ -350,6 +350,7 @@ if __name__ == '__main__':
     args.dist_url = get_init_file().as_uri()
     args.cmd = f"python3 {' '.join(sys.argv)}"
     args = set_config(args)
+    print(args)
     finetune = LLaVAFinetune(args)
     job = executor.submit(finetune)
     job_id = job.job_id
