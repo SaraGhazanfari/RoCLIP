@@ -177,7 +177,7 @@ class LLaVAFinetune:
         logging.info('Trainloader created successfully!')
 
     def train_one_epoch(self, epoch):
-        unwrap_model(self.model).get_vision_tower().vision_model.train()
+        unwrap_model(self.model).get_vision_tower().vision_tower.train()
         start_time, end_time = time.time(), time.time()
 
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
