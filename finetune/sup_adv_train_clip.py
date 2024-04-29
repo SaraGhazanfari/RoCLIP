@@ -70,6 +70,7 @@ class LLaVAFinetune:
         utils.setup_logging(self.args)
         utils.add_initial_logs(self.args)
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
+        self.tokenizer = model.tokenizer
         logging.info('Model loaded successfully.')
         utils.init_distributed_mode(self.args)
 
@@ -227,6 +228,8 @@ class LLaVAFinetune:
             out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None,
                              inputs_embeds=None, labels=labels)
+            print('pred', self.tokenizer.decode(torch.argmax(out.logits, dim=1)))
+            print('gt', self.tokenizer.decode(labels))
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
