@@ -330,7 +330,8 @@ if __name__ == '__main__':
     args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.mode}'
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     ncpus = 40
-    # default: set tasks_per_node equal to number of gpus
+    args = set_config(args)
+
     tasks_per_node = args.ngpus
     cluster = 'slurm' if not args.local else 'local'
     executor = submitit.AutoExecutor(folder=args.train_dir, cluster=cluster)
@@ -349,8 +350,6 @@ if __name__ == '__main__':
     )
     args.dist_url = get_init_file().as_uri()
     args.cmd = f"python3 {' '.join(sys.argv)}"
-    args = set_config(args)
-    print(args)
     finetune = LLaVAFinetune(args)
     job = executor.submit(finetune)
     job_id = job.job_id
