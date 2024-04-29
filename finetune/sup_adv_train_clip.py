@@ -111,7 +111,6 @@ class LLaVAFinetune:
         # finetune
         self.step_total = self.args.start_step
         epoch = 0
-        self.num_steps = 0
         if self.args.local_rank == 0:
             logging.info('Beginning training from epoch: 1')
         while self.step_total < self.args.steps:
@@ -144,7 +143,7 @@ class LLaVAFinetune:
             raise ValueError(f'Optimizer {self.args.optimizer} not supported.')
         if self.args.optimizer_state != '':
             self.optimizer.load_state_dict(torch.load(self.args.optimizer_state))
-        print('Optimizer loaded successfully :)')
+        logging.info('Optimizer loaded successfully :)')
 
     def _prepare_model(self, model):
         force_cudnn_initialization()
@@ -237,12 +236,11 @@ class LLaVAFinetune:
             data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
             del data_adv, data
             self.model.zero_grad()
-            self.num_steps += 1
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
                 lr = self.optimizer.param_groups[0]['lr']
                 self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
                 self.message.add("lr", lr, format=".6f")
-                self.message.add("num_steps", self.num_steps, format="1d")
+                self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("train loss", loss, format=".4f")
                 self.message.add("train total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
