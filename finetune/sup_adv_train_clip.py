@@ -142,6 +142,7 @@ class LLaVAFinetune:
             raise ValueError(f'Optimizer {self.args.optimizer} not supported.')
         if self.args.optimizer_state != '':
             self.optimizer.load_state_dict(torch.load(self.args.optimizer_state))
+        print('Optimizer loaded successfully :)')
 
     def _prepare_model(self, model):
         force_cudnn_initialization()
@@ -150,10 +151,13 @@ class LLaVAFinetune:
         params = model.model.get_vision_tower().vision_tower.parameters()
         if args.ngpus > 1 and args.nnodes > 1:
             self.model = DistributedDataParallel(model.model, device_ids=[self.args.local_rank])
+            logging.info('model loaded successfully on a multiple gpus and nodes!')
         elif args.ngpus > 1:
             self.model = DataParallel(model.model, device_ids=range(args.ngpus))
+            logging.info('model loaded successfully on a multiple gpus and one node!')
         else:
             self.model = model.model
+            logging.info('model loaded successfully on a single gpu and node!')
         return params
 
     def _get_data(self, annotations_path, image_dir_path, model):
@@ -169,6 +173,7 @@ class LLaVAFinetune:
             self.sampler = torch.utils.data.distributed.DistributedSampler(dataset)
         self.dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8,
                                      drop_last=True, sampler=self.sampler)
+        logging.info('Trainloader created successfully!')
 
     def train_one_epoch(self, epoch):
         unwrap_model(self.model).get_vision_tower().vision_model.train()
