@@ -1,9 +1,12 @@
+import copy
 import json
 
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
+
+from llava.constants import IGNORE_INDEX
 
 
 class COCOFlickrDataset(Dataset):
@@ -40,27 +43,36 @@ class COCOFlickrDataset(Dataset):
         caption = self.annotations[idx]["caption"]
         image = self.image_processor([[image]]).half().squeeze(0)
 
-        batch_text = []
-        batch_text.append(self.model.get_caption_prompt(caption))
-        input_ids, labels, attention_mask, past_key_values = self.model._prepare_text(batch_text, past_key_values=None,
-                                                                                      to_device=True)
-        prompt_max_length = 100
-        label_max_length = 100
-        input_ids = input_ids[0, :prompt_max_length]
-        labels = labels[0, :label_max_length]
-        attention_mask = attention_mask[0, :prompt_max_length]
-        if input_ids.shape[0] < prompt_max_length:
+        attention_mask, input_ids, labels = self._process_text(caption)
+        attention_mask, input_ids, labels = self._pad_text(attention_mask, input_ids, labels)
+        return image, input_ids, labels, attention_mask
+
+    def _pad_text(self, attention_mask, input_ids, labels):
+        max_length = 100
+        input_ids = input_ids[0, :max_length]
+        labels = labels[0, :max_length]
+        attention_mask = attention_mask[0, :max_length]
+        if input_ids.shape[0] < max_length:
             pad_token_tensor = torch.tensor(
-                [self.model.config.pad_token_id] * (prompt_max_length - input_ids.shape[0]))
-            attention_mask_tensor = torch.tensor([False] * (prompt_max_length - input_ids.shape[0]))
+                [self.model.config.pad_token_id] * (max_length - input_ids.shape[0]))
+            attention_mask_tensor = torch.tensor([False] * (max_length - input_ids.shape[0]))
             input_ids = torch.cat((input_ids, pad_token_tensor), dim=0)
             attention_mask = torch.cat((attention_mask, attention_mask_tensor), dim=0)
-
-        if labels.shape[0] < label_max_length:
             pad_token_tensor = torch.tensor(
-                [self.model.config.pad_token_id] * (label_max_length - labels.shape[0]))
+                [self.model.config.pad_token_id] * (max_length - input_ids.shape[0]))
             labels = torch.cat((labels, pad_token_tensor), dim=0)
-        return image, input_ids, labels, attention_mask
+        return attention_mask, input_ids, labels
+
+    def _process_text(self, caption):
+        batch_text = []
+        batch_text.append(self.model.get_caption_prompt(caption))
+        input_ids = self.model._prepare_text(batch_text)
+        context_only = batch_text[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
+        context_len = len(self.model.tokenizer.encode(context_only))
+        labels = copy.deepcopy(input_ids)
+        labels[:, :context_len] = IGNORE_INDEX
+        attention_mask = input_ids.ne(self.model.tokenizer.pad_token_id)
+        return attention_mask, input_ids, labels
 
 
 class ImageNetDataset(ImageFolder):
