@@ -182,7 +182,6 @@ class LLaVAFinetune:
         start_time, end_time = time.time(), time.time()
 
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
-            logging.info(f'{idx}/{len(self.dataloader)} Time:{round(end_time - start_time, 4)}')
             start_time = time.time()
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
