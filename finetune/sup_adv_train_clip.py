@@ -233,9 +233,9 @@ class LLaVAFinetune:
                 temp = labels[batch_idx]
                 temp = [t for t in temp if t != IGNORE_INDEX]
                 print(temp)
-                print(torch.argmax(out.logitslabels[batch_idx], dim=1))
+                print(torch.argmax(out.logits[batch_idx], dim=1))
                 print('gt', self.tokenizer.decode(temp))
-                print('pred', self.tokenizer.decode(torch.argmax(out.logitslabels[batch_idx], dim=1)))
+                print('pred', self.tokenizer.decode(torch.argmax(out.logits[batch_idx], dim=1)))
 
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
