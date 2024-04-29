@@ -1,12 +1,20 @@
+import logging
 import sys
 import time
+import uuid
+from datetime import datetime
+from os.path import realpath
+from pathlib import Path
 
+import submitit
+from torch.nn import DataParallel
+from torch.nn.parallel import DistributedDataParallel
+
+from finetune import utils
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
 from vlm_eval.utils import force_cudnn_initialization, get_eval_model
-
-# from vlm_eval.utils import get_eval_model
 
 sys.path.append("open_flamingo")
 import os
@@ -15,9 +23,7 @@ import string
 import random
 
 import numpy as np
-import open_clip
 import torch
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from training.scheduler import cosine_lr
 import wandb
@@ -26,7 +32,37 @@ from open_flamingo.eval.models.utils import unwrap_model
 from train.utils import str2bool
 
 import argparse
-import torch.distributed as dist
+
+
+def get_init_file():
+    # Init file must not exist, but it's parent dir must exist.
+    shared_folder = '/home/sg7457'
+    if not os.path.exists(shared_folder):
+        shared_folder = '/home/sara'
+    os.makedirs(str(shared_folder), exist_ok=True)
+    init_file = Path(shared_folder) / f"{uuid.uuid4().hex}_init"
+    if init_file.exists():
+        os.remove(str(init_file))
+    return init_file
+
+
+def set_config(args):
+    # process arguments
+    os.makedirs('./trained_models', exist_ok=True)
+    path = realpath('./trained_models')
+    if args.train_dir is None:  # and config.local_rank == 0:
+        args.start_new_model = True
+        folder = datetime.now().strftime("%Y-%m-%d_%H.%M.%S_%f")[:-2]
+        args.train_dir = f'{path}/{folder}'
+        os.makedirs(args.train_dir)
+        args.ckpt = f'{args.train_dir}/checkpoints'
+        os.makedirs(args.aug_ckpt)
+        os.makedirs(args.head_ckpt)
+    else:
+        args.train_dir = f'{path}/{args.train_dir}'
+        args.ckpt = f'{args.train_dir}/checkpoints'
+    return args
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, help="Model name. `open_flamingo` and `llava` supported.",
@@ -65,11 +101,19 @@ parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
 parser.add_argument('--output_dir', type=str, default='', help='Output directory')
 parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
+
+# distributed setting
+parser.add_argument("--ngpus", type=int, default=4, help="Number of GPUs to use.")
+parser.add_argument("--nnodes", type=int, default=1, help="Number of nodes.")
+parser.add_argument("--timeout", type=int, default=1440, help="Time of the Slurm job in minutes for training.")
+parser.add_argument("--partition", type=str, default="gpu_p13", help="Partition to use for Slurm.")
+parser.add_argument("--local", action='store_true', help="Execute with local machine instead of slurm.")
 parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
 parser.add_argument("--local-rank", default=0, type=int, help="Please ignore and do not set this argument.")
-# leftovers
+
+# leftovers for model
 parser.add_argument("--model_path", type=str)
 parser.add_argument("--temperature", type=float)
 parser.add_argument("--num_beams", type=int)
@@ -77,328 +121,191 @@ parser.add_argument("--precision", type=str)
 parser.add_argument("--vision_encoder_pretrained", type=str)
 
 
-def setup_for_distributed(is_master):
-    """
-    This function disables printing when not in master process
-    """
-    import builtins as __builtin__
-    builtin_print = __builtin__.print
-
-    def print(*args, **kwargs):
-        force = kwargs.pop('force', False)
-        if is_master or force:
-            builtin_print(*args, **kwargs)
-
-    __builtin__.print = print
-
-
-def init_distributed_mode(args):
-    # launched with torch.distributed.launch
-    if 'RANK' in os.environ and 'WORLD_SIZE' in os.environ:
-        args.rank = int(os.environ["RANK"])
-        args.world_size = int(os.environ['WORLD_SIZE'])
-        args.gpu = int(os.environ['LOCAL_RANK'])
-    # launched with submitit on a slurm cluster
-    elif 'SLURM_PROCID' in os.environ:
-        args.rank = int(os.environ['SLURM_PROCID'])
-        args.gpu = args.rank % torch.cuda.device_count()
-    # launched naively with `python main_dino.py`
-    # we manually add MASTER_ADDR and MASTER_PORT to env variables
-    elif torch.cuda.is_available():
-        print('Will run the code on one GPU.')
-        args.rank, args.gpu, args.world_size = 0, 0, 8
-        os.environ['MASTER_ADDR'] = '127.0.0.1'
-        os.environ['MASTER_PORT'] = '29500'
-    else:
-        print('Does not support training without GPU.')
-        sys.exit(1)
-
-    dist.init_process_group(
-        backend="nccl",
-        init_method=args.dist_url,
-        world_size=args.world_size,
-        rank=args.rank,
-    )
-
-    torch.cuda.set_device(args.gpu)
-    print('| distributed init (rank {}): {}'.format(
-        args.rank, args.dist_url), flush=True)
-    dist.barrier()
-    setup_for_distributed(args.rank == 0)
-
-
-def main(args, leftovers):
-    # setup wandb
-    if args.wandb:
-        init_wandb(
-            project_name='clip-finetune',
-            model_name=args.finetuned_model_name,
-            config=vars(args)
-        )
-    else:
-        wandb.init(mode='disabled')
-
-    # print args
-    print(f"Arguments:\n{'-' * 20}")
-    for arg, value in vars(args).items():
-        print(f"{arg}: {value}")
-    print(f"{'-' * 20}")
-
-    # setup dirs
-    if args.overwrite:
-        shutil.rmtree(args.output_dir, ignore_errors=True)
-    os.makedirs(os.path.join(args.output_dir, 'checkpoints'), exist_ok=False)
-
-    # write args to file
-    with open(os.path.join(args.output_dir, 'args.txt'), 'w') as f:
-        f.write(str(args))
-
-    model_orig, _, image_processor = open_clip.create_model_and_transforms(
-        args.clip_model_name, pretrained='openai'
-    )
-    if args.optimizer_state != '':
-        assert args.start_step > 0
-        assert str(args.start_step) in args.optimizer_state
-        assert args.pretrained in ['', 'none']
-        args.pretrained = args.optimizer_state.replace('_opt', '')
-
-    image_dir_path = f'{args.imagenet_root}/train2014'
-    annotations_path = f'{args.imagenet_root}/annotations/captions_train2014.json'
-    # model_args = {
-    #     leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
-    # }
-    model = get_eval_model(args, args.__dict__, adversarial="none")  # TinyLLAVA(args, main_device)  #
-    dataset = COCOFlickrDataset(model=model,
-                                image_processor=model._prepare_images,
-                                image_dir_path=image_dir_path,
-                                annotations_path=annotations_path,
-                                transform=None,
-                                prefix='COCO_train2014_'
-                                )
-
-    # init_distributed_mode(args)
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-    # dataloader_eval = DataLoader(dataset_eval, batch_size=args.batch_size, shuffle=True, num_workers=8, drop_last=True)
-    force_cudnn_initialization()
-    device_id = 0
-    model.set_device(device_id)
-    params = model.model.get_vision_tower().vision_tower.parameters()
-    # if num_gpus > 1:
-    #     model = DataParallel(model.model, device_ids=range(num_gpus))
-    # else:
-    model = model.model
-    # set optimizer (all params have requires_grad=True)
-
-    if args.opt == 'adamw':
-        optimizer = torch.optim.AdamW(params, lr=args.lr, weight_decay=args.wd)
-    elif args.opt == 'sgd':
-        optimizer = torch.optim.SGD(
-            params,
-            lr=args.lr,
-            momentum=args.momentum_sgd,
-            weight_decay=args.wd
-        )
-    else:
-        raise ValueError(f'Optimizer {args.optimizer} not supported.')
-    if args.optimizer_state != '':
-        optimizer.load_state_dict(torch.load(args.optimizer_state))
-
-    # set scheduler
-    scheduler = cosine_lr(optimizer, args.lr, args.warmup, args.steps)
-
-    # compute amount of epochs
-    total_epochs = args.steps / len(dataloader)
-    print(f'train for {total_epochs} epochs')
-    args.total_epochs = total_epochs
-
-    # finetune
-    step_total = args.start_step
-    epoch = 0
-    while step_total < args.steps:
-        train_one_epoch(model=model, dataloader=dataloader, args=args, optimizer=optimizer, scheduler=scheduler,
-                        step_total=step_total)
-        print(f'Epoch {epoch} done.')
-        epoch += 1
-        return
-
-    # save final model
-    torch.save(unwrap_model(model).model.state_dict(), f'{args.output_dir}/checkpoints/final.pt')
-    torch.save(optimizer.state_dict(), f'{args.output_dir}/checkpoints/final_opt.pt')
-
-    if args.output_dir.endswith('_temp'):
-        # rename temp dir to final dir
-        os.rename(args.output_dir, args.output_dir[:-5])
-
-
-class ClipVisionModel(torch.nn.Module):
-    def __init__(self, model, args, normalize):
-        super().__init__()
-        self.model = model
+class LLaVAFinetune:
+    def __init__(self, args):
         self.args = args
-        self.normalize = normalize
+        # setup wandb
 
-    def forward(self, vision, output_normalize):
-        embedding = self.model(self.normalize(vision))
-        if output_normalize:
-            embedding = F.normalize(embedding, dim=-1)
-        return embedding
+    def __call__(self, *args, **kwargs):
+        utils.setup_logging(self.args)
+        utils.add_initial_logs(self.args)
 
+        utils.init_distributed_mode(self.args)
+        self.message = utils.MessageBuilder()
 
-class ComputeLossWrapper:
-    def __init__(self, embedding_orig, embedding_text_labels_norm, reduction='mean', loss=None,
-                 logit_scale=100.):
-        self.embedding_orig = embedding_orig
-        self.embedding_text_labels_norm = embedding_text_labels_norm
-        self.reduction = reduction
-        self.loss_str = loss
-        self.logit_scale = logit_scale
-
-    def __call__(self, embedding, targets):
-        return compute_loss(
-            loss_str=self.loss_str, embedding=embedding, targets=targets,
-            embedding_orig=self.embedding_orig, logit_scale=self.logit_scale,
-            embedding_text_labels_norm=self.embedding_text_labels_norm, reduction=self.reduction
-        )
-
-
-def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
-    unwrap_model(model).get_vision_tower().vision_model.train()
-    start_time, end_time = time.time(), time.time()
-
-    for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
-        print(f'{i}/{len(dataloader)} Time:{round(end_time - start_time, 4)}')
-        start_time = time.time()
-        data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
-            'cuda:0'), attention_mask.to('cuda:0')
-        print('-----------------------')
-        print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
-        print(labels)
-        print('-----------------------')
-
-        if args.attack == 'pgd':
-            data_adv = pgd(
-                forward=model,
-                loss_fn=None,
-                data_clean=data,
-                targets=labels,
-                norm=args.norm,
-                eps=args.eps,
-                iterations=args.iterations_adv,
-                stepsize=args.stepsize_adv,
-                output_normalize=args.output_normalize,
-                perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
-                mode='max',
-                verbose=True,
-                input_ids=input_ids, labels=labels, attention_mask=attention_mask
+        if self.args.wandb:
+            init_wandb(
+                project_name='clip-finetune',
+                model_name=self.args.finetuned_model_name,
+                config=vars(self.args)
             )
-        elif args.attack == 'apgd':
-            # apgd currently always applies output normalization
-            data_adv = apgd(
-                model=model,
-                loss_fn=None,
-                x=data,
-                y=labels,
-                norm=args.norm,
-                eps=args.eps,
-                n_iter=args.iterations_adv,
-                verbose=True
-            )
-        elif not args.attack:
-            data_adv = data
-        if args.clean_weight > 0.:
-            loss_clean = torch.mean(
-                model(pixel_values=data, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
-                      inputs_embeds=None, labels=labels).loss)
         else:
-            loss_clean = 0.
-        print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-        out = model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask, past_key_values=None,
-                    inputs_embeds=None, labels=labels)
-        print(out.__dict__.keys())
-        print(labels)
-        print(torch.argmax(out.logits.squeeze(0), dim=0))
-        loss = torch.mean(out.loss)
-        print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-        loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-        loss_total.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-        step_total += 1
-        scheduler(step_total)
-        print('4', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-        data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
-        del data_adv, loss, loss_total, data
-        torch.cuda.empty_cache()
-        print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-        model.zero_grad()
-        end_time = time.time()
-        return
+            wandb.init(mode='disabled')
 
+        # setup dirs
+        if self.args.overwrite:
+            shutil.rmtree(self.args.output_dir, ignore_errors=True)
+        os.makedirs(os.path.join(self.args.output_dir, 'checkpoints'), exist_ok=False)
 
-def calculate_loss(args, data, data_adv, model, optimizer, scheduler, step_total):
-    if args.clean_weight > 0.:
-        loss_clean = model(data)
-    else:
-        loss_clean = 0.
-    print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-    loss = model(data_adv)
-    print(f'$$$$$$$$$$$$$$$$$$loss: {loss}, loss_clean: {loss_clean}*****************************')
-    loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-    loss_total.backward()
-    optimizer.step()
-    optimizer.zero_grad()
-    step_total += 1
-    scheduler(step_total)
-    print('4', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-    data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
-    del data_adv, loss, loss_total, data, model.input_ids, model.labels, model.attention_mask
-    torch.cuda.empty_cache()
-    print('5', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+        if self.args.optimizer_state != '':
+            assert self.args.start_step > 0
+            assert str(self.args.start_step) in self.args.optimizer_state
+            assert self.args.pretrained in ['', 'none']
+            self.args.pretrained = self.args.optimizer_state.replace('_opt', '')
 
+        image_dir_path = f'{self.args.imagenet_root}/train2014'
+        annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2014.json'
 
-@torch.no_grad()
-def compute_acc(logits, targets):
-    preds_clean = logits.max(dim=1)[1].detach()
-    acc = (preds_clean.eq(targets).sum() / targets.shape[0]).item() * 100
-    return acc
+        model = get_eval_model(self.args, self.args.__dict__, adversarial="none")  # TinyLLAVA(args, main_device)  #
 
+        self._get_data(annotations_path, image_dir_path, model)
+        params = self._prepare_model(model)
 
-def compute_loss(loss_str, embedding, targets, embedding_orig, logit_scale,
-                 embedding_text_labels_norm=None, reduction='mean'):
-    if loss_str == 'l2':
-        loss = l2(out=embedding, targets=embedding_orig, reduction=reduction)
-    elif loss_str == 'ce':
-        loss = ce(
-            out=embedding @ (logit_scale * embedding_text_labels_norm),
-            targets=targets,
-            reduction=reduction
-        )
-    else:
-        raise ValueError(f'loss {loss_str} not supported')
-    return loss
+        self._get_optimizer(params)
 
+        # set scheduler
+        self.scheduler = cosine_lr(self.optimizer, self.args.lr, self.args.warmup, self.args.steps)
 
-def l2(out, targets, reduction='none'):
-    # squared l2 - it does not divide by the latent dimension
-    # should have shape (batch_size, embedding_size)
-    assert out.shape == targets.shape, f'{out.shape} != {targets.shape}'
-    assert out.shape[0] > 1
-    # Compute the element-wise squared error
-    squared_error_batch = F.mse_loss(out, targets, reduction='none')
-    if reduction == 'mean':
-        squared_error_batch = torch.mean(squared_error_batch.sum(dim=1))
-    else:
-        squared_error_batch = squared_error_batch.sum(dim=1)
-        assert squared_error_batch.shape == (out.shape[0],), f'{squared_error_batch.shape} != {(out.shape[0],)}'
-    return squared_error_batch
+        # compute amount of epochs
+        total_epochs = self.args.steps / len(self.dataloader)
+        print(f'train for {total_epochs} epochs')
+        self.args.total_epochs = total_epochs
 
+        # finetune
+        self.step_total = self.args.start_step
+        epoch = 0
+        self.num_steps = 0
+        if self.args.local_rank == 0:
+            logging.info('Beginning training from epoch: 1')
+        while self.step_total < self.args.steps:
+            if self.sampler:
+                self.sampler.set_epoch(epoch)
+            self.train_one_epoch(epoch)
+            print(f'Epoch {epoch} done.')
+            epoch += 1
+            return
 
-def ce(out, targets, reduction='mean'):
-    # out = logits
-    assert out.shape[0] == targets.shape[0], (out.shape, targets.shape)
-    assert out.shape[0] > 1
+        # save final model
+        torch.save(unwrap_model(self.model).get_vision_tower().vision_tower.state_dict(),
+                   f'{self.args.ckpt}/final.pt')
+        torch.save(self.optimizer.state_dict(), f'{self.args.ckpt}/final_opt.pt')
 
-    return F.cross_entropy(out, targets, reduction=reduction)
+        if self.args.output_dir.endswith('_temp'):
+            os.rename(self.args.output_dir, self.args.output_dir[:-5])
+
+    def _get_optimizer(self, params):
+        if self.args.opt == 'adamw':
+            self.optimizer = torch.optim.AdamW(params, lr=self.args.lr, weight_decay=self.args.wd)
+        elif self.args.opt == 'sgd':
+            self.optimizer = torch.optim.SGD(
+                params,
+                lr=self.args.lr,
+                momentum=self.args.momentum_sgd,
+                weight_decay=self.args.wd
+            )
+        else:
+            raise ValueError(f'Optimizer {self.args.optimizer} not supported.')
+        if self.args.optimizer_state != '':
+            self.optimizer.load_state_dict(torch.load(self.args.optimizer_state))
+
+    def _prepare_model(self, model):
+        force_cudnn_initialization()
+        device_id = 0
+        model.set_device(device_id)
+        params = model.model.get_vision_tower().vision_tower.parameters()
+        if args.ngpus > 1 and args.nnodes > 1:
+            self.model = DistributedDataParallel(model.model, device_ids=[self.args.local_rank])
+        elif args.ngpus > 1:
+            self.model = DataParallel(model.model, device_ids=range(args.ngpus))
+        else:
+            self.model = model.model
+        return params
+
+    def _get_data(self, annotations_path, image_dir_path, model):
+        dataset = COCOFlickrDataset(model=model,
+                                    image_processor=model._prepare_images,
+                                    image_dir_path=image_dir_path,
+                                    annotations_path=annotations_path,
+                                    transform=None,
+                                    prefix='COCO_train2014_'
+                                    )
+        self.sampler = None
+        if self.args.ngpus > 1 and self.args.nnodes > 1:
+            self.sampler = torch.utils.data.distributed.DistributedSampler(dataset)
+        self.dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8,
+                                     drop_last=True, sampler=self.sampler)
+
+    def train_one_epoch(self, epoch):
+        unwrap_model(self.model).get_vision_tower().vision_model.train()
+        start_time, end_time = time.time(), time.time()
+
+        for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
+            logging.info(f'{idx}/{len(self.dataloader)} Time:{round(end_time - start_time, 4)}')
+            start_time = time.time()
+            data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
+                'cuda:0'), attention_mask.to('cuda:0')
+
+            if args.attack == 'pgd':
+                data_adv = pgd(
+                    forward=self.model,
+                    loss_fn=None,
+                    data_clean=data,
+                    targets=labels,
+                    norm=args.norm,
+                    eps=args.eps,
+                    iterations=args.iterations_adv,
+                    stepsize=args.stepsize_adv,
+                    output_normalize=args.output_normalize,
+                    perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
+                    mode='max',
+                    verbose=True,
+                    input_ids=input_ids, labels=labels, attention_mask=attention_mask
+                )
+            elif args.attack == 'apgd':
+                # apgd currently always applies output normalization
+                data_adv = apgd(
+                    model=self.model,
+                    loss_fn=None,
+                    x=data,
+                    y=labels,
+                    norm=args.norm,
+                    eps=args.eps,
+                    n_iter=args.iterations_adv,
+                    verbose=True
+                )
+            elif not args.attack:
+                data_adv = data
+            if args.clean_weight > 0.:
+                loss_clean = torch.mean(
+                    self.model(pixel_values=data, input_ids=input_ids, attention_mask=attention_mask,
+                               past_key_values=None,
+                               inputs_embeds=None, labels=labels).loss)
+            else:
+                loss_clean = 0.
+            # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+            out = self.model(pixel_values=data_adv, input_ids=input_ids, attention_mask=attention_mask,
+                             past_key_values=None,
+                             inputs_embeds=None, labels=labels)
+            loss = torch.mean(out.loss)
+            loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
+            loss_total.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            self.step_total += 1
+            self.scheduler(self.step_total)
+            data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
+            del data_adv, data
+            self.model.zero_grad()
+            self.num_steps += 1
+            if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
+                lr = self.optimizer.param_groups[0]['lr']
+                self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
+                self.message.add("lr", lr, format=".6f")
+                self.message.add("num_steps", self.num_steps, format="1d")
+                self.message.add("train loss", loss, format=".4f")
+                self.message.add("train total loss", loss_total, format=".4f")
+                self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
+                logging.info(self.message.get_message())
 
 
 if __name__ == '__main__':
@@ -430,5 +337,29 @@ if __name__ == '__main__':
     args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.experiment_name}_{random_str}'
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     args.output_dir = os.path.join(args.output_dir, args.finetuned_model_name)
-    # run
-    main(args, args)
+    ncpus = 40
+    # default: set tasks_per_node equal to number of gpus
+    tasks_per_node = args.ngpus
+    cluster = 'slurm' if not args.local else 'local'
+    executor = submitit.AutoExecutor(folder=args.train_dir, cluster=cluster)
+    # if not config.local:
+    executor.update_parameters(
+        gpus_per_node=args.ngpus,
+        nodes=args.nnodes,
+        tasks_per_node=tasks_per_node,
+        cpus_per_task=ncpus // tasks_per_node,
+        stderr_to_stdout=True,
+        slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
+        slurm_partition=args.partition,
+        slurm_signal_delay_s=0,
+        slurm_mem='64GB',
+        timeout_min=args.timeout,
+    )
+    args.dist_url = get_init_file().as_uri()
+    args.cmd = f"python3 {' '.join(sys.argv)}"
+    set_config(args)
+    finetune = LLaVAFinetune(args)
+    job = executor.submit(finetune)
+    job_id = job.job_id
+    folder = args.train_dir.split('/')[-1]
+    print(f"Submitted batch job {job_id} in folder {folder}")
