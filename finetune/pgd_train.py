@@ -32,7 +32,7 @@ def pgd(
         print(f'*****************************{i}*****************************')
         perturbation.requires_grad = True
         with torch.enable_grad():
-            out = forward(pixel_values=data_clean + perturbation, input_ids=input_ids,
+            out = forward(images=data_clean + perturbation, input_ids=input_ids,
                           attention_mask=attention_mask,
                           past_key_values=None,
                           inputs_embeds=None,
