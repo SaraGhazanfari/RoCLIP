@@ -239,7 +239,7 @@ class LLaVAFinetune:
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
                 lr = self.optimizer.param_groups[0]['lr']
                 self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
-                self.message.add("lr", lr, format=".6f")
+                self.message.add("lr", lr, format=".10f")
                 self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("train loss", loss, format=".4f")
                 self.message.add("train total loss", loss_total, format=".4f")
