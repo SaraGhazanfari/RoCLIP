@@ -56,11 +56,9 @@ class COCOFlickrDataset(Dataset):
             pad_token_tensor = torch.tensor(
                 [self.model.config.pad_token_id] * (max_length - input_ids.shape[0]))
             attention_mask_tensor = torch.tensor([False] * (max_length - input_ids.shape[0]))
+            labels = torch.cat((labels, pad_token_tensor), dim=0)
             input_ids = torch.cat((input_ids, pad_token_tensor), dim=0)
             attention_mask = torch.cat((attention_mask, attention_mask_tensor), dim=0)
-            pad_token_tensor = torch.tensor(
-                [self.model.config.pad_token_id] * (max_length - input_ids.shape[0]))
-            labels = torch.cat((labels, pad_token_tensor), dim=0)
         return attention_mask, input_ids, labels
 
     def _process_text(self, caption):
