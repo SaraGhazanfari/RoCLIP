@@ -87,79 +87,79 @@ def get_attack_success_rate(predictions, target_str):
             n_success += 1
     return n_success / n * 100
 
-
-class TinyLLAVA:
-    def __init__(self, args, device):
-        from transformers import LlavaForConditionalGeneration
-        self.conv_mode = "vicuna_v1"
-        args.model_path = "bczhou/tiny-llava-v1-hf"
-        self.model = LlavaForConditionalGeneration.from_pretrained(
-            args.model_path,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
-        kwargs = {}
-        if args.precision == 'float16':
-            kwargs['torch_dtype'] = torch.float16
-        elif args.precision == 'float32':
-            kwargs['torch_dtype'] = torch.float32
-        processor = AutoProcessor.from_pretrained(args.model_path)
-        self.image_processor = processor.image_processor
-        self._prepare_tokenizer(processor)
-        self.config = AutoConfig.from_pretrained(args.model_path)
-        setattr(self.config, 'image_aspect_ratio', 'pad')
-        self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
-
-    def _prepare_tokenizer(self, processor):
-        self.tokenizer = processor.tokenizer
-        mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
-        mm_use_im_patch_token = getattr(self.config, "mm_use_im_patch_token", True)
-        if mm_use_im_patch_token:
-            self.tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-        if mm_use_im_start_end:
-            self.tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-        self.model.resize_token_embeddings(len(self.tokenizer))
-
-    def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
-        assert len(batch) == 1, "Only support batch size 1 (yet)"
-        image_tensor = process_images(batch[0], self.image_processor, self.config)
-        return image_tensor
-
-    def set_device(self, device):
-        """Set device for model."""
-        self.device = f"cuda:{device}"
-        self.model = self.model.to(self.device)
-
-    def _prepare_text(
-            self,
-            convs,
-            past_key_values: torch.Tensor = None,
-            to_device: bool = False,
-    ):
-        input_ids = [
-            tokenizer_image_token(conv.get_prompt(), self.tokenizer, image_token_index=self.config.image_token_index,
-                                  return_tensors='pt') for conv in convs
-        ]
-        input_ids = torch.stack(input_ids, dim=0)
-
-        context_only = convs[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
-        context_len = len(self.tokenizer.encode(context_only))
-
-        labels = copy.deepcopy(input_ids)#[:, context_len:]
-        labels[:, :context_len] = self.config.ignore_index
-        attention_mask = input_ids.ne(self.config.pad_token_id)
-        return input_ids[:, :context_len], labels, attention_mask, past_key_values
-
-    def get_caption_prompt(self, caption=None) -> str:
-        qs = "Provide a short caption for this image."
-
-        if self.mm_use_im_start_end:
-            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-        else:
-            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
-
-        conv = conv_templates[self.conv_mode].copy()
-        conv.append_message(conv.roles[0], qs)
-        conv.append_message(conv.roles[1], caption)
-
-        return conv
+#
+# class TinyLLAVA:
+#     def __init__(self, args, device):
+#         from transformers import LlavaForConditionalGeneration
+#         self.conv_mode = "vicuna_v1"
+#         args.model_path = "bczhou/tiny-llava-v1-hf"
+#         self.model = LlavaForConditionalGeneration.from_pretrained(
+#             args.model_path,
+#             torch_dtype=torch.float16,
+#             low_cpu_mem_usage=True,
+#         )
+#         kwargs = {}
+#         if args.precision == 'float16':
+#             kwargs['torch_dtype'] = torch.float16
+#         elif args.precision == 'float32':
+#             kwargs['torch_dtype'] = torch.float32
+#         processor = AutoProcessor.from_pretrained(args.model_path)
+#         self.image_processor = processor.image_processor
+#         self._prepare_tokenizer(processor)
+#         self.config = AutoConfig.from_pretrained(args.model_path)
+#         setattr(self.config, 'image_aspect_ratio', 'pad')
+#         self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
+#
+#     def _prepare_tokenizer(self, processor):
+#         self.tokenizer = processor.tokenizer
+#         mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
+#         mm_use_im_patch_token = getattr(self.config, "mm_use_im_patch_token", True)
+#         if mm_use_im_patch_token:
+#             self.tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
+#         if mm_use_im_start_end:
+#             self.tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
+#         self.model.resize_token_embeddings(len(self.tokenizer))
+#
+#     def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
+#         assert len(batch) == 1, "Only support batch size 1 (yet)"
+#         image_tensor = process_images(batch[0], self.image_processor, self.config)
+#         return image_tensor
+#
+#     def set_device(self, device):
+#         """Set device for model."""
+#         self.device = f"cuda:{device}"
+#         self.model = self.model.to(self.device)
+#
+#     def _prepare_text(
+#             self,
+#             convs,
+#             past_key_values: torch.Tensor = None,
+#             to_device: bool = False,
+#     ):
+#         input_ids = [
+#             tokenizer_image_token(conv.get_prompt(), self.tokenizer, image_token_index=self.config.image_token_index,
+#                                   return_tensors='pt') for conv in convs
+#         ]
+#         input_ids = torch.stack(input_ids, dim=0)
+#
+#         context_only = convs[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
+#         context_len = len(self.tokenizer.encode(context_only))
+#
+#         labels = copy.deepcopy(input_ids)#[:, context_len:]
+#         labels[:, :context_len] = self.config.ignore_index
+#         attention_mask = input_ids.ne(self.config.pad_token_id)
+#         return input_ids[:, :context_len], labels, attention_mask, past_key_values
+#
+#     def get_caption_prompt(self, caption=None) -> str:
+#         qs = "Provide a short caption for this image."
+#
+#         if self.mm_use_im_start_end:
+#             qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+#         else:
+#             qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+#
+#         conv = conv_templates[self.conv_mode].copy()
+#         conv.append_message(conv.roles[0], qs)
+#         conv.append_message(conv.roles[1], caption)
+#
+#         return conv
