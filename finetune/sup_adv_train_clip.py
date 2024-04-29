@@ -110,6 +110,8 @@ parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
     distributed training; see https://pytorch.org/docs/stable/distributed.html""")
 parser.add_argument("--local-rank", default=0, type=int, help="Please ignore and do not set this argument.")
+parser.add_argument("--partition", type=str, default="gpu_p13", help="Partition to use for Slurm.")
+parser.add_argument("--local", action='store_true', help="Execute with local machine instead of slurm.")
 
 # leftovers for model
 parser.add_argument("--model_path", type=str)
