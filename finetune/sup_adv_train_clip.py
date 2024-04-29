@@ -182,7 +182,7 @@ def main(args, leftovers):
     force_cudnn_initialization()
     device_id = 0
     model.set_device(device_id)
-    params = model.model.vision_tower.vision_model.parameters()
+    params = model.model.get_vision_tower().vision_tower.parameters()
     # if num_gpus > 1:
     #     model = DataParallel(model.model, device_ids=range(num_gpus))
     # else:
@@ -262,7 +262,7 @@ class ComputeLossWrapper:
 
 
 def train_one_epoch(model, dataloader, args, optimizer, scheduler, step_total):
-    unwrap_model(model).vision_tower.vision_model.train()
+    unwrap_model(model).get_vision_tower().vision_model.train()
     start_time, end_time = time.time(), time.time()
 
     for i, (data, input_ids, labels, attention_mask) in enumerate(dataloader):
