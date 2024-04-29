@@ -95,8 +95,8 @@ parser.add_argument('--iterations_adv', type=int, default=10, help='Iterations f
 parser.add_argument('--stepsize_adv', type=float, default=1.,
                     help='Step size for adversarial attack (no effect for apgd)')
 parser.add_argument('--wandb', type=str2bool, default=True, help='Use Weights & Biases for logging')
-parser.add_argument('--experiment_name', type=str, default='')
-parser.add_argument('--overwrite', type=str2bool, default=False, help='Overwrite existing directory')
+parser.add_argument('--mode', type=str, default='')
+
 parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
 parser.add_argument('--train_dir', type=str, default=None, help='Output directory')
