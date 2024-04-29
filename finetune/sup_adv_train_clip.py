@@ -241,8 +241,9 @@ class LLaVAFinetune:
                 self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
                 self.message.add("lr", lr, format=".10f")
                 self.message.add("num_steps", self.step_total, format="1d")
+                self.message.add("total", self.args.steps, format="1d")
                 self.message.add("train loss", loss, format=".4f")
-                self.message.add("train total loss", loss_total, format=".4f")
+                # self.message.add("train total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
 
