@@ -1,18 +1,10 @@
-import copy
 import sys
 import time
-from typing import List
 
-from torch.nn import DataParallel
-from transformers import AutoProcessor, AutoConfig
-
-from llava.constants import DEFAULT_IM_START_TOKEN, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_END_TOKEN
-from llava.conversation import conv_templates
-from llava.mm_utils import process_images, tokenizer_image_token
 from train.datasets import COCOFlickrDataset
 from train.pgd_train import pgd
 from vlm_eval.attacks.apgd import apgd
-from vlm_eval.utils import force_cudnn_initialization
+from vlm_eval.utils import force_cudnn_initialization, get_eval_model
 
 # from vlm_eval.utils import get_eval_model
 
@@ -83,73 +75,6 @@ parser.add_argument("--temperature", type=float)
 parser.add_argument("--num_beams", type=int)
 parser.add_argument("--precision", type=str)
 parser.add_argument("--vision_encoder_pretrained", type=str)
-
-
-class TinyLLAVA:
-    def __init__(self, args, device):
-        from transformers import LlavaForConditionalGeneration, LlamaForCausalLM
-        self.conv_mode = "vicuna_v1"
-        args.model_path = "bczhou/tiny-llava-v1-hf"
-        self.model = LlamaForCausalLM.from_pretrained(
-            args.model_path,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        )
-        kwargs = {}
-        if args.precision == 'float16':
-            kwargs['torch_dtype'] = torch.float16
-        elif args.precision == 'float32':
-            kwargs['torch_dtype'] = torch.float32
-        processor = AutoProcessor.from_pretrained(args.model_path)
-        self.image_processor = processor.image_processor
-        self.tokenizer = processor.tokenizer
-        self.config = AutoConfig.from_pretrained(args.model_path)
-        setattr(self.config, 'image_aspect_ratio', 'pad')
-        self.mm_use_im_start_end = getattr(self.config, "mm_use_im_start_end", False)
-
-    def _prepare_images(self, batch: List[List[torch.Tensor]]) -> torch.Tensor:
-        assert len(batch) == 1, "Only support batch size 1 (yet)"
-        image_tensor = process_images(batch[0], self.image_processor, self.config)
-        return image_tensor
-
-    def set_device(self, device):
-        """Set device for model."""
-        self.device = f"cuda:{device}"
-        self.model = self.model.to(self.device)
-
-    def _prepare_text(
-            self,
-            convs,
-            past_key_values: torch.Tensor = None,
-            to_device: bool = False,
-    ):
-        input_ids = [
-            tokenizer_image_token(conv.get_prompt(), self.tokenizer, image_token_index=self.config.image_token_index,
-                                  return_tensors='pt') for conv in convs
-        ]
-        input_ids = torch.stack(input_ids, dim=0)
-
-        context_only = convs[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
-        context_len = len(self.tokenizer.encode(context_only))
-
-        labels = copy.deepcopy(input_ids)#[:, context_len:]
-        labels[:, :context_len] = self.config.ignore_index
-        attention_mask = input_ids.ne(self.config.pad_token_id)
-        return input_ids[:, :context_len], labels, attention_mask, past_key_values
-
-    def get_caption_prompt(self, caption=None) -> str:
-        qs = "Provide a short caption for this image."
-
-        if self.mm_use_im_start_end:
-            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-        else:
-            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
-
-        conv = conv_templates[self.conv_mode].copy()
-        conv.append_message(conv.roles[0], qs)
-        conv.append_message(conv.roles[1], caption)
-
-        return conv
 
 
 def setup_for_distributed(is_master):
@@ -228,8 +153,6 @@ def main(args, leftovers):
     with open(os.path.join(args.output_dir, 'args.txt'), 'w') as f:
         f.write(str(args))
 
-    main_device = 0
-    # get models
     model_orig, _, image_processor = open_clip.create_model_and_transforms(
         args.clip_model_name, pretrained='openai'
     )
@@ -244,7 +167,7 @@ def main(args, leftovers):
     # model_args = {
     #     leftovers[i].lstrip("-"): leftovers[i + 1] for i in range(0, len(leftovers), 2)
     # }
-    model = TinyLLAVA(args, main_device)  # get_eval_model(args, args.__dict__, adversarial="none")
+    model = get_eval_model(args, args.__dict__, adversarial="none")  # TinyLLAVA(args, main_device)  #
     dataset = COCOFlickrDataset(model=model,
                                 image_processor=model._prepare_images,
                                 image_dir_path=image_dir_path,
