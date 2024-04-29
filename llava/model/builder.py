@@ -19,7 +19,7 @@ import warnings
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
 
-from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.constants import DEFAULT_IMAGE_PATCH_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IMAGE_TOKEN_INDEX
 from llava.model import *
 
 
@@ -209,6 +209,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
         if mm_use_im_start_end:
             tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
+        tokenizer.add_tokens([IMAGE_TOKEN_INDEX], special_tokens=True)
         model.resize_token_embeddings(len(tokenizer))
 
         vision_tower = model.get_vision_tower()
