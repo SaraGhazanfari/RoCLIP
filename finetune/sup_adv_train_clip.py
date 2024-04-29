@@ -69,7 +69,7 @@ class LLaVAFinetune:
     def __call__(self, *args, **kwargs):
         utils.setup_logging(self.args)
         utils.add_initial_logs(self.args)
-
+        model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
         utils.init_distributed_mode(self.args)
         self.message = utils.MessageBuilder()
 
@@ -91,7 +91,7 @@ class LLaVAFinetune:
         image_dir_path = f'{self.args.imagenet_root}/train2014'
         annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2014.json'
 
-        model = get_eval_model(self.args, self.args.__dict__, adversarial="none")  # TinyLLAVA(args, main_device)  #
+        # TinyLLAVA(args, main_device)  #
 
         self._get_data(annotations_path, image_dir_path, model)
         params = self._prepare_model(model)
