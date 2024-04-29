@@ -2,10 +2,13 @@ import logging
 import os
 import pprint
 import socket
+import sys
+from time import sleep
 
 import numpy as np
 import torch
 import torch.distributed as dist
+import wandb
 
 
 def add_initial_logs(config):
@@ -135,3 +138,31 @@ class MessageBuilder:
 
     def clear(self):
         self.msg = []
+
+
+def init_wandb(project_name, model_name, config, **wandb_kwargs):
+    os.environ['WANDB__SERVICE_WAIT'] = '300'
+    while True:
+        try:
+            wandb_run = wandb.init(
+                project=project_name, name=model_name, save_code=True,
+                config=config, **wandb_kwargs,
+            )
+            break
+        except Exception as e:
+            print('wandb connection error', file=sys.stderr)
+            print(f'error: {e}', file=sys.stderr)
+            sleep(1)
+            print('retrying..', file=sys.stderr)
+    return wandb_run
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise ValueError
