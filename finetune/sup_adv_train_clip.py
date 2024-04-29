@@ -15,6 +15,7 @@ from finetune.datasets import COCOFlickrDataset
 from finetune.param import parser
 from finetune.pgd_train import pgd
 from finetune.utils import init_wandb
+from llava.constants import IGNORE_INDEX
 from vlm_eval.attacks.apgd import apgd
 from vlm_eval.utils import force_cudnn_initialization, get_eval_model
 
@@ -229,7 +230,9 @@ class LLaVAFinetune:
                              past_key_values=None,
                              inputs_embeds=None, labels=labels)
             for batch_idx in range(labels.shape[0]):
-                print('gt', self.tokenizer.decode(labels[batch_idx]))
+                temp = labels[batch_idx]
+                temp = [t for t in temp if t != IGNORE_INDEX]
+                print('gt', self.tokenizer.decode(temp))
                 print('pred', self.tokenizer.decode(torch.argmax(out.logitslabels[batch_idx], dim=1)))
 
             loss = torch.mean(out.loss)
