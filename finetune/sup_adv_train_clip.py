@@ -237,11 +237,7 @@ class LLaVAFinetune:
                 temp = [t.item() for t in temp if t != IGNORE_INDEX]
                 print(temp)
                 out[batch_idx, out[batch_idx] == -200] = 1
-
-                print('gt', self.tokenizer.decode(temp))
-                for token_idx in range(out[batch_idx].shape[0]):
-                    print(out[batch_idx, token_idx])
-                    print('pred', self.tokenizer.decode(out[batch_idx, :token_idx], skip_special_tokens=True))
+                print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
 
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
