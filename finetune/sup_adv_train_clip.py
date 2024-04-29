@@ -228,10 +228,9 @@ class LLaVAFinetune:
             out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None,
                              inputs_embeds=None, labels=labels)
-            print('gt', self.tokenizer.decode(labels))
-            print(torch.argmax(out.logits, dim=1).shape)
-            print(torch.argmax(out.logits, dim=1))
-            print('pred', self.tokenizer.decode(torch.argmax(out.logits, dim=1)))
+            for batch_idx in range(labels.shape[0]):
+                print('gt', self.tokenizer.decode(labels[batch_idx]))
+                print('pred', self.tokenizer.decode(torch.argmax(out.logitslabels[batch_idx], dim=1)))
 
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
