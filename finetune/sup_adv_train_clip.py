@@ -72,6 +72,7 @@ class LLaVAFinetune:
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
         logging.info('Model loaded successfully.')
         utils.init_distributed_mode(self.args)
+
         self.message = utils.MessageBuilder()
 
         if self.args.wandb:

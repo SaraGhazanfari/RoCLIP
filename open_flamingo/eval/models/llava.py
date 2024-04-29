@@ -32,6 +32,7 @@ class EvalModelLLAVA(BaseEvalModel):
             pretrained_rob_path=model_args["vision_encoder_pretrained"],
             dtype=model_args["precision"]
         )
+        self.config = self.model.config
         self.image_processor.do_normalize = False
         self.normalizer = transforms.Normalize(
             mean=self.image_processor.image_mean, std=self.image_processor.image_std
