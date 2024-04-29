@@ -35,11 +35,6 @@ parser.add_argument('--stepsize_adv', type=float, default=1.,
 parser.add_argument('--wandb', type=str2bool, default=True, help='Use Weights & Biases for logging')
 parser.add_argument('--mode', type=str, default='')
 
-parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
-parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
-parser.add_argument('--train_dir', type=str, default=None, help='Output directory')
-parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
-
 # distributed setting
 parser.add_argument("--ngpus", type=int, default=4, help="Number of GPUs to use.")
 parser.add_argument("--nnodes", type=int, default=1, help="Number of nodes.")
@@ -59,6 +54,7 @@ parser.add_argument("--precision", type=str)
 parser.add_argument("--vision_encoder_pretrained", type=str)
 
 # Logging parameters
-parser.add_argument("--log_freq", type=int, default=20, help="The log is generated within this epoch frequency")
-parser.add_argument("--val_log_freq", type=int, default=10, help="The log is generated within this epoch frequency")
+parser.add_argument('--train_dir', type=str, default=None, help='Output directory')
+parser.add_argument("--log_freq", type=int, default=1, help="The log is generated within this epoch frequency")
+parser.add_argument("--eval_freq", type=int, default=10, help="The log is generated within this epoch frequency")
 parser.add_argument("--logging_verbosity", type=str, default='INFO', help="Level of verbosity of the logs")
