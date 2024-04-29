@@ -232,6 +232,8 @@ class LLaVAFinetune:
             for batch_idx in range(labels.shape[0]):
                 temp = labels[batch_idx]
                 temp = [t for t in temp if t != IGNORE_INDEX]
+                print(temp)
+                print(torch.argmax(out.logitslabels[batch_idx], dim=1))
                 print('gt', self.tokenizer.decode(temp))
                 print('pred', self.tokenizer.decode(torch.argmax(out.logitslabels[batch_idx], dim=1)))
 
