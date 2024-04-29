@@ -229,7 +229,8 @@ class LLaVAFinetune:
             out = self.model.generate(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
                              length_penalty=-2.0, labels=labels)
-
+            print(out)
+            print(out.shape)
             for batch_idx in range(labels.shape[0]):
                 temp = labels[batch_idx]
                 temp = [t.item() for t in temp if t != IGNORE_INDEX]
