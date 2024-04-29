@@ -18,7 +18,6 @@ from vlm_eval.utils import force_cudnn_initialization, get_eval_model
 
 sys.path.append("open_flamingo")
 import os
-import shutil
 import string
 import random
 
@@ -329,7 +328,7 @@ if __name__ == '__main__':
 
     # set model name and output dir
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
-    args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.experiment_name}_{random_str}'
+    args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.mode}_{random_str}'
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     ncpus = 40
     # default: set tasks_per_node equal to number of gpus
