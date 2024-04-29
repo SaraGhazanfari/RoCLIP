@@ -239,11 +239,11 @@ class LLaVAFinetune:
 
             loss = torch.mean(out.loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-            loss_total.backward()
-            self.optimizer.step()
-            self.optimizer.zero_grad()
-            self.step_total += 1
-            self.scheduler(self.step_total)
+            # loss_total.backward()
+            # self.optimizer.step()
+            # self.optimizer.zero_grad()
+            # self.step_total += 1
+            # self.scheduler(self.step_total)
             data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
             del data_adv, data
             self.model.zero_grad()
