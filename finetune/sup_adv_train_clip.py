@@ -90,8 +90,8 @@ class LLaVAFinetune:
             assert self.args.pretrained in ['', 'none']
             self.args.pretrained = self.args.optimizer_state.replace('_opt', '')
 
-        image_dir_path = f'{self.args.imagenet_root}/train2014'
-        annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2014.json'
+        image_dir_path = f'{self.args.imagenet_root}/train2017'
+        annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2017.json'
 
         # TinyLLAVA(args, main_device)  #
 
@@ -167,7 +167,8 @@ class LLaVAFinetune:
                                     image_dir_path=image_dir_path,
                                     annotations_path=annotations_path,
                                     transform=None,
-                                    prefix='COCO_train2014_'
+                                    prefix=''
+                                    # prefix='COCO_train2014_'
                                     )
         self.sampler = None
         if self.args.ngpus > 1 and self.args.nnodes > 1:
