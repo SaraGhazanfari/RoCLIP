@@ -99,7 +99,7 @@ parser.add_argument('--experiment_name', type=str, default='')
 parser.add_argument('--overwrite', type=str2bool, default=False, help='Overwrite existing directory')
 parser.add_argument('--log_freq', type=int, default=1, help='Logging frequency')
 parser.add_argument('--eval_freq', type=int, default=50, help='Evaluation frequency')
-parser.add_argument('--output_dir', type=str, default='', help='Output directory')
+parser.add_argument('--output_dir', type=str, default=None, help='Output directory')
 parser.add_argument('--save_checkpoints', type=str2bool, default=True, help='Save 10 training checkpoints')
 
 # distributed setting
