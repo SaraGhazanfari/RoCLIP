@@ -226,29 +226,15 @@ class LLaVAFinetune:
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            out = self.model.generate(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
-                                      past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
-                                      length_penalty=-2.0, labels=labels)
-
-
-            for batch_idx in range(labels.shape[0]):
-                temp = labels[batch_idx]
-                temp = [t.item() for t in temp if t != IGNORE_INDEX]
-                print('gt', self.tokenizer.decode(temp))
-                out[batch_idx, out[batch_idx] == -200] = 1
-                print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
-
             out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
-                                      past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
-                                      length_penalty=-2.0, labels=labels)
-            print(out.__dict__.keys())
-            loss = torch.mean(out.loss)
+                             past_key_values=None, inputs_embeds=None, labels=labels)
+            loss = out.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
-            # loss_total.backward()
-            # self.optimizer.step()
-            # self.optimizer.zero_grad()
-            # self.step_total += 1
-            # self.scheduler(self.step_total)
+            loss_total.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            self.step_total += 1
+            self.scheduler(self.step_total)
             data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
             del data_adv, data
             self.model.zero_grad()
@@ -262,6 +248,18 @@ class LLaVAFinetune:
                 # self.message.add("train total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
+
+    def evaluate(self, data, input_ids, attention_mask, labels):
+        out = self.model.generate(images=data, input_ids=input_ids, attention_mask=attention_mask,
+                                  past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
+                                  length_penalty=-2.0, labels=labels)
+
+        for batch_idx in range(labels.shape[0]):
+            temp = labels[batch_idx]
+            temp = [t.item() for t in temp if t != IGNORE_INDEX]
+            print('gt', self.tokenizer.decode(temp))
+            out[batch_idx, out[batch_idx] == -200] = 1
+            print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
 
 
 if __name__ == '__main__':
