@@ -39,7 +39,7 @@ parser.add_argument('--mode', type=str, default='')
 parser.add_argument("--ngpus", type=int, default=4, help="Number of GPUs to use.")
 parser.add_argument("--nnodes", type=int, default=1, help="Number of nodes.")
 parser.add_argument("--timeout", type=int, default=1440, help="Time of the Slurm job in minutes for training.")
-parser.add_argument("--partition", type=str, default="gpu_p13", help="Partition to use for Slurm.")
+parser.add_argument("--partition", type=str, default="nvidia", help="Partition to use for Slurm.")
 parser.add_argument("--local", action='store_true', help="Execute with local machine instead of slurm.")
 parser.add_argument('--devices', type=str, default='', help='Device IDs for CUDA')
 parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
