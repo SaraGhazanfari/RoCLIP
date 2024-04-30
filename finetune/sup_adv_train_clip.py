@@ -274,12 +274,13 @@ class LLaVAFinetune:
                                       length_penalty=-2.0, labels=labels)
 
             for batch_idx in range(labels.shape[0]):
-                temp = labels[batch_idx]
-                temp = [t.item() for t in temp if t != IGNORE_INDEX]
-                logging.info('gt', self.tokenizer.decode(temp).replace('</s>', '').replace('<unk>', ''))
+                gt = labels[batch_idx]
+                gt = [t.item() for t in gt if t != IGNORE_INDEX]
+                gt = self.tokenizer.decode(gt).replace('</s>', '').replace('<unk>', '')
+                logging.info(f'gt: {gt}')
                 out[batch_idx, out[batch_idx] == -200] = 1
-                pred = self.tokenizer.decode(out[batch_idx], skip_special_tokens=True)
-                logging.info('pred', pred.split('ASSISTANT: ')[-1])
+                pred = self.tokenizer.decode(out[batch_idx], skip_special_tokens=True).split('ASSISTANT: ')[-1]
+                logging.info(f'pred:{pred}')
 
             if idx == 1:
                 break
