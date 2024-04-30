@@ -329,13 +329,14 @@ if __name__ == '__main__':
     executor = submitit.AutoExecutor(folder=args.train_dir, cluster=cluster)
     # if not config.local:
     executor.update_parameters(
-        gpus_per_node=args.ngpus,
+        # gpus_per_node=args.ngpus,
+        gres=f'gpu:v100:{args.ngpus}',
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
         cpus_per_task=ncpus // tasks_per_node,
         stderr_to_stdout=True,
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
-        slurm_partition=args.partition,
+        #slurm_partition=args.partition,
         slurm_signal_delay_s=0,
         slurm_mem='64GB',
         timeout_min=args.timeout,
