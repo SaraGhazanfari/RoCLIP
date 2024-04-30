@@ -195,9 +195,9 @@ class LLaVAFinetune:
     def train_one_epoch(self, epoch):
         unwrap_model(self.model).get_vision_tower().vision_tower.train()
         start_time, end_time = time.time(), time.time()
-
+        start_time = time.time()
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
-            start_time = time.time()
+
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
 
@@ -261,6 +261,7 @@ class LLaVAFinetune:
                 # self.message.add("train total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
+                start_time = time.time()
 
             if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
                 self.evaluate()
