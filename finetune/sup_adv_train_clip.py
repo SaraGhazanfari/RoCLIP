@@ -276,9 +276,9 @@ class LLaVAFinetune:
             for batch_idx in range(labels.shape[0]):
                 temp = labels[batch_idx]
                 temp = [t.item() for t in temp if t != IGNORE_INDEX]
-                print('gt', self.tokenizer.decode(temp))
+                logging.info('gt', self.tokenizer.decode(temp))
                 out[batch_idx, out[batch_idx] == -200] = 1
-                print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
+                logging.info('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
 
             if idx == 1:
                 break
