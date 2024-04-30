@@ -90,10 +90,10 @@ def init_distributed_mode(args):
 
     except Exception as e:
         logging.info(e)
-        print(os.environ)
-        args.rank = int(os.environ['LOCAL_RANK'])
-        args.local_rank = int(os.environ['LOCAL_RANK'])
-        args.world_size = int(os.environ['WORLD_SIZE'])
+        args.rank = int(os.environ['SLURM_LOCALID'])
+        args.local_rank = int(os.environ['SLURM_LOCALID'])
+        args.world_size = args.nnodes * args.ngpus
+        print('local_rank', args.rank)
 
     dist.init_process_group(
         backend="nccl",
