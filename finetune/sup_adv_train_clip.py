@@ -339,8 +339,8 @@ if __name__ == '__main__':
         slurm_signal_delay_s=0,
         slurm_mem='64GB',
         timeout_min=args.timeout,
-        additional_parameters={'slurm_mail_type': 'BEGIN',
-                               'slurm_mail_user': 'sg7457@nyu.edu'}
+        additional_parameters={'mail_type': 'BEGIN',
+                               'mail_user': 'sg7457@nyu.edu'}
     )
     args.dist_url = get_init_file().as_uri()
     args.cmd = f"python3 {' '.join(sys.argv)}"
