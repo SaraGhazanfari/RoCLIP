@@ -90,7 +90,7 @@ def init_distributed_mode(args):
 
     except Exception as e:
         logging.info(e)
-        args.rank = int(os.environ['RANK'])
+        args.rank = int(os.environ['LOCAL_RANK'])
         args.local_rank = int(os.environ['LOCAL_RANK'])
         args.world_size = int(os.environ['WORLD_SIZE'])
 
