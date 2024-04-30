@@ -321,7 +321,6 @@ if __name__ == '__main__':
     random_str = ''.join(random.choices(string.ascii_letters + string.digits, k=5))
     args.finetuned_model_name = f'{args.clip_model_name}_{args.pretrained}_{args.dataset}_{args.loss}_{args.dataset}_{args.mode}'
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
-    ncpus = 40
     args = set_config(args)
 
     tasks_per_node = args.ngpus
@@ -333,7 +332,7 @@ if __name__ == '__main__':
         gres=f'gpu:v100:{args.ngpus}',
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
-        cpus_per_task=ncpus // tasks_per_node,
+        cpus_per_task=args.ncpus,
         stderr_to_stdout=True,
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
         #slurm_partition=args.partition,

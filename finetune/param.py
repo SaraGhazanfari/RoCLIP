@@ -36,6 +36,7 @@ parser.add_argument('--wandb', type=str2bool, default=True, help='Use Weights & 
 parser.add_argument('--mode', type=str, default='')
 
 # distributed setting
+parser.add_argument("--ncpus", type=int, default=4, help="Number of CPUS per GPU.")
 parser.add_argument("--ngpus", type=int, default=4, help="Number of GPUs to use.")
 parser.add_argument("--nnodes", type=int, default=1, help="Number of nodes.")
 parser.add_argument("--timeout", type=int, default=1440, help="Time of the Slurm job in minutes for training.")
