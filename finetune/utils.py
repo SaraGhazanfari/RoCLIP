@@ -90,10 +90,9 @@ def init_distributed_mode(args):
 
     except Exception as e:
         logging.info(e)
-        logging.info('Will run the code on 8 GPUs.')
-        args.rank, args.local_rank, args.world_size = 0, 0, torch.cuda.device_count()
-        os.environ['MASTER_ADDR'] = '127.0.0.1'
-        os.environ['MASTER_PORT'] = '29500'
+        args.rank = int(os.environ['RANK'])
+        args.local_rank = int(os.environ['LOCAL_RANK'])
+        args.world_size = int(os.environ['WORLD_SIZE'])
 
     dist.init_process_group(
         backend="nccl",
