@@ -92,12 +92,9 @@ class LLaVAFinetune:
             assert self.args.pretrained in ['', 'none']
             self.args.pretrained = self.args.optimizer_state.replace('_opt', '')
 
-        image_dir_path = f'{self.args.imagenet_root}/train2017'
-        annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2017.json'
-
         # TinyLLAVA(args, main_device)  #
 
-        self._get_data(annotations_path, image_dir_path, model)
+        self._get_data(model)
         params = self._prepare_model(model)
 
         self._get_optimizer(params)
@@ -163,7 +160,9 @@ class LLaVAFinetune:
             logging.info('model loaded successfully on a single gpu and node!')
         return params
 
-    def _get_data(self, annotations_path, image_dir_path, model):
+    def _get_data(self, model):
+        image_dir_path = f'{self.args.imagenet_root}/train2017'
+        annotations_path = f'{self.args.imagenet_root}/annotations/captions_train2017.json'
         dataset = COCOFlickrDataset(model=model,
                                     image_processor=model._prepare_images,
                                     image_dir_path=image_dir_path,
@@ -172,11 +171,25 @@ class LLaVAFinetune:
                                     prefix=''
                                     # prefix='COCO_train2014_'
                                     )
+        image_dir_path = f'{self.args.imagenet_root}/val2017'
+        annotations_path = f'{self.args.imagenet_root}/annotations/captions_val2017.json'
+        val_dataset = COCOFlickrDataset(model=model,
+                                        image_processor=model._prepare_images,
+                                        image_dir_path=image_dir_path,
+                                        annotations_path=annotations_path,
+                                        transform=None,
+                                        prefix=''
+                                        # prefix='COCO_train2014_'
+                                        )
         self.sampler = None
         if self.args.ngpus > 1 and self.args.nnodes > 1:
             self.sampler = torch.utils.data.distributed.DistributedSampler(dataset)
         self.dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8,
                                      drop_last=True, sampler=self.sampler)
+        self.dataloader = DataLoader(dataset, batch_size=10, shuffle=True, num_workers=8,
+                                     drop_last=True, sampler=self.sampler)
+        self.valloader = DataLoader(val_dataset, batch_size=5, shuffle=True, num_workers=8,
+                                    drop_last=True, sampler=self.sampler)
         logging.info('Trainloader created successfully!')
 
     def train_one_epoch(self, epoch):
@@ -249,17 +262,24 @@ class LLaVAFinetune:
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
 
-    def evaluate(self, data, input_ids, attention_mask, labels):
-        out = self.model.generate(images=data, input_ids=input_ids, attention_mask=attention_mask,
-                                  past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
-                                  length_penalty=-2.0, labels=labels)
+            if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
+                self.evaluate()
 
-        for batch_idx in range(labels.shape[0]):
-            temp = labels[batch_idx]
-            temp = [t.item() for t in temp if t != IGNORE_INDEX]
-            print('gt', self.tokenizer.decode(temp))
-            out[batch_idx, out[batch_idx] == -200] = 1
-            print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
+    def evaluate(self):
+        for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
+            out = self.model.generate(images=data, input_ids=input_ids, attention_mask=attention_mask,
+                                      past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
+                                      length_penalty=-2.0, labels=labels)
+
+            for batch_idx in range(labels.shape[0]):
+                temp = labels[batch_idx]
+                temp = [t.item() for t in temp if t != IGNORE_INDEX]
+                print('gt', self.tokenizer.decode(temp))
+                out[batch_idx, out[batch_idx] == -200] = 1
+                print('pred', self.tokenizer.decode(out[batch_idx], skip_special_tokens=True))
+
+            if idx == 1:
+                break
 
 
 if __name__ == '__main__':
