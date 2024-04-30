@@ -335,10 +335,12 @@ if __name__ == '__main__':
         cpus_per_task=args.ncpus,
         stderr_to_stdout=True,
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
-        #slurm_partition=args.partition,
+        # slurm_partition=args.partition,
         slurm_signal_delay_s=0,
         slurm_mem='64GB',
         timeout_min=args.timeout,
+        mail_type='BEGIN',
+        mail_user='sg7457@nyu.edu'
     )
     args.dist_url = get_init_file().as_uri()
     args.cmd = f"python3 {' '.join(sys.argv)}"
