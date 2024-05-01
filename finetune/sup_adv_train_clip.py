@@ -147,10 +147,8 @@ class LLaVAFinetune:
         logging.info('Optimizer loaded successfully :)')
 
     def _prepare_model(self, model):
-        # force_cudnn_initialization()
-        # device_id = 0
+        force_cudnn_initialization()
         params = model.model.get_vision_tower().vision_tower.parameters()
-        model = model.cuda()
         if args.ngpus > 1:  # and args.nnodes > 1:
             self.model = DistributedDataParallel(model.model, device_ids=[self.args.local_rank])
             logging.info('model loaded successfully on a multiple gpus and nodes!')
