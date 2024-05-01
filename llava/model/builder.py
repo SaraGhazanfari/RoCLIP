@@ -16,6 +16,7 @@ import os
 import shutil
 import warnings
 
+import open_clip
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig, BitsAndBytesConfig
 
@@ -173,7 +174,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
                 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
             else:
-                tokenizer = AutoTokenizer.from_pretrained(model_path , use_fast=False)
+                tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
                 model = LlavaLlamaForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
     else:
         # Load language model
@@ -215,12 +216,13 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         vision_tower = model.get_vision_tower()
         # vision_tower.set_device(device)
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
+
         if not vision_tower.is_loaded:
-            vision_tower.load_model(non_llava, pretrained_rob_path)  # .to(device=device)
+            vision_tower, _, image_processor = open_clip.create_model_and_transforms('hf-hub:chs20/fare2-clip')
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
-        image_processor = vision_tower.image_processor
+        image_processor = vision_tower.image_processor if not image_processor else image_processor
 
     if hasattr(model.config, "max_sequence_length"):
         context_len = model.config.max_sequence_length
