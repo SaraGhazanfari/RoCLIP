@@ -219,7 +219,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
 
         if not vision_tower.is_loaded:
-            vision_tower.load_model(non_llava, pretrained_rob_path).to(device=device)
+            vision_tower.load_model(non_llava, pretrained_rob_path)
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
