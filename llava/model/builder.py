@@ -222,15 +222,8 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
-        print(image_processor)
-        try:
-            print(image_processor[0])
-        except Exception as e:
-            print(e)
-            print(image_processor[4].transforms)
-        print('******************************')
-        print(vision_tower.image_processor)
-        image_processor = vision_tower.image_processor
+
+        image_processor = vision_tower.image_processor if not image_processor else image_processor
 
     if hasattr(model.config, "max_sequence_length"):
         context_len = model.config.max_sequence_length
