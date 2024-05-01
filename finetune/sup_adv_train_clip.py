@@ -186,12 +186,10 @@ class LLaVAFinetune:
         self.sampler = None
         if self.args.ngpus > 1:
             self.sampler = torch.utils.data.distributed.DistributedSampler(dataset)
-        self.dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8,
+        self.dataloader = DataLoader(dataset, batch_size=self.args.batch_size, num_workers=8,
                                      drop_last=True, sampler=self.sampler)
-        self.dataloader = DataLoader(dataset, batch_size=10, shuffle=True, num_workers=8,
-                                     drop_last=True, sampler=self.sampler)
-        self.valloader = DataLoader(val_dataset, batch_size=5, shuffle=True, num_workers=8,
-                                    drop_last=True, sampler=self.sampler)
+        self.valloader = DataLoader(val_dataset, batch_size=5, num_workers=8,
+                                    drop_last=True)
         logging.info('Trainloader created successfully!')
 
     def train_one_epoch(self, epoch):
