@@ -219,11 +219,11 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
 
         if not vision_tower.is_loaded:
-            vision_tower.load_model(non_llava, pretrained_rob_path)
-            finetuned_vision_tower, _, image_processor = open_clip.create_model_and_transforms('hf-hub:chs20/fare2-clip')
-            print(vision_tower)
-            print('----------------------------')
-            print(vision_tower.image_processor)
+            vision_tower.load_model(non_llava, pretrained_rob_path)#.to(device=device)
+
+        # print(vision_tower.vision_tower)
+        vision_tower.to(device=device, dtype=kwargs["torch_dtype"])
+        image_processor = vision_tower.image_processor
 
         # print(vision_tower.vision_tower)
         vision_tower.to(device=device, dtype=kwargs["torch_dtype"])

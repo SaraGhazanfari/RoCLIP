@@ -4,9 +4,8 @@ import torch.nn as nn
 from transformers import CLIPVisionModel, CLIPImageProcessor, CLIPVisionConfig
 
 
-
 class ClipVisionModel(torch.nn.Module):
-    def __init__(self, model,  normalize, all_tokens=False, proj=True):
+    def __init__(self, model, normalize, all_tokens=False, proj=True):
         super().__init__()
         self.model = model
         self.normalize = normalize
@@ -46,26 +45,37 @@ class CLIPVisionTower(nn.Module):
     def load_model(self, non_llava=False, pretrained_ckpt=None, device='cuda'):
 
         self.non_llava = non_llava
-        
+
         if non_llava:
             import open_clip
             print("using open_clip")
             model_orig, _, image_processor = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             vision_model = model_orig.visual
             if pretrained_ckpt != 'openai':
-                vision_model.load_state_dict(torch.load(pretrained_ckpt, map_location='cpu'))
-            # self.image_processor = image_processor
-            # self.image_processor = CLIPImageProcessor.from_pretrained(self.vision_tower_name)
-            self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
+                model_orig, _, image_processor = open_clip.create_model_and_transforms(pretrained_ckpt)
+                vision_model = model_orig.visual
+                # vision_model.load_state_dict(torch.load(pretrained_ckpt, map_location='cpu'))
+                self.image_processor = CLIPImageProcessor(do_resize=True,
+                                                          size=image_processor.transforms[0].size,
+                                                          do_center_crop=True,
+                                                          crop_size=image_processor.transforms[1].size[0],
+                                                          do_rescale=False,
+                                                          do_normalize=True,
+                                                          image_mean=image_processor.transforms[-1].mean,
+                                                          image_std=image_processor.transforms[-1].std,
+                                                          do_convert_rgb=True)
+            else:
+                self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
             # model_orig = vision_model
             # llava operates on the second to last layer output, so we remove the last layer
-            vision_model.transformer.resblocks = vision_model.transformer.resblocks[:-1]; print("removing last layer of vision model")
+            vision_model.transformer.resblocks = vision_model.transformer.resblocks[:-1];
+            print("removing last layer of vision model")
             model_orig = ClipVisionModel(
                 model=vision_model,
                 normalize=lambda x: x,  # images have to be normalized, e.g. as handled by the llava model wrapper
                 all_tokens=True, proj=False
             )
-            self.vision_tower = model_orig        
+            self.vision_tower = model_orig
             self.vision_tower.device = device
 
         else:
@@ -79,12 +89,12 @@ class CLIPVisionTower(nn.Module):
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs):
-        
+
         if self.non_llava:
-            image_features = image_forward_outs#.hidden_states[1:]
+            image_features = image_forward_outs  # .hidden_states[1:]
         else:
             image_features = image_forward_outs.hidden_states[self.select_layer]
-        
+
         if self.select_feature == 'patch':
             image_features = image_features[:, 1:]
         elif self.select_feature == 'cls_patch':
@@ -93,31 +103,32 @@ class CLIPVisionTower(nn.Module):
             raise ValueError(f'Unexpected select feature: {self.select_feature}')
         return image_features
 
-
     def forward(self, images):
-            if type(images) is list:
-                image_features = []
-                for image in images:
-                    if self.non_llava:
-                        image_forward_out = self.vision_tower(image.to(device=self.device).unsqueeze(0)).reshape(images.shape[0], -1, 1024)
-                    else:
-                        image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
-                    image_feature = self.feature_select(image_forward_out).to(image.dtype)
-                    image_features.append(image_feature)
-            else:
+        if type(images) is list:
+            image_features = []
+            for image in images:
                 if self.non_llava:
-                    image_forward_outs = self.vision_tower(images.to(device=self.device)).reshape(images.shape[0], -1, 1024)
+                    image_forward_out = self.vision_tower(image.to(device=self.device).unsqueeze(0)).reshape(
+                        images.shape[0], -1, 1024)
                 else:
-                    image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype), output_hidden_states=True)
-                
-                image_features = self.feature_select(image_forward_outs).to(images.dtype)
+                    image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0),
+                                                          output_hidden_states=True)
+                image_feature = self.feature_select(image_forward_out).to(image.dtype)
+                image_features.append(image_feature)
+        else:
+            if self.non_llava:
+                image_forward_outs = self.vision_tower(images.to(device=self.device)).reshape(images.shape[0], -1, 1024)
+            else:
+                image_forward_outs = self.vision_tower(images.to(device=self.device, dtype=self.dtype),
+                                                       output_hidden_states=True)
 
-            return image_features
+            image_features = self.feature_select(image_forward_outs).to(images.dtype)
+
+        return image_features
 
     @property
     def dummy_feature(self):
         return torch.zeros(1, self.hidden_size, device=self.device, dtype=self.dtype)
-
 
     @property
     def dtype(self):
