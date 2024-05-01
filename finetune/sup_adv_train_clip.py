@@ -324,7 +324,8 @@ if __name__ == '__main__':
     # if not config.local:
     executor.update_parameters(
         # gpus_per_node=args.ngpus,
-        gres=f'gpu:{args.gpu_name}:{args.ngpus}',
+        gres=f'gpu:{args.ngpus}',
+        constraint="a100|h100",
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
         cpus_per_task=args.ncpus,
