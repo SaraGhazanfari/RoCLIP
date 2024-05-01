@@ -41,7 +41,7 @@ class EvalModelLLAVA(BaseEvalModel):
         except Exception as e:
             print(e)
             self.normalizer = transforms.Normalize(
-                mean=self.image_processor[-1].mean, std=self.image_processor[-1].std
+                mean=self.image_processor.transforms[-1].mean, std=self.image_processor.transforms[-1].std
             )
         model_args["temperature"] = float(model_args["temperature"])
         model_args["num_beams"] = int(model_args["num_beams"])
