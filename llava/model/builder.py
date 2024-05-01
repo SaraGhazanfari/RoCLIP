@@ -214,7 +214,7 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
         model.resize_token_embeddings(len(tokenizer))
 
         vision_tower = model.get_vision_tower()
-        print(vision_tower)
+        print(model)
         # vision_tower.set_device(device)
         non_llava = True if pretrained_rob_path not in [None, 'None', 'none'] else False
 
