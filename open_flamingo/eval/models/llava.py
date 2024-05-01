@@ -34,9 +34,13 @@ class EvalModelLLAVA(BaseEvalModel):
         )
         self.config = self.model.config
         self.image_processor.do_normalize = False
-        self.normalizer = transforms.Normalize(
-            mean=self.image_processor.image_mean, std=self.image_processor.image_std
-        )  # we need to normalize in the forward pass, so that the threat model is consistent
+        try:
+            self.normalizer = transforms.Normalize(
+                mean=self.image_processor.image_mean, std=self.image_processor.image_std
+            )  # we need to normalize in the forward pass, so that the threat model is consistent
+        except Exception as e:
+            print(e)
+            self.normalizer = self.image_processor[3]
         model_args["temperature"] = float(model_args["temperature"])
         model_args["num_beams"] = int(model_args["num_beams"])
         self.model_args = model_args
