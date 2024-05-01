@@ -153,10 +153,10 @@ class LLaVAFinetune:
             self.model = DistributedDataParallel(model.model.cuda(), device_ids=[self.args.local_rank])
             logging.info('model loaded successfully on a multiple gpus and nodes!')
         # elif args.ngpus > 1:
-        #     self.model = DataParallel(model.model, device_ids=range(args.ngpus))
+        #     self.model = DataParallel(model.model.cuda(), device_ids=range(args.ngpus))
         #     logging.info('model loaded successfully on a multiple gpus and one node!')
         else:
-            self.model = model.model
+            self.model = model.model.cuda()
             logging.info('model loaded successfully on a single gpu and node!')
         return params
 
