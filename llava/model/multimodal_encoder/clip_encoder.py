@@ -59,11 +59,12 @@ class CLIPVisionTower(nn.Module):
                                                           size=image_processor.transforms[0].size,
                                                           do_center_crop=True,
                                                           crop_size=image_processor.transforms[1].size[0],
-                                                          do_rescale=False,
+                                                          do_rescale=True,
                                                           do_normalize=True,
                                                           image_mean=image_processor.transforms[-1].mean,
                                                           image_std=image_processor.transforms[-1].std,
-                                                          do_convert_rgb=True)
+                                                          do_convert_rgb=True,
+                                                          rescale_factor=255)
             else:
                 self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
             # model_orig = vision_model
