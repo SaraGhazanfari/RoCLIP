@@ -76,9 +76,9 @@ def main():
     eval_datasets_list = [x for x in eval_datasets_list if x != ""]
     results_file_dir = f"{args.results_file}_{'_'.join(eval_datasets_list)}"
     if (v := eval_model.model_args.get("vision_encoder_pretrained")) is not None:
-        v = ("-" + v.split("/")[-3]) if "/" in v else v
-        if len(v) > 180:
-            v = v[140:]
+    #     v = ("-" + v.split("/")[-3]) if "/" in v else v
+    #     if len(v) > 180:
+    #         v = v[140:]
         results_file_dir += v
     if args.attack not in [None, "none"]:
         results_file_dir += f"_{args.attack}_{args.eps}_{args.steps}_{args.mask_out}_{''.join(map(str, args.shots))}-shot"
