@@ -150,7 +150,7 @@ class LLaVAFinetune:
         force_cudnn_initialization()
         params = model.model.get_vision_tower().vision_tower.parameters()
         if args.ngpus > 1:  # and args.nnodes > 1:
-            self.model = DistributedDataParallel(model.model, device_ids=[self.args.local_rank])
+            self.model = DistributedDataParallel(model.model.cuda(), device_ids=[self.args.local_rank])
             logging.info('model loaded successfully on a multiple gpus and nodes!')
         # elif args.ngpus > 1:
         #     self.model = DataParallel(model.model, device_ids=range(args.ngpus))
