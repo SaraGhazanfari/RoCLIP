@@ -120,15 +120,15 @@ class LLaVAFinetune:
             return
 
         # save final model
-        self._save_model()
+        self._save_model(self.args.steps)
 
         if self.args.train_dir.endswith('_temp'):
             os.rename(self.args.train_dir, self.args.train_dir[:-5])
 
-    def _save_model(self):
+    def _save_model(self, step_num):
         torch.save(unwrap_model(self.model).get_vision_tower().vision_tower.state_dict(),
-                   f'{self.args.ckpt}/final.pt')
-        torch.save(self.optimizer.state_dict(), f'{self.args.ckpt}/final_opt.pt')
+                   f'{self.args.ckpt}/final_{step_num}.pt')
+        torch.save(self.optimizer.state_dict(), f'{self.args.ckpt}/final_opt_{step_num}.pt')
 
     def _get_optimizer(self, params):
         if self.args.opt == 'adamw':
@@ -265,7 +265,7 @@ class LLaVAFinetune:
                 self.evaluate()
 
             if idx % 2000 == 1999:
-                self._save_model()
+                self._save_model(idx+1)
 
     def evaluate(self):
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
