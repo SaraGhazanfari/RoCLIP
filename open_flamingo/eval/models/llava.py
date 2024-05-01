@@ -34,15 +34,10 @@ class EvalModelLLAVA(BaseEvalModel):
         )
         self.config = self.model.config
         self.image_processor.do_normalize = False
-        try:
-            self.normalizer = transforms.Normalize(
-                mean=self.image_processor.image_mean, std=self.image_processor.image_std
-            )  # we need to normalize in the forward pass, so that the threat model is consistent
-        except Exception as e:
-            print(e)
-            self.normalizer = transforms.Normalize(
-                mean=self.image_processor.transforms[-1].mean, std=self.image_processor.transforms[-1].std
-            )
+        self.normalizer = transforms.Normalize(
+            mean=self.image_processor.image_mean, std=self.image_processor.image_std
+        )  # we need to normalize in the forward pass, so that the threat model is consistent
+
         model_args["temperature"] = float(model_args["temperature"])
         model_args["num_beams"] = int(model_args["num_beams"])
         self.model_args = model_args
@@ -70,6 +65,7 @@ class EvalModelLLAVA(BaseEvalModel):
             max_generation_length: int,
             **kwargs,
     ) -> List[str]:
+        print(batch_images.min(), batch_images.max())
         assert len(batch_text) == 1, "Only support batch size 1 (yet)"
         assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
 
