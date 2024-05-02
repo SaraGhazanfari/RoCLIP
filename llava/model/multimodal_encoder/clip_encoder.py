@@ -69,7 +69,7 @@ class CLIPVisionTower(nn.Module):
                 else:
                     state_dict = torch.load(pretrained_ckpt, map_location='cpu')
                     for k, v in state_dict.items():
-                        state_dict[k.repalce('model.', '')] = v
+                        state_dict[k.replace('model.', '')] = v
                         del state_dict[k]
                     vision_model.load_state_dict(state_dict)
                     self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')
