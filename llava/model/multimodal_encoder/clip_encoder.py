@@ -52,18 +52,22 @@ class CLIPVisionTower(nn.Module):
             model_orig, _, image_processor = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             vision_model = model_orig.visual
             if pretrained_ckpt != 'openai':
-                model_orig, _, image_processor = open_clip.create_model_and_transforms(pretrained_ckpt)
-                vision_model = model_orig.visual
-                # vision_model.load_state_dict(torch.load(pretrained_ckpt, map_location='cpu'))
-                self.image_processor = CLIPImageProcessor(do_resize=True,
-                                                          size=image_processor.transforms[0].size,
-                                                          do_center_crop=True,
-                                                          crop_size=image_processor.transforms[1].size[0],
-                                                          do_rescale=True,
-                                                          do_normalize=True,
-                                                          image_mean=image_processor.transforms[-1].mean,
-                                                          image_std=image_processor.transforms[-1].std,
-                                                          do_convert_rgb=True)
+                if pretrained_ckpt.startswith('hf-hub'):
+                    model_orig, _, image_processor = open_clip.create_model_and_transforms(pretrained_ckpt)
+                    vision_model = model_orig.visual
+
+                    self.image_processor = CLIPImageProcessor(do_resize=True,
+                                                              size=image_processor.transforms[0].size,
+                                                              do_center_crop=True,
+                                                              crop_size=image_processor.transforms[1].size[0],
+                                                              do_rescale=True,
+                                                              do_normalize=True,
+                                                              image_mean=image_processor.transforms[-1].mean,
+                                                              image_std=image_processor.transforms[-1].std,
+                                                              do_convert_rgb=True)
+                else:
+                    vision_model.load_state_dict(torch.load(pretrained_ckpt, map_location='cpu'))
+                    self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')
             else:
                 self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
             # model_orig = vision_model
