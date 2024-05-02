@@ -196,10 +196,8 @@ class LLaVAFinetune:
 
     def train_one_epoch(self, epoch):
         unwrap_model(self.model).get_vision_tower().vision_tower.train()
-        start_time, end_time = time.time(), time.time()
         start_time = time.time()
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
-            print(data.shape, input_ids.shape, labels.shape, attention_mask.shape)
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
 
