@@ -97,7 +97,7 @@ class CLIPVisionTower(nn.Module):
 
         # couldn;t find a quicker way of doing this, should work for now but suboptimal
         # self.vision_tower.dtype = CLIPVisionModel.from_pretrained(self.vision_tower_name).dtype
-        self.vision_tower.requires_grad_(False)
+        self.vision_tower.requires_grad_(True)
         self.is_loaded = True
 
     def feature_select(self, image_forward_outs):
