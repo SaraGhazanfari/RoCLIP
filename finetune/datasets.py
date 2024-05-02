@@ -44,7 +44,7 @@ class COCOFlickrDataset(Dataset):
         image = self.image_processor([[image]]).half().squeeze(0)
 
         attention_mask, input_ids, labels = self._process_text(caption)
-        attention_mask, input_ids, labels = self._pad_text(attention_mask, input_ids, labels)
+        # attention_mask, input_ids, labels = self._pad_text(attention_mask, input_ids, labels)
         return image, input_ids, labels, attention_mask
 
     def _pad_text(self, attention_mask, input_ids, labels):
