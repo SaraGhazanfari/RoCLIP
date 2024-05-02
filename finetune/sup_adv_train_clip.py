@@ -245,12 +245,11 @@ class LLaVAFinetune:
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
-            for param in self.model.get_vision_tower().vision_tower.parameters():
-                print(param)
-                break
-
 
             self.optimizer.step()
+            for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
+                print(f"Parameter name: {name}")
+                print(f"Gradient: {param.grad}")
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
