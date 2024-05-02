@@ -232,7 +232,7 @@ class LLaVAFinetune:
                 )
             elif not args.attack:
                 data_adv = data
-
+            print(torch.norm(data.reshape(args.batch_size, -1) - data_adv.reshape(args.batch_size, -1), p=2, dim=1))
             with torch.enable_grad():
                 if args.clean_weight > 0.:
                     loss_clean = torch.mean(
@@ -247,12 +247,11 @@ class LLaVAFinetune:
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
-
             self.optimizer.step()
-            for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
-                print(f"Parameter name: {name}")
-                print(f'Grad: {param.requires_grad}')
-                print(f"Gradient: {param.grad}")
+            # for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
+            #     print(f"Parameter name: {name}")
+            #     print(f'Grad: {param.requires_grad}')
+            #     print(f"Gradient: {param.grad}")
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
@@ -275,15 +274,16 @@ class LLaVAFinetune:
                 self.evaluate()
 
             if idx % 2000 == 1999:
-                self._save_model(idx+1)
+                self._save_model(idx + 1)
 
     def evaluate(self):
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
             out = unwrap_model(self.model).generate(images=data, input_ids=input_ids, attention_mask=attention_mask,
-                                      past_key_values=None, min_new_tokens=0, max_new_tokens=20, num_beams=3,
-                                      length_penalty=-2.0, labels=labels)
+                                                    past_key_values=None, min_new_tokens=0, max_new_tokens=20,
+                                                    num_beams=3,
+                                                    length_penalty=-2.0, labels=labels)
 
             for batch_idx in range(labels.shape[0]):
                 gt = labels[batch_idx]
@@ -334,7 +334,7 @@ if __name__ == '__main__':
     # if not config.local:
     executor.update_parameters(
         gpus_per_node=args.ngpus,
-        #gres=f'gpu:{args.ngpus}',
+        # gres=f'gpu:{args.ngpus}',
         constraint=args.constraint,
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
