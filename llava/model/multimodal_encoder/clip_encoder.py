@@ -51,6 +51,7 @@ class CLIPVisionTower(nn.Module):
             print("using open_clip")
             model_orig, _, image_processor = open_clip.create_model_and_transforms('ViT-L-14', pretrained='openai')
             vision_model = model_orig.visual
+
             if pretrained_ckpt != 'openai':
                 if pretrained_ckpt.startswith('hf-hub'):
                     model_orig, _, image_processor = open_clip.create_model_and_transforms(pretrained_ckpt)
@@ -66,7 +67,11 @@ class CLIPVisionTower(nn.Module):
                                                               image_std=image_processor.transforms[-1].std,
                                                               do_convert_rgb=True)
                 else:
-                    vision_model.load_state_dict(torch.load(pretrained_ckpt, map_location='cpu'))
+                    state_dict = torch.load(pretrained_ckpt, map_location='cpu')
+                    for k, v in state_dict.items():
+                        state_dict[k.repalce('model.', '')] = v
+                        del state_dict[k]
+                    vision_model.load_state_dict(state_dict)
                     self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')
             else:
                 self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
