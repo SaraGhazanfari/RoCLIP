@@ -73,7 +73,8 @@ class CLIPVisionTower(nn.Module):
                     new_state_dict = OrderedDict()
                     for k, v in state_dict.items():
                         new_state_dict[k.replace('model.', '')] = v
-                    vision_model.load_state_dict(new_state_dict)
+                    msg = vision_model.load_state_dict(new_state_dict)
+                    print(msg)
                     self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')
             else:
                 self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
