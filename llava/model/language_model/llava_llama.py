@@ -101,8 +101,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             # Enable model/pipeline parallelism
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
-
+        print(loss)
+        print(return_dict)
         if not return_dict:
+            print('HERE I am')
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 

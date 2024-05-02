@@ -356,6 +356,4 @@ if __name__ == '__main__':
     job = executor.submit(finetune)
     job_id = job.job_id
     folder = args.train_dir.split('/')[-1]
-    print(torch.__version__)
-    print(torch.cuda.is_available())
     print(f"Submitted batch job {job_id} in folder {folder}")
