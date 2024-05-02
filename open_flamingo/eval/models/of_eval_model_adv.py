@@ -132,8 +132,7 @@ class EvalModelAdv(BaseEvalModel):
         )
         input_ids = encodings["input_ids"]
         attention_mask = encodings["attention_mask"]
-        print(batch_text)
-        print(batch_images.shape)
+
         with torch.inference_mode():
             with self.autocast():
                 # x_vis = self._prepare_images(batch_images).to(

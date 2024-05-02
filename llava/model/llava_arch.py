@@ -160,6 +160,7 @@ class LlavaMetaForCausalLM(ABC):
                 else:
                     print(self.get_model().device)
                     print(cur_input_ids[:image_token_start])
+                    print(cur_input_ids.device)
                     cur_new_input_embeds.append(self.get_model().embed_tokens(cur_input_ids[:image_token_start]))
                     cur_new_input_embeds.append(cur_image_features)
                     if labels is not None:
