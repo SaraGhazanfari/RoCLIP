@@ -144,8 +144,8 @@ class EvalModelLLAVA(BaseEvalModel):
         input_ids = [
             tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
         ]
-        input_ids = torch.stack(input_ids, dim=0)
-        # input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
+        #input_ids = torch.stack(input_ids, dim=0)
+        input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
         return input_ids
 
     def get_vqa_prompt(self, question, answer=None) -> str:
