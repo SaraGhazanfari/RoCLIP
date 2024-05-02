@@ -65,7 +65,7 @@ class EvalModelLLAVA(BaseEvalModel):
             max_generation_length: int,
             **kwargs,
     ) -> List[str]:
-        print(batch_images.min(), batch_images.max())
+
         assert len(batch_text) == 1, "Only support batch size 1 (yet)"
         assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
 

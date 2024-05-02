@@ -282,7 +282,6 @@ def evaluate_captioning(
                 img_id = batch["image_id"][i]
                 adv_images_cur_dict[img_id] = batch_images[i]
 
-            print(batch_images.device)
 
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
