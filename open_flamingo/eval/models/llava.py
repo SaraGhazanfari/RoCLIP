@@ -140,12 +140,14 @@ class EvalModelLLAVA(BaseEvalModel):
         image_tensor = process_images(batch[0], self.image_processor, self.model.config)
         return image_tensor
 
-    def _prepare_text(self, convs):
+    def _prepare_text(self, convs, device='cuda'):
         input_ids = [
             tokenizer_image_token(conv.get_prompt(), self.tokenizer, return_tensors='pt') for conv in convs
         ]
-        #input_ids = torch.stack(input_ids, dim=0)
-        input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
+        if device == 'cpu':
+            input_ids = torch.stack(input_ids, dim=0)
+        else:
+            input_ids = torch.stack(input_ids, dim=0).to(device='cuda', non_blocking=True)
         return input_ids
 
     def get_vqa_prompt(self, question, answer=None) -> str:

@@ -64,7 +64,7 @@ class COCOFlickrDataset(Dataset):
     def _process_text(self, caption):
         batch_text = []
         batch_text.append(self.model.get_caption_prompt(caption))
-        input_ids = self.model._prepare_text(batch_text)
+        input_ids = self.model._prepare_text(batch_text, device='cpu')
         context_only = batch_text[0].get_prompt().split("ASSISTANT:")[0] + "ASSISTANT:"
         context_len = len(self.model.tokenizer.encode(context_only))
         labels = copy.deepcopy(input_ids)
