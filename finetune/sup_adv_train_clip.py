@@ -232,7 +232,8 @@ class LLaVAFinetune:
                 )
             elif not args.attack:
                 data_adv = data
-            print(torch.norm(data.reshape(args.batch_size, -1) - data_adv.reshape(args.batch_size, -1), p=2, dim=1))
+            print(torch.norm(data.reshape(args.batch_size, -1) - data_adv.reshape(args.batch_size, -1), p=float('inf'),
+                             dim=1))
             with torch.enable_grad():
                 if args.clean_weight > 0.:
                     loss_clean = torch.mean(
