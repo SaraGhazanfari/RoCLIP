@@ -47,7 +47,7 @@ def get_query_set(train_dataset, query_set_size, seed):
 def prepare_eval_samples(test_dataset, num_samples, batch_size, seed, len_test_dataset=0):
     np.random.seed(seed)
     len_test_dataset = len_test_dataset if len_test_dataset > 0 else len(test_dataset)
-    random_indices = np.random.choice(len_test_dataset, num_samples, replace=False)
+    random_indices = np.arange(100, 100 + num_samples)  # np.random.choice(len_test_dataset, num_samples, replace=False)
     dataset = torch.utils.data.Subset(test_dataset, random_indices)
     sampler = torch.utils.data.SequentialSampler(dataset)
     loader = torch.utils.data.DataLoader(
