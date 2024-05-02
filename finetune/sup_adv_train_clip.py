@@ -69,6 +69,9 @@ class LLaVAFinetune:
     def __call__(self, *args, **kwargs):
         utils.setup_logging(self.args)
         utils.add_initial_logs(self.args)
+        print(torch.__version__)
+        print(torch.cuda.is_available())
+
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
         self.tokenizer = model.tokenizer
         logging.info('Model loaded successfully.')
@@ -242,8 +245,7 @@ class LLaVAFinetune:
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
-            print(self.optimizer.param_groups)
-            for param in self.optimizer.param_groups:
+            for param in self.optimizer.parameters():
                 print(param)
 
             self.optimizer.step()
@@ -348,4 +350,6 @@ if __name__ == '__main__':
     job = executor.submit(finetune)
     job_id = job.job_id
     folder = args.train_dir.split('/')[-1]
+    print(torch.__version__)
+    print(torch.cuda.is_available())
     print(f"Submitted batch job {job_id} in folder {folder}")
