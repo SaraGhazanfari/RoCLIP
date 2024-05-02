@@ -329,8 +329,8 @@ if __name__ == '__main__':
     executor = submitit.AutoExecutor(folder=args.train_dir, cluster=cluster)
     # if not config.local:
     executor.update_parameters(
-        # gpus_per_node=args.ngpus,
-        gres=f'gpu:{args.ngpus}',
+        gpus_per_node=args.ngpus,
+        #gres=f'gpu:{args.ngpus}',
         constraint=args.constraint,
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
