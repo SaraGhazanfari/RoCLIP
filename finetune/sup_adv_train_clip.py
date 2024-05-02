@@ -245,8 +245,10 @@ class LLaVAFinetune:
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
-            for param in self.optimizer.parameters():
+            for param in self.model.get_vision_tower().vision_tower.parameters():
                 print(param)
+                break
+
 
             self.optimizer.step()
             self.optimizer.zero_grad()
