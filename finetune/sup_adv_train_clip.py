@@ -73,6 +73,7 @@ class LLaVAFinetune:
         print(torch.cuda.is_available())
 
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
+        self.normalizer = model.normalizer
         self.tokenizer = model.tokenizer
         logging.info('Model loaded successfully.')
         utils.init_distributed_mode(self.args)
@@ -243,7 +244,7 @@ class LLaVAFinetune:
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
+            out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
