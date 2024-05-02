@@ -45,7 +45,8 @@ class COCOFlickrDataset(Dataset):
 
         attention_mask, input_ids, labels = self._process_text(caption)
         # attention_mask, input_ids, labels = self._pad_text(attention_mask, input_ids, labels)
-        return image, torch.tensor(input_ids), torch.tensor(labels), torch.tensor(attention_mask)
+        return image, torch.tensor(input_ids).unsqueeze(0), torch.tensor(labels).unsqueeze(0), torch.tensor(
+            attention_mask).unsqueeze(0)
 
     def _pad_text(self, attention_mask, input_ids, labels):
         max_length = 100
