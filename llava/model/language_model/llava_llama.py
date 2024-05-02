@@ -88,7 +88,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         hidden_states = outputs[0]
         logits = self.lm_head(hidden_states)
-
+        print(logits)
+        print('=============================')
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
@@ -100,11 +101,10 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             shift_labels = shift_labels.view(-1)
             # Enable model/pipeline parallelism
             shift_labels = shift_labels.to(shift_logits.device)
+            print(shift_logits)
             loss = loss_fct(shift_logits, shift_labels)
-        print(loss)
-        print(return_dict)
+
         if not return_dict:
-            print('HERE I am')
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
