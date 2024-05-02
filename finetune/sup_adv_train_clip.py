@@ -234,17 +234,17 @@ class LLaVAFinetune:
                 data_adv = data
             print(torch.norm(data.reshape(args.batch_size, -1) - data_adv.reshape(args.batch_size, -1), p=float('inf'),
                              dim=1))
-            with torch.enable_grad():
-                if args.clean_weight > 0.:
-                    loss_clean = torch.mean(
-                        self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
-                                   past_key_values=None,
-                                   inputs_embeds=None, labels=labels).loss)
-                else:
-                    loss_clean = 0.
-                # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-                out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
-                                 past_key_values=None, inputs_embeds=None, labels=labels)
+
+            if args.clean_weight > 0.:
+                loss_clean = torch.mean(
+                    self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
+                               past_key_values=None,
+                               inputs_embeds=None, labels=labels).loss.sum())
+            else:
+                loss_clean = 0.
+            # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+            out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
+                             past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
@@ -265,8 +265,8 @@ class LLaVAFinetune:
                 self.message.add("lr", lr, format=".10f")
                 self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("total", self.args.steps, format="1d")
-                self.message.add("train loss", loss, format=".4f")
-                # self.message.add("train total loss", loss_total, format=".4f")
+                self.message.add("Adv loss", loss, format=".4f")
+                self.message.add("clean loss", loss_clean, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
                 start_time = time.time()
