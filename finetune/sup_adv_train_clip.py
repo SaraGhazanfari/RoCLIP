@@ -249,7 +249,7 @@ class LLaVAFinetune:
             loss_total.backward()
 
             self.optimizer.step()
-            for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
+            for name, param in self.model.named_parameters():
                 print(f"Parameter name: {name}")
                 print(f'Grad: {param.requires_grad}')
                 print(f"Gradient: {param.grad}")
