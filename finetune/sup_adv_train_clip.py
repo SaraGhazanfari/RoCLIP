@@ -242,6 +242,10 @@ class LLaVAFinetune:
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
+            print(self.optimizer.param_groups)
+            for param in self.optimizer.param_groups:
+                print(param)
+
             self.optimizer.step()
             self.optimizer.zero_grad()
             self.step_total += 1
