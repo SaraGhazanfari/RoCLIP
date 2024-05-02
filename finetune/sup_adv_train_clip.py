@@ -232,16 +232,18 @@ class LLaVAFinetune:
                 )
             elif not args.attack:
                 data_adv = data
-            if args.clean_weight > 0.:
-                loss_clean = torch.mean(
-                    self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
-                               past_key_values=None,
-                               inputs_embeds=None, labels=labels).loss)
-            else:
-                loss_clean = 0.
-            # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
-                             past_key_values=None, inputs_embeds=None, labels=labels)
+
+            with torch.enable_grad():
+                if args.clean_weight > 0.:
+                    loss_clean = torch.mean(
+                        self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
+                                   past_key_values=None,
+                                   inputs_embeds=None, labels=labels).loss)
+                else:
+                    loss_clean = 0.
+                # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+                out = self.model(images=data_adv, input_ids=input_ids, attention_mask=attention_mask,
+                                 past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
             loss_total.backward()
@@ -249,6 +251,7 @@ class LLaVAFinetune:
             self.optimizer.step()
             for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
                 print(f"Parameter name: {name}")
+                print(f'Grad: {param.requires_grad}')
                 print(f"Gradient: {param.grad}")
             self.optimizer.zero_grad()
             self.step_total += 1
