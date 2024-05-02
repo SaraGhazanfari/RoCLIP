@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 
@@ -68,10 +70,10 @@ class CLIPVisionTower(nn.Module):
                                                               do_convert_rgb=True)
                 else:
                     state_dict = torch.load(pretrained_ckpt, map_location='cpu')
+                    new_state_dict = OrderedDict()
                     for k, v in state_dict.items():
-                        state_dict[k.replace('model.', '')] = v
-                        del state_dict[k]
-                    vision_model.load_state_dict(state_dict)
+                        new_state_dict[k.replace('model.', '')] = v
+                    vision_model.load_state_dict(new_state_dict)
                     self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')
             else:
                 self.image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14')  # 224
