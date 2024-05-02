@@ -51,7 +51,7 @@ def main():
 
     force_cudnn_initialization()
 
-    device_id = 0
+    device_id = args.device_n
     eval_model.set_device(device_id)
 
     if args.model != "open_flamingo" and args.shots != [0]:

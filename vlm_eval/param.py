@@ -379,7 +379,7 @@ parser.add_argument(
 )
 parser.add_argument("--dont_save_adv", action="store_true", default=False)
 parser.add_argument("--out_base_path", type=str, default=".")
-parser.add_argument("--device_n", type=int, default=None)
+parser.add_argument("--device_n", type=int, default=0)
 parser.add_argument("--verbose", action="store_true", default=False)
 parser.add_argument(
     "--dataset-type",
