@@ -30,15 +30,14 @@ def pgd(
     velocity = torch.zeros_like(data_clean)
     for i in range(iterations):
         perturbation.requires_grad = True
-        with torch.enable_grad():
-            out = forward(images=data_clean + perturbation, input_ids=input_ids,
-                          attention_mask=attention_mask,
-                          past_key_values=None,
-                          inputs_embeds=None,
-                          labels=labels)
-            loss = loss_fn(out, targets) if loss_fn else out.loss.sum()
-            if verbose:
-                print(f'[{i}] {loss.item():.5f}')
+        out = forward(images=data_clean + perturbation, input_ids=input_ids,
+                      attention_mask=attention_mask,
+                      past_key_values=None,
+                      inputs_embeds=None,
+                      labels=labels)
+        loss = loss_fn(out, targets) if loss_fn else out.loss.sum()
+        if verbose:
+            print(f'[{i}] {loss.item():.5f}')
 
         with torch.no_grad():
             gradient = torch.autograd.grad(loss, perturbation)[0]
