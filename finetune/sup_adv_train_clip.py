@@ -156,10 +156,9 @@ class LLaVAFinetune:
         if args.ngpus > 1:  # and args.nnodes > 1:
             self.model = DistributedDataParallel(model.model.cuda(), device_ids=[self.args.local_rank],
                                                  find_unused_parameters=True)
+            self.vision_teacher = DistributedDataParallel(self.vision_teacher.cuda(), device_ids=[self.args.local_rank],
+                                                          find_unused_parameters=True)
             logging.info('model loaded successfully on a multiple gpus and nodes!')
-        # elif args.ngpus > 1:
-        #     self.model = DataParallel(model.model.cuda(), device_ids=range(args.ngpus))
-        #     logging.info('model loaded successfully on a multiple gpus and one node!')
         else:
             self.model = model.model.cuda()
             logging.info('model loaded successfully on a single gpu and node!')
@@ -248,7 +247,7 @@ class LLaVAFinetune:
             def hook(module, input, output):
                 vision_embedding.append(output)
 
-            hook_handle = self.model.get_vision_tower().vision_tower.register_forward_hook(hook)
+            hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
 
             out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
