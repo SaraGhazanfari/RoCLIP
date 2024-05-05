@@ -1,3 +1,4 @@
+import copy
 import logging
 import sys
 import time
@@ -69,10 +70,9 @@ class LLaVAFinetune:
     def __call__(self, *args, **kwargs):
         utils.setup_logging(self.args)
         utils.add_initial_logs(self.args)
-        print(torch.__version__)
-        print(torch.cuda.is_available())
 
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
+        self.vision_teacher = copy.deepcopy(model.model.get_vision_tower().vision_tower)
         self.normalizer = model.normalizer
         self.tokenizer = model.tokenizer
         logging.info('Model loaded successfully.')
@@ -241,16 +241,22 @@ class LLaVAFinetune:
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
+            vision_embedding = None
+
+            def hook(module, input, output):
+                vision_embedding = output
+
+            hook_handle = self.model.get_vision_tower().vision_tower.register_forward_hook(hook)
+
             out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
-            loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
+            vision_loss = torch.nn.MSELoss()(self.vision_teacher(self.normalizer(data)), vision_embedding)
+            print(vision_loss)
+            loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss + vision_loss
             loss_total.backward()
             self.optimizer.step()
-            # for name, param in self.model.get_vision_tower().vision_tower.named_parameters():
-            #     print(f"Parameter name: {name}")
-            #     print(f'Grad: {param.requires_grad}')
-            #     print(f"Gradient: {param.grad}")
+            hook_handle.remove()
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
