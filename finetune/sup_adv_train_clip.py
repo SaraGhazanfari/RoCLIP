@@ -251,6 +251,9 @@ class LLaVAFinetune:
             out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
+            print(vision_embedding)
+            print(vision_embedding.shape)
+
             vision_loss = torch.nn.MSELoss()(self.vision_teacher(self.normalizer(data)), vision_embedding)
             print(vision_loss)
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss + vision_loss
