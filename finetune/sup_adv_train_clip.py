@@ -244,6 +244,7 @@ class LLaVAFinetune:
             vision_embedding = list()
             with torch.no_grad():
                 teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
+
             def hook(module, input, output):
                 vision_embedding.append(output)
 
@@ -261,7 +262,7 @@ class LLaVAFinetune:
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone()
+            data_adv.detach().clone(), loss.detach().clone(), vision_loss.detach().clone(), loss_total.detach().clone()
             del data_adv, data
             self.model.zero_grad()
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
