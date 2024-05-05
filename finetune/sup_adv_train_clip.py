@@ -242,7 +242,8 @@ class LLaVAFinetune:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
             vision_embedding = list()
-            teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
+            with torch.no_grad():
+                teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
             def hook(module, input, output):
                 vision_embedding.append(output)
 
