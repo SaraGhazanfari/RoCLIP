@@ -241,10 +241,10 @@ class LLaVAFinetune:
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            vision_embedding = None
+            vision_embedding = list()
             teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
             def hook(module, input, output):
-                vision_embedding = output
+                vision_embedding.append(output)
 
             hook_handle = self.model.get_vision_tower().vision_tower.register_forward_hook(hook)
 
@@ -252,8 +252,8 @@ class LLaVAFinetune:
                              past_key_values=None, inputs_embeds=None, labels=labels)
             loss = out.loss.sum()
             print(teacher_vision_embedding.shape)
-            print(vision_embedding)
-            print(vision_embedding.shape)
+            print(vision_embedding[0])
+            print(vision_embedding[0].shape)
 
             vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding)
             print(vision_loss)
