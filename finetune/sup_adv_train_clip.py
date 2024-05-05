@@ -255,7 +255,8 @@ class LLaVAFinetune:
             loss = out.loss.sum()
 
             vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
-            loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss + vision_loss
+            loss_total = args.clean_weight * loss_clean + (
+                        1 - args.clean_weight) * loss + args.vision_weight * vision_loss
             loss_total.backward()
             self.optimizer.step()
             hook_handle.remove()
