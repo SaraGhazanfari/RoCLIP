@@ -240,24 +240,23 @@ class LLaVAFinetune:
             else:
                 loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            # vision_embedding = list()
+            vision_embedding = list()
             with torch.no_grad():
                 teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
-            student_vision_embedding = unwrap_model(self.model).get_vision_tower().vision_tower(data_adv)
-            # def hook(module, input, output):
-            #     vision_embedding.append(output)
-            #
-            # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
-            #
-            # out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
-            #                  past_key_values=None, inputs_embeds=None, labels=labels)
-            # loss = out.loss.sum()
+            def hook(module, input, output):
+                vision_embedding.append(output)
 
-            loss_total = torch.nn.MSELoss()(teacher_vision_embedding, student_vision_embedding)
-            # loss_total = args.vision_weight * vision_loss + (1 - args.clean_weight) * loss
+            hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
+
+            out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
+                             past_key_values=None, inputs_embeds=None, labels=labels)
+            loss = out.loss.sum()
+
+            vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
+            loss_total = args.vision_weight * vision_loss + (1 - args.vision_weight) * loss
             loss_total.backward()
             self.optimizer.step()
-            # hook_handle.remove()
+            hook_handle.remove()
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
@@ -270,8 +269,9 @@ class LLaVAFinetune:
                 self.message.add("lr", lr, format=".10f")
                 self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("total", self.args.steps, format="1d")
-                self.message.add("Adv loss", loss_total, format=".4f")
-                # self.message.add("Vision loss", vision_loss, format=".4f")
+                self.message.add("Lang loss", loss, format=".4f")
+                self.message.add("Vision loss", vision_loss, format=".4f")
+                self.message.add("Total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
                 start_time = time.time()
