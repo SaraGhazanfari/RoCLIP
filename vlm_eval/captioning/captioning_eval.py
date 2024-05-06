@@ -3,6 +3,7 @@ import json
 import os
 import uuid
 from collections import defaultdict
+from datetime import datetime
 
 from tqdm import tqdm
 
@@ -369,7 +370,8 @@ def evaluate_captioning(
 
     if attack_str == "ensemble":
         assert None not in captions_best_dict.values()
-        results_path = f"{dataset_name}results-best_{uuid.uuid4()}.json"
+        now_time = datetime.now().strftime("%Y-%m-%d_%H.%M.%S_%f")[:-2]
+        results_path = f"{dataset_name}results-best_{now_time}.json"
         results_path = os.path.join(args.out_base_path, "captions-json", results_path)
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving **best** generated captions to {results_path}")
