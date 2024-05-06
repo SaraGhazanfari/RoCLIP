@@ -34,8 +34,8 @@ def pgd(
                       attention_mask=attention_mask,
                       past_key_values=None,
                       inputs_embeds=None,
-                      labels=labels)
-        loss = loss_fn(out, targets) if loss_fn else out.loss.sum()
+                      labels=labels).loss.sum()
+        loss = loss_fn(out, targets) if loss_fn else out
         if verbose:
             print(f'[{i}] {loss.item():.5f}')
 
