@@ -107,6 +107,22 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
+        out = CausalLMOutputWithPast(
+            loss=loss,
+            logits=logits,
+            past_key_values=outputs.past_key_values,
+            hidden_states=outputs.hidden_states,
+            attentions=outputs.attentions,
+        )
+        print('--------------------------------------------')
+        print(loss)
+        print('--------------------------------------------')
+        print(outputs.past_key_values)
+        print('--------------------------------------------')
+        print(logits.shape)
+        print('--------------------------------------------')
+        print(out.__dict__.keys())
+        print('--------------------------------------------')
         return CausalLMOutputWithPast(
             loss=loss,
             logits=logits,
