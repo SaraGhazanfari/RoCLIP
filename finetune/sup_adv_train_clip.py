@@ -256,7 +256,7 @@ class LLaVAFinetune:
 
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
             vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
-            print(vision_embedding)
+            print(data_adv)
             loss_total = args.clean_weight * vision_loss + (1 - args.clean_weight) * loss
             loss_total.backward()
             self.optimizer.step()
