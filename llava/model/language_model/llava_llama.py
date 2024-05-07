@@ -117,12 +117,15 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         print('--------------------------------------------')
         print(loss)
         print('--------------------------------------------')
-        print(outputs.past_key_values.shape)
-        print('--------------------------------------------')
         print(logits.shape)
         print('--------------------------------------------')
         print(out.__dict__.keys())
         print('--------------------------------------------')
+        print(len(outputs.past_key_values))
+        for t in outputs.past_key_values:
+            print(t.shape)
+        print('--------------------------------------------')
+
         return CausalLMOutputWithPast(
             loss=loss,
             logits=logits,
