@@ -73,7 +73,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         input_ids, attention_mask, past_key_values, inputs_embeds, labels = self.prepare_inputs_labels_for_multimodal(
             input_ids, attention_mask, past_key_values, labels, images)
 
-
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         outputs = self.model(
             input_ids=input_ids,
@@ -106,29 +105,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         if not return_dict:
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
-
-        out = CausalLMOutputWithPast(
-            loss=loss,
-            logits=logits,
-            past_key_values=outputs.past_key_values,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
-        )
-        print('--------------------------------------------')
-        print(loss)
-        print('--------------------------------------------')
-        print(logits.shape)
-        print(shift_logits.shape)
-        print(labels.shape)
-        print('--------------------------------------------')
-        print(out.__dict__.keys())
-        print('--------------------------------------------')
-        print(len(outputs.past_key_values))
-        for t in outputs.past_key_values:
-            print(len(t))
-            print(t)
-            break
-        print('--------------------------------------------')
 
         return CausalLMOutputWithPast(
             loss=loss,
