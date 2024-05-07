@@ -12,7 +12,7 @@ def pgd(
         eps,
         iterations,
         stepsize,
-        output_normalize,
+        normalizer,
         perturbation=None,
         mode='min',
         momentum=0.9,
@@ -29,7 +29,7 @@ def pgd(
     velocity = torch.zeros_like(data_clean)
     for i in range(iterations):
         perturbation.requires_grad = True
-        out = forward(images=data_clean + perturbation, input_ids=input_ids,
+        out = forward(images=normalizer(data_clean + perturbation), input_ids=input_ids,
                       attention_mask=attention_mask,
                       past_key_values=None,
                       inputs_embeds=None,

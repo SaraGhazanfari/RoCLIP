@@ -211,7 +211,7 @@ class LLaVAFinetune:
                     eps=args.eps,
                     iterations=args.iterations_adv,
                     stepsize=args.stepsize_adv,
-                    output_normalize=args.output_normalize,
+                    normalizer=self.normalizer,
                     perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
                     mode='max',
                     verbose=False,
@@ -255,8 +255,9 @@ class LLaVAFinetune:
             loss = out.loss.sum()
 
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
+            print(vision_embedding[0])
             vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
-            print(data_adv)
+
             loss_total = args.clean_weight * vision_loss + (1 - args.clean_weight) * loss
             loss_total.backward()
             self.optimizer.step()
