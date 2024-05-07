@@ -260,7 +260,7 @@ class LLaVAFinetune:
 
             loss_total = args.clean_weight * vision_loss + (1 - args.clean_weight) * loss
             loss_total.backward()
-
+            print(f'****************************{idx}')
             for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
                 try:
                     if param.grad.isnan().any():  #
