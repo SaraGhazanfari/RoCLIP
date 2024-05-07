@@ -117,7 +117,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         print('--------------------------------------------')
         print(loss)
         print('--------------------------------------------')
-        print(outputs.past_key_values)
+        print(outputs.past_key_values.shape)
         print('--------------------------------------------')
         print(logits.shape)
         print('--------------------------------------------')
