@@ -1,4 +1,3 @@
-import copy
 import logging
 import sys
 import time
@@ -250,7 +249,12 @@ class LLaVAFinetune:
             #
             out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
+            if out.loss.isnan().any():  #
+                print(out.loss)
+                print(f'attention: nan in gradient ({out.loss.isnan().sum()})')  #
+
             loss = out.loss.sum()
+
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
             # vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
             loss_total = args.clean_weight * loss_clean + (1 - args.clean_weight) * loss
@@ -260,7 +264,7 @@ class LLaVAFinetune:
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss_total.detach().clone()  # , loss.detach().clone(), vision_loss.detach().clone()
+            data_adv.detach().clone(), loss.detach().clone(), loss_clean.detach().clone(), loss_total.detach().clone()
             del data_adv, data
             self.model.zero_grad()
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
