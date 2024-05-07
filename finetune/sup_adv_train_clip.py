@@ -272,7 +272,7 @@ class LLaVAFinetune:
             for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
                 try:
                     if param.isnan().any():  #
-                        print(f'attention: nan in gradient ({param.isnan().sum()})')  #
+                        print(f'param: nan in gradient ({param.isnan().sum()})')  #
                 except:
                     print(name)
 

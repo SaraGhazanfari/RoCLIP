@@ -41,9 +41,9 @@ def pgd(
         with torch.no_grad():
             gradient = torch.autograd.grad(loss, perturbation)[0]
             gradient = gradient
-            if gradient.isnan().any():  #
-                print(f'attention: nan in gradient ({gradient.isnan().sum()})')  #
-                gradient[gradient.isnan()] = 0.
+            # if gradient.isnan().any():  #
+            #     print(f'attention: nan in gradient ({gradient.isnan().sum()})')  #
+            #     gradient[gradient.isnan()] = 0.
             # normalize
             gradient = normalize_grad(gradient, p=norm)
             # momentum
