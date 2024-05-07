@@ -123,7 +123,9 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         print('--------------------------------------------')
         print(len(outputs.past_key_values))
         for t in outputs.past_key_values:
-            print(t.shape)
+            print(len(t))
+            print(t)
+            break
         print('--------------------------------------------')
 
         return CausalLMOutputWithPast(
