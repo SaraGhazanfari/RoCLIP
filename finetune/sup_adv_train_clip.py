@@ -334,7 +334,7 @@ if __name__ == '__main__':
     args.finetuned_model_name = args.finetuned_model_name.replace('/', '_')
     args = set_config(args)
 
-    tasks_per_node = 1 #args.ngpus
+    tasks_per_node = 1  # args.ngpus
     cluster = 'slurm' if not args.local else 'local'
     executor = submitit.AutoExecutor(folder=args.train_dir, cluster=cluster)
     # if not config.local:
@@ -344,7 +344,7 @@ if __name__ == '__main__':
         constraint=args.constraint,
         nodes=args.nnodes,
         tasks_per_node=tasks_per_node,
-        cpus_per_task=args.ncpus,
+        cpus_per_task=args.ncpus * args.ngpus,
         stderr_to_stdout=True,
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
         # slurm_partition=args.partition,
