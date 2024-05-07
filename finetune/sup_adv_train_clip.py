@@ -260,7 +260,14 @@ class LLaVAFinetune:
 
             loss_total = args.clean_weight * vision_loss + (1 - args.clean_weight) * loss
             loss_total.backward()
+
+            for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
+                if param.grad.isnan().any():  #
+                    print(f'attention: nan in gradient ({param.grad.isnan().sum()})')  #
+                    param.grad[param.grad.isnan()] = 0.
+
             self.optimizer.step()
+
             hook_handle.remove()
             self.optimizer.zero_grad()
             self.step_total += 1
