@@ -64,6 +64,7 @@ def pgd(
             ) - data_clean  # clamp to image space
             assert not perturbation.isnan().any()
         loss.detach().clone()
+        forward.zero_grad()
         del loss, out
 
     return data_clean + perturbation.detach()
