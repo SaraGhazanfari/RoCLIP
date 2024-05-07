@@ -251,7 +251,7 @@ class LLaVAFinetune:
                              past_key_values=None, inputs_embeds=None, labels=labels)
             if out.loss.isnan().any():  #
                 print(out.loss)
-                print(f'attention: nan in gradient ({out.loss.isnan().sum()})')  #
+                print(f'main: nan in gradient ({out.loss.isnan().sum()})')  #
 
             loss = out.loss.sum()
 
