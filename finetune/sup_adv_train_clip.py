@@ -100,6 +100,13 @@ class LLaVAFinetune:
         self._get_data(model)
         params = self._prepare_model(model)
 
+        for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
+            try:
+                if param.isnan().any():  #
+                    print(f'nan in param ({param.isnan().sum()})')  #
+            except:
+                print(name)
+
         self._get_optimizer(params)
 
         # set scheduler
@@ -264,7 +271,7 @@ class LLaVAFinetune:
             for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
                 try:
                     if param.grad.isnan().any():  #
-                        print(f'attention: nan in gradient ({param.grad.isnan().sum()})')  #
+                        print(f'nan in gradient ({param.grad.isnan().sum()})')  #
                         param.grad[param.grad.isnan()] = 0.
                 except:
                     print(name)
@@ -272,7 +279,7 @@ class LLaVAFinetune:
             for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
                 try:
                     if param.isnan().any():  #
-                        print(f'param: nan in gradient ({param.isnan().sum()})')  #
+                        print(f'nan in param ({param.isnan().sum()})')  #
                 except:
                     print(name)
 
