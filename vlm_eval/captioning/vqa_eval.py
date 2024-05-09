@@ -340,7 +340,7 @@ def evaluate_vqa(
     acc = 0
     for pred in answers_best_list:
         print(f"{pred['question_id']}, pred:{pred['answer']}, gt:{test_dataset.answers[pred['question_id']]}")
-        if pred['answer'] in test_dataset.answers[pred['question_id']]:
+        if pred['answer'].lower() in test_dataset.answers[pred['question_id']]:
             acc += 1
 
     print(f'Accuracy: {acc / len(answers_best_list)}')
