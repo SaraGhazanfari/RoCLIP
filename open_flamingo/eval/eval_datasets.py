@@ -129,8 +129,10 @@ class VQADataset(Dataset):
             "question": self.data[idx]["question"],
             "question_id": self.data[idx]["question_id"],
         }
-
-        answers = self.data[idx]['answers']
+        try:
+            answers = self.data[idx]['answers']
+        except:
+            print(self.data[idx])
 
         if self.which_gt in ["all", None]:
             results["answers"] = answers
