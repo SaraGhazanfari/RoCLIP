@@ -46,6 +46,8 @@ class EvalModelLLAVA(BaseEvalModel):
             self.cast_dtype = torch.float16
         elif model_args["precision"] == "float32":
             self.cast_dtype = torch.float32
+        elif model_args["precision"] == "bfloat16":
+            self.cast_dtype = torch.bfloat16
         else:
             raise ValueError(f"Unknown dtype: {model_args['precision']}")
 
