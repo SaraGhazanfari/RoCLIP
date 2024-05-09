@@ -72,7 +72,7 @@ class LLaVAFinetune:
         utils.add_initial_logs(self.args)
 
         model = get_eval_model(self.args, self.args.__dict__, adversarial="none")
-        self.vision_teacher = copy.deepcopy(model.model.get_vision_tower().vision_tower)
+        # self.vision_teacher = copy.deepcopy(model.model.get_vision_tower().vision_tower)
         self.normalizer = model.normalizer
         self.tokenizer = model.tokenizer
         logging.info('Model loaded successfully.')
@@ -248,13 +248,13 @@ class LLaVAFinetune:
             #     loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
             vision_embedding = list()
-            with torch.no_grad():
-                teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
+            # with torch.no_grad():
+            #     teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
 
-            def hook(module, input, output):
-                vision_embedding.append(output)
-
-            hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
+            # def hook(module, input, output):
+            #     vision_embedding.append(output)
+            #
+            # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
 
             out = self.model(images=self.normalizer(data_adv), input_ids=input_ids, attention_mask=attention_mask,
                              past_key_values=None, inputs_embeds=None, labels=labels)
@@ -262,10 +262,10 @@ class LLaVAFinetune:
             loss = out.loss.sum()
 
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
-            print(vision_embedding[0])
-            vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
+            # print(vision_embedding[0])
+            # vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
 
-            loss_total = args.clean_weight * vision_loss + (1 - args.clean_weight) * loss
+            loss_total = loss
             loss_total.backward()
             print(f'****************************{idx}')
             for name, param in unwrap_model(self.model).get_vision_tower().vision_tower.named_parameters():
@@ -284,11 +284,11 @@ class LLaVAFinetune:
                     print(name)
 
             self.optimizer.step()
-            hook_handle.remove()
+            # hook_handle.remove()
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss.detach().clone(), vision_loss.detach().clone(), loss_total.detach().clone()
+            data_adv.detach().clone(), loss.detach().clone(), loss_total.detach().clone() #vision_loss.detach().clone(),
             del data_adv, data
             self.model.zero_grad()
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
@@ -298,7 +298,7 @@ class LLaVAFinetune:
                 self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("total", self.args.steps, format="1d")
                 self.message.add("adv loss", loss, format=".4f")
-                self.message.add("vision loss", vision_loss, format=".4f")
+                # self.message.add("vision loss", vision_loss, format=".4f")
                 # self.message.add("Total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
