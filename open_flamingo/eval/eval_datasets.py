@@ -109,8 +109,8 @@ class VQADataset(Dataset):
     def __len__(self):
         return len(self.questions)
 
-    def get_img_path(self, question):
-        return os.path.join(self.image_dir_path, f"{['image_id']}.jpg")
+    def get_img_path(self, idx):
+        return os.path.join(self.image_dir_path, f"{self.data[idx]['image_id']}.jpg")
 
     def get_from_id(self, question_id):
         assert not self.is_train
@@ -122,7 +122,7 @@ class VQADataset(Dataset):
 
     def __getitem__(self, idx):
         question = self.questions[idx]
-        img_path = self.get_img_path(question)
+        img_path = self.get_img_path(idx)
         if self.is_tensor:
             image_path = img_path.replace("jpg", "pt")
             image = torch.load(image_path)
