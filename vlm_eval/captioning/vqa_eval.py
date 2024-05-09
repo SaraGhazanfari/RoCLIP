@@ -51,7 +51,7 @@ def evaluate_vqa(
         train_annotations_json_path = args.textvqa_train_annotations_json_path
         test_image_dir_path = args.textvqa_test_image_dir_path
         test_annotations_json_path = args.textvqa_test_annotations_json_path
-        test_questions_json_path = args.textvqa_test_questions_json_path
+        test_questions_json_path = args.textvqa_test_annotations_json_path
     elif dataset_name != 'cc3m':
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 
@@ -336,12 +336,18 @@ def evaluate_vqa(
         answers_best_list = [{"answer": answers_best_dict[k], "question_id": k} for k in answers_best_dict]
         with open(results_path, "w") as f:
             f.write(json.dumps(answers_best_list, indent=4))
+    acc = 0
+    for pred in answers_best_list:
+        if pred['answer'] in test_dataset.answers[pred['question_id']]:
+            acc += 1
 
-    acc = compute_vqa_accuracy(
-        results_path,
-        test_questions_json_path,
-        test_annotations_json_path,
-        dataset=dataset_name
-    )
+    print(f'Accuracy: {acc / len(answers_best_list)}')
+
+    # acc = compute_vqa_accuracy(
+    #     results_path,
+    #     test_questions_json_path,
+    #     test_annotations_json_path,
+    #     dataset=dataset_name
+    # )
 
     return acc, results_path

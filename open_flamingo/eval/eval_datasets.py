@@ -12,14 +12,14 @@ from open_flamingo.eval.classification_utils import IMAGENET_1K_CLASS_ID_TO_LABE
 
 class CaptionDataset(Dataset):
     def __init__(
-        self,
-        image_train_dir_path,
-        annotations_path,
-        is_train,
-        dataset_name,
-        image_val_dir_path=None,
-        which_gt=None,
-        best_gt_caption_path=None,
+            self,
+            image_train_dir_path,
+            annotations_path,
+            is_train,
+            dataset_name,
+            image_val_dir_path=None,
+            which_gt=None,
+            best_gt_caption_path=None,
     ):
         self.image_train_dir_path = image_train_dir_path
         self.image_val_dir_path = image_val_dir_path
@@ -70,7 +70,8 @@ class CaptionDataset(Dataset):
             )
         image.load()
 
-        image_id = self.annotations[idx]["cocoid"] if self.dataset_name == "coco" else self.annotations[idx]["filename"].split(".")[0]
+        image_id = self.annotations[idx]["cocoid"] if self.dataset_name == "coco" else \
+            self.annotations[idx]["filename"].split(".")[0]
 
         if isinstance(self.which_gt, int):
             cpt_idx = self.which_gt
@@ -92,7 +93,7 @@ class CaptionDataset(Dataset):
 
 class VQADataset(Dataset):
     def __init__(
-        self, image_dir_path, annotations_path, is_train, dataset_name, which_gt='all', is_tensor=False
+            self, image_dir_path, annotations_path, is_train, dataset_name, which_gt='all', is_tensor=False
     ):
         self.data = json.load(open(annotations_path, "r"))['data']
         self.image_dir_path = image_dir_path
@@ -100,6 +101,7 @@ class VQADataset(Dataset):
         self.dataset_name = dataset_name
         self.which_gt = which_gt
         self.is_tensor = is_tensor
+        self.answers = {}
 
     def __len__(self):
         return len(self.data)
@@ -145,7 +147,7 @@ class VQADataset(Dataset):
                 results["answers"] = [most_common[which_gt][0]]
         else:
             raise ValueError(f"Unknown which_gt: {self.which_gt}")
-
+        self.answers[results['question_id']] = results['answers']
         return results
 
 
@@ -202,7 +204,8 @@ class TensorCaptionDataset(CaptionDataset):
     def __getitem__(self, idx):
         if self.dataset_name == "coco":
             image_path = os.path.join(
-                self.image_train_dir_path if self.annotations[idx]["filepath"] == "train2014" else self.image_val_dir_path,
+                self.image_train_dir_path if self.annotations[idx][
+                                                 "filepath"] == "train2014" else self.image_val_dir_path,
                 self.annotations[idx]["filename"]
             )
             image_path = image_path.replace("jpg", "pt")
