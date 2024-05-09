@@ -110,7 +110,7 @@ class VQADataset(Dataset):
         return len(self.questions)
 
     def get_img_path(self, question):
-        return os.path.join(self.image_dir_path, f"{question['image_id']}.jpg")
+        return os.path.join(self.image_dir_path, f"{['image_id']}.jpg")
 
     def get_from_id(self, question_id):
         assert not self.is_train
