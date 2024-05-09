@@ -290,7 +290,7 @@ class LLaVAFinetune:
             if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
                 self.evaluate()
 
-            if idx % 2000 == 1999:
+            if idx % 1000 == 999:
                 self._save_model(idx + 1)
 
     @torch.no_grad()
