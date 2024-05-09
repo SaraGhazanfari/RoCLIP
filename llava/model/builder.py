@@ -100,6 +100,8 @@ def load_pretrained_model(model_path, model_base, model_name, pretrained_rob_pat
             kwargs['torch_dtype'] = torch.float16
         elif dtype == 'float32':
             kwargs['torch_dtype'] = torch.float32
+        elif dtype == 'bfloat16':
+            kwargs['torch_dtype'] = torch.bfloat16
         else:
             raise ValueError(f"Unknown dtype {dtype}, must be float16 or float32")
 
