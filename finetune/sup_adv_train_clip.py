@@ -293,6 +293,7 @@ class LLaVAFinetune:
             if idx % 2000 == 1999:
                 self._save_model(idx + 1)
 
+    @torch.no_grad()
     def evaluate(self):
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
