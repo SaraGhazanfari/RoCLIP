@@ -293,31 +293,19 @@ parser.add_argument(
 
 # TextVQA Dataset
 parser.add_argument(
-    "--textvqa_image_dir_path",
+    "--textvqa_train_image_dir_path",
     type=str,
     help="Path to the textvqa images directory.",
     default=None,
 )
 parser.add_argument(
-    "--textvqa_train_questions_json_path",
+    "--textvqa_test_image_dir_path",
     type=str,
-    help="Path to the textvqa questions json file.",
+    help="Path to the textvqa images directory.",
     default=None,
 )
 parser.add_argument(
-    "--textvqa_train_annotations_json_path",
-    type=str,
-    help="Path to the textvqa annotations json file.",
-    default=None,
-)
-parser.add_argument(
-    "--textvqa_test_questions_json_path",
-    type=str,
-    help="Path to the textvqa questions json file.",
-    default=None,
-)
-parser.add_argument(
-    "--textvqa_test_annotations_json_path",
+    "--textvqa_annotations_json_path",
     type=str,
     help="Path to the textvqa annotations json file.",
     default=None,

@@ -46,60 +46,31 @@ def evaluate_vqa(
     Returns:
         float: accuracy score
     """
-
-    if dataset_name == "ok_vqa":
-        train_image_dir_path = args.ok_vqa_train_image_dir_path
-        train_questions_json_path = args.ok_vqa_train_questions_json_path
-        train_annotations_json_path = args.ok_vqa_train_annotations_json_path
-        test_image_dir_path = args.ok_vqa_test_image_dir_path
-        test_questions_json_path = args.ok_vqa_test_questions_json_path
-        test_annotations_json_path = args.ok_vqa_test_annotations_json_path
-    elif dataset_name == "vqav2":
-        train_image_dir_path = args.vqav2_train_image_dir_path
-        train_questions_json_path = args.vqav2_train_questions_json_path
-        train_annotations_json_path = args.vqav2_train_annotations_json_path
-        test_image_dir_path = args.vqav2_test_image_dir_path
-        test_questions_json_path = args.vqav2_test_questions_json_path
-        test_annotations_json_path = args.vqav2_test_annotations_json_path
-    elif dataset_name == "vizwiz":
-        train_image_dir_path = args.vizwiz_train_image_dir_path
-        train_questions_json_path = args.vizwiz_train_questions_json_path
-        train_annotations_json_path = args.vizwiz_train_annotations_json_path
-        test_image_dir_path = args.vizwiz_test_image_dir_path
-        test_questions_json_path = args.vizwiz_test_questions_json_path
-        test_annotations_json_path = args.vizwiz_test_annotations_json_path
-    elif dataset_name == "textvqa":
-        train_image_dir_path = args.textvqa_image_dir_path
-        train_questions_json_path = args.textvqa_train_questions_json_path
-        train_annotations_json_path = args.textvqa_train_annotations_json_path
-        test_image_dir_path = args.textvqa_image_dir_path
-        test_questions_json_path = args.textvqa_test_questions_json_path
-        test_annotations_json_path = args.textvqa_test_annotations_json_path
+    if dataset_name == "textvqa":
+        train_image_dir_path = args.textvqa_train_image_dir_path
+        annotations_json_path = args.textvqa_annotations_json_path
+        test_image_dir_path = args.textvqa_test_image_dir_path
     elif dataset_name != 'cc3m':
         raise ValueError(f"Unsupported dataset: {dataset_name}")
-
 
     if dataset_name != 'cc3m':
         train_dataset = VQADataset(
             image_dir_path=train_image_dir_path,
-            question_path=train_questions_json_path,
-            annotations_path=train_annotations_json_path,
+            annotations_path=annotations_json_path,
             is_train=True,
             dataset_name=dataset_name,
         )
 
         test_dataset = VQADataset(
             image_dir_path=test_image_dir_path,
-            question_path=test_questions_json_path,
-            annotations_path=test_annotations_json_path,
+            annotations_path=annotations_json_path,
             is_train=False,
             dataset_name=dataset_name,
         )
         if args.from_saved:
             perturbation_dataset = VQADataset(
                 image_dir_path=args.from_saved,
-                question_path=test_questions_json_path,
-                annotations_path=test_annotations_json_path,
+                annotations_path=annotations_json_path,
                 is_train=False,
                 dataset_name=dataset_name,
                 is_tensor=True
