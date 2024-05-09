@@ -203,6 +203,7 @@ class LLaVAFinetune:
     def train_one_epoch(self, epoch):
         unwrap_model(self.model).get_vision_tower().vision_tower.train()
         start_time = time.time()
+        log_loss = 0
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
@@ -246,7 +247,7 @@ class LLaVAFinetune:
             # else:
             #     loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            vision_embedding = list()
+            # vision_embedding = list()
             # with torch.no_grad():
             #     teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
 
@@ -258,13 +259,12 @@ class LLaVAFinetune:
             loss_total = self.model(images=self.normalizer(data_adv), input_ids=input_ids,
                                     attention_mask=attention_mask,
                                     past_key_values=None, inputs_embeds=None, labels=labels).loss.sum()
-
+            log_loss += loss_total.item()
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
             # print(vision_embedding[0])
             # vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
 
             loss_total.backward()
-            print(f'****************************{idx}')
 
             self.optimizer.step()
             # hook_handle.remove()
@@ -280,17 +280,18 @@ class LLaVAFinetune:
                 self.message.add("lr", lr, format=".10f")
                 self.message.add("num_steps", self.step_total, format="1d")
                 self.message.add("total", self.args.steps, format="1d")
-                self.message.add("adv loss", loss_total, format=".4f")
+                self.message.add("adv loss", log_loss/self.args.log_freq, format=".4f")
                 # self.message.add("vision loss", vision_loss, format=".4f")
                 # self.message.add("Total loss", loss_total, format=".4f")
                 self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
                 logging.info(self.message.get_message())
                 start_time = time.time()
+                log_loss = 0
 
             if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
                 self.evaluate()
 
-            if idx % 1000 == 999:
+            if idx % 2000 == 1999:
                 self._save_model(idx + 1)
 
     @torch.no_grad()
