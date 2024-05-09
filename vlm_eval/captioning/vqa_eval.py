@@ -298,12 +298,12 @@ def evaluate_vqa(
         with open(results_path, "w") as f:
             f.write(json.dumps(answers_best_list, indent=4))
 
-    # acc = compute_vqa_accuracy(
-    #     results_path,
-    #     test_questions_json_path,
-    #     test_annotations_json_path,
-    #     dataset=dataset_name
-    # )
+    acc = compute_vqa_accuracy(
+        results_path,
+        test_questions_json_path,
+        test_annotations_json_path,
+        dataset=dataset_name
+    )
 
     return acc, results_path
 
