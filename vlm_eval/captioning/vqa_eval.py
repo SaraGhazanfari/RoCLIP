@@ -7,7 +7,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MDataset
-from open_flamingo.eval.eval_datasets import VQADataset
+from open_flamingo.eval.eval_datasets import TextVQADataset, VQADataset
 from open_flamingo.eval.eval_model import BaseEvalModel
 from open_flamingo.eval.ok_vqa_utils import postprocess_ok_vqa_generation
 from open_flamingo.eval.vqa_metric import (
@@ -46,49 +46,9 @@ def evaluate_vqa(
     Returns:
         float: accuracy score
     """
-    if dataset_name == "textvqa":
-        train_image_dir_path = args.textvqa_train_image_dir_path
-        train_annotations_json_path = args.textvqa_train_annotations_json_path
-        test_image_dir_path = args.textvqa_test_image_dir_path
-        test_annotations_json_path = args.textvqa_test_annotations_json_path
-        test_questions_json_path = args.textvqa_test_annotations_json_path
-    elif dataset_name != 'cc3m':
-        raise ValueError(f"Unsupported dataset: {dataset_name}")
 
-    if dataset_name != 'cc3m':
-        train_dataset = VQADataset(
-            image_dir_path=train_image_dir_path,
-            annotations_path=train_annotations_json_path,
-            is_train=True,
-            dataset_name=dataset_name,
-        )
-
-        test_dataset = VQADataset(
-            image_dir_path=test_image_dir_path,
-            annotations_path=test_annotations_json_path,
-            is_train=False,
-            dataset_name=dataset_name,
-        )
-        if args.from_saved:
-            perturbation_dataset = VQADataset(
-                image_dir_path=args.from_saved,
-                annotations_path=test_annotations_json_path,
-                is_train=False,
-                dataset_name=dataset_name,
-                is_tensor=True
-            )
-    else:
-        test_questions_json_path = args.cc_test_questions_json_path
-        test_annotations_json_path = args.cc_questions_answers_json_path
-        train_dataset = CC3MDataset(
-            img_root=args.train_data,
-            annotations_path=args.cc_questions_answers_json_path,
-        )
-
-        test_dataset = CC3MDataset(
-            img_root=args.train_data,
-            annotations_path=args.cc_questions_answers_json_path,
-        )
+    perturbation_dataset, test_annotations_json_path, test_dataset, test_questions_json_path, train_dataset = get_dataset(
+        args, dataset_name)
     effective_num_shots = compute_effective_num_shots(num_shots, args.model)
 
     test_dataloader = prepare_eval_samples(
@@ -337,13 +297,6 @@ def evaluate_vqa(
         answers_best_list = [{"answer": answers_best_dict[k], "question_id": k} for k in answers_best_dict]
         with open(results_path, "w") as f:
             f.write(json.dumps(answers_best_list, indent=4))
-    acc = 0
-    for pred in answers_best_list:
-        print(f"{pred['question_id']}, pred:{pred['answer']}, gt:{test_dataset.answers[pred['question_id']]}")
-        if pred['answer'].lower() in test_dataset.answers[pred['question_id']]:
-            acc += 1
-
-    print(f'Accuracy: {acc / len(answers_best_list)}')
 
     # acc = compute_vqa_accuracy(
     #     results_path,
@@ -353,3 +306,74 @@ def evaluate_vqa(
     # )
 
     return acc, results_path
+
+
+def get_dataset(args, dataset_name):
+    perturbation_dataset = None
+    if dataset_name == 'vqav2':
+        train_image_dir_path = args.vqav2_train_image_dir_path
+        train_questions_json_path = args.vqav2_train_questions_json_path
+        train_annotations_json_path = args.vqav2_train_annotations_json_path
+        test_image_dir_path = args.vqav2_test_image_dir_path
+        test_questions_json_path = args.vqav2_test_questions_json_path
+        test_annotations_json_path = args.vqav2_test_annotations_json_path
+    elif dataset_name == "textvqa":
+        train_image_dir_path = args.textvqa_train_image_dir_path
+        train_annotations_json_path = args.textvqa_train_annotations_json_path
+        test_image_dir_path = args.textvqa_test_image_dir_path
+        test_annotations_json_path = args.textvqa_test_annotations_json_path
+        test_questions_json_path = args.textvqa_test_annotations_json_path
+    elif dataset_name != 'cc3m':
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
+    if dataset_name not in ['cc3m', 'textvqa']:
+        train_dataset = VQADataset(
+            image_dir_path=train_image_dir_path,
+            question_path=train_questions_json_path,
+            annotations_path=train_annotations_json_path,
+            is_train=True,
+            dataset_name=dataset_name,
+        )
+
+        test_dataset = VQADataset(
+            image_dir_path=test_image_dir_path,
+            question_path=test_questions_json_path,
+            annotations_path=test_annotations_json_path,
+            is_train=False,
+            dataset_name=dataset_name,
+        )
+        if args.from_saved:
+            perturbation_dataset = VQADataset(
+                image_dir_path=args.from_saved,
+                question_path=test_questions_json_path,
+                annotations_path=test_annotations_json_path,
+                is_train=False,
+                dataset_name=dataset_name,
+                is_tensor=True
+            )
+    elif dataset_name == 'textvqa':
+        train_dataset = TextVQADataset(
+            image_dir_path=train_image_dir_path,
+            annotations_path=train_annotations_json_path,
+            is_train=True,
+            dataset_name=dataset_name,
+        )
+
+        test_dataset = TextVQADataset(
+            image_dir_path=test_image_dir_path,
+            annotations_path=test_annotations_json_path,
+            is_train=False,
+            dataset_name=dataset_name,
+        )
+    elif dataset_name == 'cc3m':
+        test_questions_json_path = args.cc_test_questions_json_path
+        test_annotations_json_path = args.cc_questions_answers_json_path
+        train_dataset = CC3MDataset(
+            img_root=args.train_data,
+            annotations_path=args.cc_questions_answers_json_path,
+        )
+
+        test_dataset = CC3MDataset(
+            img_root=args.train_data,
+            annotations_path=args.cc_questions_answers_json_path,
+        )
+    return perturbation_dataset, test_annotations_json_path, test_dataset, test_questions_json_path, train_dataset

@@ -93,6 +93,85 @@ class CaptionDataset(Dataset):
 
 class VQADataset(Dataset):
     def __init__(
+            self, image_dir_path, question_path, annotations_path, is_train, dataset_name, which_gt='all',
+            is_tensor=False
+    ):
+        self.questions = json.load(open(question_path, "r"))["questions"]
+        if annotations_path is not None:
+            self.answers = json.load(open(annotations_path, "r"))["annotations"]
+        else:
+            self.answers = None
+        self.image_dir_path = image_dir_path
+        self.is_train = is_train
+        self.dataset_name = dataset_name
+        if self.dataset_name in {"vqav2", "ok_vqa"}:
+            self.img_coco_split = self.image_dir_path.strip("/").split("/")[-1]
+            assert self.img_coco_split in {"train2014", "val2014", "test2015"}
+        self.which_gt = which_gt
+        self.is_tensor = is_tensor
+
+    def __len__(self):
+        return len(self.questions)
+
+    def get_img_path(self, question):
+        if self.dataset_name in {"vqav2", "ok_vqa"}:
+            return os.path.join(
+                self.image_dir_path,
+                f"COCO_{self.img_coco_split}_{question['image_id']:012d}.jpg"
+                if self.is_train
+                else f"COCO_{self.img_coco_split}_{question['image_id']:012d}.jpg",
+            )
+        elif self.dataset_name == "vizwiz":
+            return os.path.join(self.image_dir_path, question["image_id"])
+        elif self.dataset_name == "textvqa":
+            return os.path.join(self.image_dir_path, f"{question['image_id']}.jpg")
+        else:
+            raise Exception(f"Unknown VQA dataset {self.dataset_name}")
+
+    def get_from_id(self, question_id):
+        assert not self.is_train
+        assert self.dataset_name == "textvqa"
+        prefix = ''
+        image_path = f"{self.image_dir_path}/{prefix}{str(question_id).zfill(12)}.pt"
+        image = torch.load(image_path)
+        return image
+
+    def __getitem__(self, idx):
+        question = self.questions[idx]
+        img_path = self.get_img_path(question)
+        if self.is_tensor:
+            image_path = img_path.replace("jpg", "pt")
+            image = torch.load(image_path)
+        else:
+            image = Image.open(img_path)
+            image.load()
+        results = {
+            "image": image,
+            "question": question["question"],
+            "question_id": question["question_id"],
+        }
+        if self.answers is not None:
+            answers = self.answers[idx]
+            answers = [a["answer"] for a in answers["answers"]]
+            if self.which_gt in ["all", None]:
+                results["answers"] = answers
+            elif isinstance(self.which_gt, int) or isinstance(self.which_gt, dict):
+                which_gt = self.which_gt[question["question_id"]] if isinstance(self.which_gt, dict) else self.which_gt
+                # return the nth most common answer
+                counter = Counter(answers)
+                most_common = counter.most_common()
+                if which_gt >= len(most_common):
+                    results["answers"] = []
+                else:
+                    results["answers"] = [most_common[which_gt][0]]
+            else:
+                raise ValueError(f"Unknown which_gt: {self.which_gt}")
+
+        return results
+
+
+class TextVQADataset(Dataset):
+    def __init__(
             self, image_dir_path, annotations_path, is_train, dataset_name, which_gt='all', is_tensor=False
     ):
         self.data = json.load(open(annotations_path, "r"))['data']
