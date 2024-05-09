@@ -95,12 +95,6 @@ class VQADataset(Dataset):
         self, image_dir_path, annotations_path, is_train, dataset_name, which_gt='all', is_tensor=False
     ):
         self.data = json.load(open(annotations_path, "r"))['data']
-        print(self.data[0])
-        self.questions = list()
-        for sample in self.data:
-            self.questions.append({'question': sample["question"], 'question_id': sample["question_id"]})
-        self.answers = [sample["answers"] for sample in self.data]
-
         self.image_dir_path = image_dir_path
         self.is_train = is_train
         self.dataset_name = dataset_name
@@ -108,7 +102,7 @@ class VQADataset(Dataset):
         self.is_tensor = is_tensor
 
     def __len__(self):
-        return len(self.questions)
+        return len(self.data)
 
     def get_img_path(self, idx):
         return os.path.join(self.image_dir_path, f"{self.data[idx]['image_id']}.jpg")
@@ -122,7 +116,7 @@ class VQADataset(Dataset):
         return image
 
     def __getitem__(self, idx):
-        question = self.questions[idx]
+        question = self.data[idx]['question']
         img_path = self.get_img_path(idx)
         if self.is_tensor:
             image_path = img_path.replace("jpg", "pt")
@@ -132,25 +126,25 @@ class VQADataset(Dataset):
             image.load()
         results = {
             "image": image,
-            "question": question["question"],
-            "question_id": question["question_id"],
+            "question": self.data[idx]["question"],
+            "question_id": self.data[idx]["question_id"],
         }
-        if self.answers is not None:
-            answers = self.answers[idx]
 
-            if self.which_gt in ["all", None]:
-                results["answers"] = answers
-            elif isinstance(self.which_gt, int) or isinstance(self.which_gt, dict):
-                which_gt = self.which_gt[question["question_id"]] if isinstance(self.which_gt, dict) else self.which_gt
-                # return the nth most common answer
-                counter = Counter(answers)
-                most_common = counter.most_common()
-                if which_gt >= len(most_common):
-                    results["answers"] = []
-                else:
-                    results["answers"] = [most_common[which_gt][0]]
+        answers = self.data[idx]['answers']
+
+        if self.which_gt in ["all", None]:
+            results["answers"] = answers
+        elif isinstance(self.which_gt, int) or isinstance(self.which_gt, dict):
+            which_gt = self.which_gt[question["question_id"]] if isinstance(self.which_gt, dict) else self.which_gt
+            # return the nth most common answer
+            counter = Counter(answers)
+            most_common = counter.most_common()
+            if which_gt >= len(most_common):
+                results["answers"] = []
             else:
-                raise ValueError(f"Unknown which_gt: {self.which_gt}")
+                results["answers"] = [most_common[which_gt][0]]
+        else:
+            raise ValueError(f"Unknown which_gt: {self.which_gt}")
 
         return results
 
