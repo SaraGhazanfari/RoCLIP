@@ -51,6 +51,7 @@ def evaluate_vqa(
         train_annotations_json_path = args.textvqa_train_annotations_json_path
         test_image_dir_path = args.textvqa_test_image_dir_path
         test_annotations_json_path = args.textvqa_test_annotations_json_path
+        test_questions_json_path = args.textvqa_test_questions_json_path
     elif dataset_name != 'cc3m':
         raise ValueError(f"Unsupported dataset: {dataset_name}")
 

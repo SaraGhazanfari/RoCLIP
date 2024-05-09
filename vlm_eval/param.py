@@ -316,6 +316,11 @@ parser.add_argument(
     help="Path to the textvqa annotations json file.",
     default=None,
 )
+parser.add_argument(
+    "--textvqa_test_questions_json_path",
+    type=str,
+    default=None,
+)
 
 ## Imagenet dataset
 parser.add_argument("--imagenet_root", type=str, default="/tmp")
