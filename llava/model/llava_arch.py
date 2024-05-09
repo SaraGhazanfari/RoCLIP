@@ -97,6 +97,11 @@ class LlavaMetaForCausalLM(ABC):
             images, image_sizes=None):
         vision_tower = self.get_vision_tower()
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
+            if vision_tower is None:
+                print('Vision Tower is NONE')
+            if images is None:
+                print('images is NONE')
+            print(input_ids.shape)
             return input_ids, position_ids, attention_mask, past_key_values, None, labels
 
         if type(images) is list or images.ndim == 5:

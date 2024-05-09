@@ -314,10 +314,10 @@ class LLaVAFinetune:
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
+
             out = unwrap_model(self.model).generate(images=data, input_ids=input_ids, attention_mask=attention_mask,
                                                     past_key_values=None, min_new_tokens=0, max_new_tokens=20,
-                                                    num_beams=3,
-                                                    length_penalty=-2.0, labels=labels)
+                                                    num_beams=3, length_penalty=-2.0, labels=labels)
 
             for batch_idx in range(labels.shape[0]):
                 gt = labels[batch_idx]
