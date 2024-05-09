@@ -95,6 +95,7 @@ class VQADataset(Dataset):
         self, image_dir_path, annotations_path, is_train, dataset_name, which_gt='all', is_tensor=False
     ):
         self.data = json.load(open(annotations_path, "r"))['data']
+        print(self.data[0])
         self.questions = list()
         for sample in self.data:
             self.questions.append({'question': sample["question"], 'question_id': sample["question_id"]})
