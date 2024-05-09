@@ -197,7 +197,7 @@ def evaluate_vqa(
                 # assert num_shots == 0
                 attack = APGD(
                     eval_model if not targeted else lambda x: -eval_model(x),
-                    norm="linf",
+                    norm="l2",
                     eps=attack_config["eps"],
                     mask_out=mask_out,
                     initial_stepsize=1.0,
