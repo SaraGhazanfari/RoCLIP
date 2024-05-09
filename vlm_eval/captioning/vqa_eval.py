@@ -290,7 +290,8 @@ def evaluate_vqa(
         print(f"Saving generated captions to {results_path}")
         answers_attack_dict[f"{attack_str_cur}-{precision}-{init}-{gt}"] = results_path
         with open(results_path, "w") as f:
-            f.write(json.dumps([{"answer": predictions[k], "question_id": k} for k in predictions], indent=4))
+            answers_best_list = [{"answer": predictions[k], "question_id": k} for k in predictions]
+            f.write(json.dumps(answers_best_list, indent=4))
 
         if attack_str == "ensemble":
             acc_dict_cur = compute_vqa_accuracy(
