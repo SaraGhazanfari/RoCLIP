@@ -305,7 +305,13 @@ parser.add_argument(
     default=None,
 )
 parser.add_argument(
-    "--textvqa_annotations_json_path",
+    "--textvqa_train_annotations_json_path",
+    type=str,
+    help="Path to the textvqa annotations json file.",
+    default=None,
+)
+parser.add_argument(
+    "--textvqa_test_annotations_json_path",
     type=str,
     help="Path to the textvqa annotations json file.",
     default=None,
