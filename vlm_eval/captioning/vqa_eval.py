@@ -225,7 +225,7 @@ def evaluate_vqa(
                 length_penalty=length_penalty,
             )
             print(outputs, batch["answers"])
-            print(scores.shape)
+            print(scores.keys())
             process_function = (
                 postprocess_ok_vqa_generation
                 if dataset_name == "ok_vqa"

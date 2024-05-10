@@ -85,7 +85,8 @@ class EvalModelLLAVA(BaseEvalModel):
             min_new_tokens=min_generation_length,
             max_new_tokens=max_generation_length,
             use_cache=False,
-            output_scores=True
+            output_scores=True,
+            return_dict_in_generate=True
         )
 
         input_token_len = input_ids.shape[1]
