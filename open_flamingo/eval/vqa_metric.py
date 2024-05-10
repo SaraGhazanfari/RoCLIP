@@ -538,11 +538,10 @@ class VQAEval:
                 otherGTAns = [
                     item for item in gts[quesId]["answers"] if item != gtAnsDatum
                 ]
-                print(resAns)
-                print(gts[quesId]["answers"])
+
                 matchingAns = [item for item in otherGTAns if item["answer"] == resAns]
                 acc = min(1, float(len(matchingAns)) / 3)
-                print(acc)
+
                 gtAcc.append(acc)
             quesType = gts[quesId]["question_type"] if "question_type" in gts[quesId] else "other"
             ansType = (
