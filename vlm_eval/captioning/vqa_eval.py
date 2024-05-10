@@ -239,7 +239,7 @@ def evaluate_vqa(
                 pB = torch.sort(predictions / num_samples, dim=1, descending=True).values[0, 1].cpu().item()
                 print(pA, norm.ppf(pA))
                 print(pB, norm.ppf(pB))
-                radius = sigma / 2 * (pA - pB)
+                radius = (sigma / 2) * (pA - pB)
                 print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
                       torch.max(predictions / num_samples, dim=1).values, radius)
 
