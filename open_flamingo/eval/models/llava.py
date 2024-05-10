@@ -1,6 +1,6 @@
 import copy
 import os
-from typing import List
+from typing import List, Any
 
 import torch
 from torchvision.transforms import transforms
@@ -66,7 +66,7 @@ class EvalModelLLAVA(BaseEvalModel):
             min_generation_length: int,
             max_generation_length: int,
             **kwargs,
-    ) -> List[str]:
+    ) -> (List[str], Any):
 
         assert len(batch_text) == 1, "Only support batch size 1 (yet)"
         assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
@@ -75,7 +75,7 @@ class EvalModelLLAVA(BaseEvalModel):
         input_ids = self._prepare_text(batch_text)
 
         batch_images = self.normalizer(batch_images)
-        output_ids, scores = self.model.generate(
+        complete_outputs = self.model.generate(
             input_ids,
             images=batch_images.to(dtype=self.cast_dtype, device='cuda', non_blocking=True),
             do_sample=True if self.model_args["temperature"] > 0 else False,
@@ -88,7 +88,8 @@ class EvalModelLLAVA(BaseEvalModel):
             output_scores=True,
             return_dict_in_generate=True
         )
-
+        print(complete_outputs.keys())
+        output_ids = complete_outputs['output_id']
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
@@ -100,7 +101,7 @@ class EvalModelLLAVA(BaseEvalModel):
             outputs = outputs[:-len(self.stop_str)]
         outputs = outputs.strip()
 
-        return [outputs], scores
+        return [outputs], complete_outputs['scores']
 
     def __call__(self, images_unnorm):
         assert self.input_ids is not None
