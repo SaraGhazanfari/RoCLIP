@@ -227,7 +227,7 @@ def evaluate_vqa(
             special_tokens = eval_model.tokenizer.all_special_tokens
             special_token_ids = eval_model.tokenizer.convert_tokens_to_ids(special_tokens)
             print(special_token_ids)
-            print(scores.shape, torch.argmax(scores, dim=1), eval_model.tokenizer.decode(torch.argmax(scores, dim=1)),
+            print(torch.max(scores, dim=1), torch.argmax(scores, dim=1), eval_model.tokenizer.decode(torch.argmax(scores, dim=1)),
                   outputs, batch["answers"])
 
             process_function = (
