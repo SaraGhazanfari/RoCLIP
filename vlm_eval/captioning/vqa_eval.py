@@ -233,11 +233,9 @@ def evaluate_vqa(
             )
             print(complete_outputs.keys())
             print(complete_outputs.get('logits').shape)
-            output_ids = torch.argmax(complete_outputs['logits'][0], dim=1).reshape(-1,1)
+            output_ids = torch.argmax(complete_outputs['logits'][0], dim=1).reshape(-1, 1)
+            print(output_ids.shape)
             input_token_len = eval_model.input_ids.shape[1]
-            n_diff_input_output = (eval_model.input_ids != output_ids[:, :input_token_len]).sum().item()
-            if n_diff_input_output > 0:
-                print(f"[Warning] {n_diff_input_output} output_ids are not the same as the input_ids")
             outputs = eval_model.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
             outputs = outputs.strip()
 
