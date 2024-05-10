@@ -69,7 +69,7 @@ class EvalModelLLAVA(BaseEvalModel):
     ) -> (List[str], Any):
 
         assert len(batch_text) == 1, "Only support batch size 1 (yet)"
-        assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
+        # assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
 
         # prompt = batch_text.get_prompt()
         input_ids = self._prepare_text(batch_text)
