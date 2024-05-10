@@ -252,6 +252,8 @@ def evaluate_vqa(
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
+            print(outputs, batch["answers"])
+            print('-----------------------------')
             process_function = (
                 postprocess_ok_vqa_generation
                 if dataset_name == "ok_vqa"
@@ -263,8 +265,7 @@ def evaluate_vqa(
             for new_prediction, sample_id in zip(new_predictions, batch["question_id"]):
                 # predictions.append({"answer": new_prediction, "question_id": sample_id})
                 predictions[sample_id] = new_prediction
-                print(new_prediction, batch["answers"])
-            print('-----------------------------')
+
 
             if batch_n < 20 and args.verbose:
                 print(f"gt answer: {batch['answers']}")
