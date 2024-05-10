@@ -259,7 +259,8 @@ def evaluate_vqa(
             )
 
             new_predictions = map(process_function, outputs)
-
+            print(new_prediction, batch["answers"])
+            print('-----------------------------')
             for new_prediction, sample_id in zip(new_predictions, batch["question_id"]):
                 # predictions.append({"answer": new_prediction, "question_id": sample_id})
                 predictions[sample_id] = new_prediction
