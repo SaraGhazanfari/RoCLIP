@@ -97,12 +97,13 @@ class EvalModelLLAVA(BaseEvalModel):
         if n_diff_input_output > 0:
             print(f"[Warning] {n_diff_input_output} output_ids are not the same as the input_ids")
         outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
-        # scores = scores[input_token_len:]
+
         outputs = outputs.strip()
-        print(output_ids[:, input_token_len:])
-        for score in scores:
-            print(torch.argmax(score))
+
         if outputs.endswith(self.stop_str):
+            print(outputs)
+            print(len(self.stop_str))
+
             outputs = outputs[:-len(self.stop_str)]
             scores = scores[:-len(self.stop_str)]
         outputs = outputs.strip()
