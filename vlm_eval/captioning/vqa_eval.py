@@ -215,23 +215,19 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
-            encodings = eval_model.tokenizer(
-                batch_text,
-                padding="longest",
-                truncation=True,
-                return_tensors="pt",
-                max_length=2000,
+
+            eval_model.set_inputs(
+                batch_text=batch_text,
+                past_key_values=None,
+                to_device=True
             )
-            input_ids = encodings["input_ids"]
-            attention_mask = encodings["attention_mask"]
-            labels = encodings["labels"]
 
             complete_outputs = eval_model.model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                past_key_values=None,
+                input_ids=eval_model.input_ids,
+                attention_mask=eval_model.attention_mask,
+                past_key_values=eval_model.past_key_values,
                 inputs_embeds=None,
-                labels=labels,
+                labels=eval_model.labels,
                 images=eval_model.normalizer(batch_images),
             )
             print(complete_outputs.keys())
