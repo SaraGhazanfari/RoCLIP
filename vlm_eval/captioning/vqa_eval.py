@@ -228,7 +228,7 @@ def evaluate_vqa(
                 past_key_values=eval_model.past_key_values,
                 inputs_embeds=None,
                 labels=eval_model.labels,
-                images=eval_model.normalizer(batch_images),
+                images=eval_model.normalizer(batch_images.half()),
             )
             print(complete_outputs.keys())
             print(complete_outputs.get('logits').shape)
