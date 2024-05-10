@@ -101,7 +101,7 @@ class EvalModelLLAVA(BaseEvalModel):
         outputs = outputs.strip()
         print(output_ids[:, input_token_len:])
         for score in scores:
-            print(max(score))
+            print(torch.argmax(score))
         if outputs.endswith(self.stop_str):
             outputs = outputs[:-len(self.stop_str)]
             scores = scores[:-len(self.stop_str)]
