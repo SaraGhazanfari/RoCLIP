@@ -235,6 +235,14 @@ def evaluate_vqa(
 
                 print(predictions / num_samples)
 
+            outputs, scores = eval_model.get_outputs(
+                batch_images=batch_images,
+                batch_text=batch_text,
+                min_generation_length=min_generation_length,
+                max_generation_length=max_generation_length,
+                num_beams=num_beams,
+                length_penalty=length_penalty,
+            )
             special_tokens = eval_model.tokenizer.all_special_tokens
             special_token_ids = eval_model.tokenizer.convert_tokens_to_ids(special_tokens)
             print(special_token_ids)
