@@ -1,9 +1,11 @@
 import argparse
 import json
 import os
+import time
 import uuid
 from collections import defaultdict
 
+import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
@@ -219,7 +221,7 @@ def evaluate_vqa(
             if batch_n == 1:
                 num_samples = 100
                 predictions = torch.zeros(2, 32001).cuda()  # Adjust num_classes accordingly
-
+                start_time = time.time()
                 for _ in range(num_samples):
                     noisy_inputs = torch.randn_like(batch_images) * 0.1
                     with torch.no_grad():
@@ -233,7 +235,7 @@ def evaluate_vqa(
                         )
                         predictions += F.softmax(scores, dim=1)
 
-                print(predictions / num_samples)
+                print(time.time()-start_time, torch.argmax(predictions / num_samples, dim=1))
 
             outputs, scores = eval_model.get_outputs(
                 batch_images=batch_images,
