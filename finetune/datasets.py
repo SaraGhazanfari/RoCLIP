@@ -43,7 +43,7 @@ class COCOFlickrDataset(Dataset):
         caption = self.annotations[idx]["caption"]
         # image = self.image_processor([[image]]).squeeze(0)
         # image = self.image_processor([[image]]).half().squeeze(0)
-        image = self.image_processor([[image]]).squeeze(0).to(torch.bfloat16)
+        image = self.image_processor([[image]]).squeeze(0).to(dtype=self.model.dtype, device='cuda', non_blocking=True)
         attention_mask, input_ids, labels = self._process_text(caption)
         attention_mask, input_ids, labels = self._pad_text(attention_mask, input_ids, labels)
         return image, input_ids, labels, attention_mask
