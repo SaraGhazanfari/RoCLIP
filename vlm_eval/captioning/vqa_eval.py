@@ -224,7 +224,7 @@ def evaluate_vqa(
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
-            print(torch.argmax(scores, dim=1), outputs, batch["answers"])
+            print(scores.shape, torch.argmax(scores, dim=1), outputs, batch["answers"])
 
             process_function = (
                 postprocess_ok_vqa_generation
