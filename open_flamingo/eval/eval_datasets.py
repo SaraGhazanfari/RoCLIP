@@ -146,7 +146,7 @@ class VQADataset(Dataset):
             image = Image.open(img_path)
             image.load()
         results = {
-            "image": image,
+            "image": image.half(),
             "question": question["question"],
             "question_id": question["question_id"],
         }
