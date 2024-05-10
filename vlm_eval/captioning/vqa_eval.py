@@ -239,7 +239,7 @@ def evaluate_vqa(
 
             if outputs.endswith(eval_model.stop_str):
                 outputs = outputs[:-len(eval_model.stop_str)]
-            outputs = outputs.strip()
+            outputs = postprocess_vqa_generation(outputs.strip())
 
             print(outputs, batch["answers"])
             print('-----------------------------')
