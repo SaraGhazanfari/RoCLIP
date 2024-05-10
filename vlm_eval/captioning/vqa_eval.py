@@ -243,6 +243,7 @@ def evaluate_vqa(
             outputs = outputs.strip()
 
             print(outputs, batch["answer"])
+            print('-----------------------------')
 
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
