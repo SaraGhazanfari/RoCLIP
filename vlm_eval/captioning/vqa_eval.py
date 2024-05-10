@@ -240,7 +240,8 @@ def evaluate_vqa(
             if outputs.endswith(eval_model.stop_str):
                 outputs = outputs[:-len(eval_model.stop_str)]
             outputs = postprocess_vqa_generation(outputs.strip())
-
+            print(output_ids.shape)
+            print(input_token_len)
             print(outputs, batch["answers"])
             print('-----------------------------')
 
