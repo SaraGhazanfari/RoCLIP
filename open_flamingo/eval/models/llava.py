@@ -90,6 +90,7 @@ class EvalModelLLAVA(BaseEvalModel):
         )
 
         output_ids = complete_outputs['sequences']
+
         scores = list(complete_outputs['scores'])
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
@@ -98,7 +99,9 @@ class EvalModelLLAVA(BaseEvalModel):
         outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
         # scores = scores[input_token_len:]
         outputs = outputs.strip()
-
+        print(output_ids[:, input_token_len:])
+        for score in scores:
+            print(max(score))
         if outputs.endswith(self.stop_str):
             outputs = outputs[:-len(self.stop_str)]
             scores = scores[:-len(self.stop_str)]
