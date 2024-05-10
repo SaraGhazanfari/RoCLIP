@@ -6,6 +6,7 @@ import uuid
 from collections import defaultdict
 
 import torch.nn.functional as F
+from scipy.stats import norm
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MDataset
@@ -218,11 +219,12 @@ def evaluate_vqa(
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
             if batch_n == 1:
+                sigma = 1.0
                 num_samples = 100
                 predictions = torch.zeros(2, 32001).cuda()  # Adjust num_classes accordingly
                 start_time = time.time()
                 for _ in range(num_samples):
-                    noisy_inputs = torch.randn_like(batch_images) * 0.1
+                    noisy_inputs = torch.randn_like(batch_images) * sigma
                     with torch.no_grad():
                         outputs, scores = eval_model.get_outputs(
                             batch_images=batch_images + noisy_inputs,
@@ -234,8 +236,11 @@ def evaluate_vqa(
                         )
                         predictions += F.softmax(scores, dim=1)
 
+                phi_inv = norm.ppf(1 - 0.001 / 2)
+                radius = sigma * phi_inv * torch.sqrt((torch.sort(predictions / num_samples, dim=1).values[:, 0] -
+                                                     torch.sort(predictions / num_samples, dim=1).values[:, 1]) / num_samples)
                 print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
-                      torch.max(predictions / num_samples, dim=1).values)
+                      torch.max(predictions / num_samples, dim=1).values, radius)
 
             outputs, scores = eval_model.get_outputs(
                 batch_images=batch_images,
