@@ -215,7 +215,27 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
+            encodings = eval_model.tokenizer(
+                batch_text,
+                padding="longest",
+                truncation=True,
+                return_tensors="pt",
+                max_length=2000,
+            )
+            input_ids = encodings["input_ids"]
+            attention_mask = encodings["attention_mask"]
+            labels = encodings["labels"]
 
+            complete_outputs = eval_model.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                past_key_values=None,
+                inputs_embeds=None,
+                labels=labels,
+                images=eval_model.normalizer(batch_images),
+            )
+            print(complete_outputs.keys())
+            print(complete_outputs.get('logits').shape)
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
@@ -224,7 +244,6 @@ def evaluate_vqa(
                 num_beams=num_beams,
                 length_penalty=length_penalty,
             )
-            print(outputs)
             process_function = (
                 postprocess_ok_vqa_generation
                 if dataset_name == "ok_vqa"
