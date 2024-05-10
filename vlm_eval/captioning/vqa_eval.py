@@ -236,8 +236,10 @@ def evaluate_vqa(
                         )
                         predictions += F.softmax(scores, dim=1)
 
-                radius = sigma / 2 * (norm.ppf(torch.sort(predictions / num_samples, dim=1).values[0, 0]) - norm.ppf(
-                    torch.sort(predictions / num_samples, dim=1).values[0, 1]))
+                radius = sigma / 2 * (norm.ppf(
+                    torch.sort(predictions / num_samples, dim=1).values[0, 0].cpu().numpy()) - norm.ppf(
+                    torch.sort(predictions / num_samples, dim=1).values[0, 1].cpu().numpy()
+                ))
                 print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
                       torch.max(predictions / num_samples, dim=1).values, radius)
 
