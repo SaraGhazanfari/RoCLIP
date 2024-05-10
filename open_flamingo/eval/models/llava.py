@@ -91,7 +91,7 @@ class EvalModelLLAVA(BaseEvalModel):
 
         output_ids = complete_outputs['sequences']
 
-        scores = torch.tensor(complete_outputs['scores'])
+        scores = torch.concat(complete_outputs['scores'], dim=1)
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
