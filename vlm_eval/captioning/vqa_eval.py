@@ -5,7 +5,6 @@ import time
 import uuid
 from collections import defaultdict
 
-import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
@@ -235,7 +234,8 @@ def evaluate_vqa(
                         )
                         predictions += F.softmax(scores, dim=1)
 
-                print(time.time()-start_time, torch.argmax(predictions / num_samples, dim=1))
+                print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
+                      torch.max(predictions / num_samples, dim=1).values)
 
             outputs, scores = eval_model.get_outputs(
                 batch_images=batch_images,
