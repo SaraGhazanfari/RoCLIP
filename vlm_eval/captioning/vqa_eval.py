@@ -235,8 +235,8 @@ def evaluate_vqa(
                             length_penalty=length_penalty,
                         )
                         predictions += F.softmax(scores, dim=1)
-                pA = torch.sort(predictions / num_samples, dim=1).values[0, 0].cpu().item()
-                pB = torch.sort(predictions / num_samples, dim=1).values[0, 1].cpu().item()
+                pA = torch.sort(predictions / num_samples, dim=1, descending=True).values[0, 0].cpu().item()
+                pB = torch.sort(predictions / num_samples, dim=1, descending=True).values[0, 1].cpu().item()
                 print(pA, norm.ppf(pA))
                 print(pB, norm.ppf(pB))
                 radius = sigma / 2 * (pA - pB)
