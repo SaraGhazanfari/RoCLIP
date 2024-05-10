@@ -4,6 +4,7 @@ import os
 import uuid
 from collections import defaultdict
 
+import torch.nn.functional as F
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MDataset
@@ -215,19 +216,29 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
+            if batch_n == 1:
+                num_samples = 100
+                predictions = torch.zeros(2, 32001)  # Adjust num_classes accordingly
 
-            outputs, scores = eval_model.get_outputs(
-                batch_images=batch_images,
-                batch_text=batch_text,
-                min_generation_length=min_generation_length,
-                max_generation_length=max_generation_length,
-                num_beams=num_beams,
-                length_penalty=length_penalty,
-            )
+                for _ in range(num_samples):
+                    noisy_inputs = torch.randn_like(batch_images) * 0.1
+                    with torch.no_grad():
+                        outputs, scores = eval_model.get_outputs(
+                            batch_images=batch_images + noisy_inputs,
+                            batch_text=batch_text,
+                            min_generation_length=min_generation_length,
+                            max_generation_length=max_generation_length,
+                            num_beams=num_beams,
+                            length_penalty=length_penalty,
+                        )
+                        predictions += F.softmax(scores, dim=1)
+
+                print(predictions / num_samples)
+
             special_tokens = eval_model.tokenizer.all_special_tokens
             special_token_ids = eval_model.tokenizer.convert_tokens_to_ids(special_tokens)
             print(special_token_ids)
-            import torch.nn.functional as F
+
             probabilities = F.softmax(scores, dim=1)
             print(torch.max(probabilities, dim=1).values, torch.argmax(scores, dim=1),
                   eval_model.tokenizer.decode(torch.argmax(scores, dim=1)),
