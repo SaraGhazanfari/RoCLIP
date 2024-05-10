@@ -231,7 +231,8 @@ def evaluate_vqa(
                 images=eval_model.normalizer(
                     batch_images.to(dtype=eval_model.model.dtype, device='cuda', non_blocking=True)),
             )
-
+            print(torch.argmax(complete_outputs['logits'][0], dim=1))
+            print(torch.argmax(complete_outputs['logits'][0], dim=1).shape)
             output_ids = torch.argmax(complete_outputs['logits'][0], dim=1).reshape(-1, 1)
 
             input_token_len = eval_model.input_ids.shape[1]
