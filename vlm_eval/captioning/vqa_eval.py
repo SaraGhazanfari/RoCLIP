@@ -236,7 +236,7 @@ def evaluate_vqa(
             input_token_len = eval_model.input_ids.shape[1]
             outputs = eval_model.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
             outputs = outputs.strip()
-            print(outputs, batch["answers"])
+
             if outputs.endswith(eval_model.stop_str):
                 outputs = outputs[:-len(eval_model.stop_str)]
             outputs = outputs.strip()
