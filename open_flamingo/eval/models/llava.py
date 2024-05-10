@@ -88,20 +88,23 @@ class EvalModelLLAVA(BaseEvalModel):
             output_scores=True,
             return_dict_in_generate=True
         )
-        print(complete_outputs.keys())
+
         output_ids = complete_outputs['sequences']
+        scores = list(complete_outputs['scores'])
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
             print(f"[Warning] {n_diff_input_output} output_ids are not the same as the input_ids")
         outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
+        scores = scores[input_token_len:]
         outputs = outputs.strip()
 
         if outputs.endswith(self.stop_str):
             outputs = outputs[:-len(self.stop_str)]
+            scores = scores[:-len(self.stop_str)]
         outputs = outputs.strip()
 
-        return [outputs], complete_outputs['scores']
+        return [outputs], scores
 
     def __call__(self, images_unnorm):
         assert self.input_ids is not None
