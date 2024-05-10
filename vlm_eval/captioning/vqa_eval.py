@@ -216,36 +216,7 @@ def evaluate_vqa(
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
 
-            eval_model.set_inputs(
-                batch_text=batch_text,
-                past_key_values=None,
-                to_device=True
-            )
-
-            complete_outputs = eval_model.model(
-                input_ids=eval_model.input_ids,
-                attention_mask=eval_model.attention_mask,
-                past_key_values=eval_model.past_key_values,
-                inputs_embeds=None,
-                labels=eval_model.labels,
-                images=eval_model.normalizer(
-                    batch_images.to(dtype=eval_model.model.dtype, device='cuda', non_blocking=True)),
-            )
-            output_ids = torch.argmax(complete_outputs['logits'][0], dim=1).reshape(1, -1)
-
-            input_token_len = eval_model.input_ids.shape[1]
-            outputs = eval_model.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
-            outputs = outputs.strip()
-
-            if outputs.endswith(eval_model.stop_str):
-                outputs = outputs[:-len(eval_model.stop_str)]
-            outputs = postprocess_vqa_generation(outputs.strip())
-            print(output_ids.shape)
-            print(input_token_len)
-            print(outputs, batch["answers"])
-            print('-----------------------------')
-
-            outputs = eval_model.get_outputs(
+            outputs, scores = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
                 min_generation_length=min_generation_length,
@@ -254,7 +225,7 @@ def evaluate_vqa(
                 length_penalty=length_penalty,
             )
             print(outputs, batch["answers"])
-            print('-----------------------------')
+            print(scores.shape)
             process_function = (
                 postprocess_ok_vqa_generation
                 if dataset_name == "ok_vqa"
@@ -266,7 +237,6 @@ def evaluate_vqa(
             for new_prediction, sample_id in zip(new_predictions, batch["question_id"]):
                 # predictions.append({"answer": new_prediction, "question_id": sample_id})
                 predictions[sample_id] = new_prediction
-
 
             if batch_n < 20 and args.verbose:
                 print(f"gt answer: {batch['answers']}")

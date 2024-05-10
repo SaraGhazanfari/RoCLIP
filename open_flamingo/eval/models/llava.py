@@ -75,7 +75,7 @@ class EvalModelLLAVA(BaseEvalModel):
         input_ids = self._prepare_text(batch_text)
 
         batch_images = self.normalizer(batch_images)
-        output_ids = self.model.generate(
+        output_ids, scores = self.model.generate(
             input_ids,
             images=batch_images.to(dtype=self.cast_dtype, device='cuda', non_blocking=True),
             do_sample=True if self.model_args["temperature"] > 0 else False,
@@ -84,7 +84,8 @@ class EvalModelLLAVA(BaseEvalModel):
             num_beams=self.model_args["num_beams"],
             min_new_tokens=min_generation_length,
             max_new_tokens=max_generation_length,
-            use_cache=False
+            use_cache=False,
+            output_scores=True
         )
 
         input_token_len = input_ids.shape[1]
@@ -98,7 +99,7 @@ class EvalModelLLAVA(BaseEvalModel):
             outputs = outputs[:-len(self.stop_str)]
         outputs = outputs.strip()
 
-        return [outputs]
+        return [outputs], scores
 
     def __call__(self, images_unnorm):
         assert self.input_ids is not None
