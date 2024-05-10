@@ -231,10 +231,9 @@ def evaluate_vqa(
                 images=eval_model.normalizer(
                     batch_images.to(dtype=eval_model.model.dtype, device='cuda', non_blocking=True)),
             )
-            print(complete_outputs.keys())
-            print(complete_outputs.get('logits').shape)
+
             output_ids = torch.argmax(complete_outputs['logits'][0], dim=1).reshape(-1, 1)
-            print(output_ids.shape)
+
             input_token_len = eval_model.input_ids.shape[1]
             outputs = eval_model.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
             outputs = outputs.strip()
@@ -243,7 +242,7 @@ def evaluate_vqa(
                 outputs = outputs[:-len(eval_model.stop_str)]
             outputs = outputs.strip()
 
-            print(outputs)
+            print(outputs, batch["answer"])
 
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,

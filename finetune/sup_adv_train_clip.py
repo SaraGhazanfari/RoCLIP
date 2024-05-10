@@ -362,7 +362,7 @@ if __name__ == '__main__':
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
         # slurm_partition=args.partition,
         slurm_signal_delay_s=0,
-        slurm_mem='64GB',
+        slurm_mem='256GB',
         timeout_min=args.timeout,
         additional_parameters={'mail_type': 'BEGIN',
                                'mail_user': 'sg7457@nyu.edu'}
