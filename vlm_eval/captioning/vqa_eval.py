@@ -242,7 +242,7 @@ def evaluate_vqa(
                 outputs = outputs[:-len(eval_model.stop_str)]
             outputs = outputs.strip()
 
-            print(outputs, batch["answer"])
+            print(outputs, batch["answers"])
             print('-----------------------------')
 
             outputs = eval_model.get_outputs(
