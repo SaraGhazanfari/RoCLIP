@@ -218,7 +218,7 @@ def evaluate_vqa(
                 adv_images_cur_dict[q_id] = batch_images[i]
             if batch_n == 1:
                 num_samples = 100
-                predictions = torch.zeros(2, 32001).to(batch_images.device)  # Adjust num_classes accordingly
+                predictions = torch.zeros(2, 32001).cuda()  # Adjust num_classes accordingly
 
                 for _ in range(num_samples):
                     noisy_inputs = torch.randn_like(batch_images) * 0.1
