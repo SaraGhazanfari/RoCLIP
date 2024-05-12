@@ -66,6 +66,50 @@ class EvalModelLLAVA(BaseEvalModel):
             min_generation_length: int,
             max_generation_length: int,
             **kwargs,
+    ) -> List[str]:
+
+        assert len(batch_text) == 1, "Only support batch size 1 (yet)"
+        # assert 0. <= batch_images.min() and batch_images.max() <= 1., "Images must be in image space"
+
+        # prompt = batch_text.get_prompt()
+        input_ids = self._prepare_text(batch_text)
+
+        batch_images = self.normalizer(batch_images)
+        output_ids = self.model.generate(
+            input_ids,
+            images=batch_images.to(dtype=self.cast_dtype, device='cuda', non_blocking=True),
+            do_sample=True if self.model_args["temperature"] > 0 else False,
+            temperature=self.model_args["temperature"],
+            top_p=self.model_args.get("top_p"),
+            num_beams=self.model_args["num_beams"],
+            min_new_tokens=min_generation_length,
+            max_new_tokens=max_generation_length,
+            use_cache=False,
+        )
+
+        input_token_len = input_ids.shape[1]
+        n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
+        if n_diff_input_output > 0:
+            print(f"[Warning] {n_diff_input_output} output_ids are not the same as the input_ids")
+        outputs = self.tokenizer.batch_decode(output_ids[:, input_token_len:], skip_special_tokens=True)[0]
+        outputs = outputs.strip()
+
+        if outputs.endswith(self.stop_str):
+            outputs = outputs[:-len(self.stop_str)]
+        outputs = outputs.strip()
+
+        return [outputs]
+
+    @torch.no_grad()
+    def get_outputs_and_scores(
+            self,
+            batch_text,  # List[conv object]
+            batch_images: torch.Tensor,
+            min_generation_length: int,
+            max_generation_length: int,
+            output_scores: bool = False,
+            return_dict_in_generate: bool = False,
+            **kwargs,
     ) -> (List[str], Any):
 
         assert len(batch_text) == 1, "Only support batch size 1 (yet)"
@@ -85,13 +129,14 @@ class EvalModelLLAVA(BaseEvalModel):
             min_new_tokens=min_generation_length,
             max_new_tokens=max_generation_length,
             use_cache=False,
-            output_scores=True,
-            return_dict_in_generate=True
+            output_scores=output_scores,
+            return_dict_in_generate=return_dict_in_generate
         )
-
-        output_ids = complete_outputs['sequences']
-
-        scores = torch.concat(complete_outputs['scores'], dim=0)
+        if output_scores:
+            output_ids = complete_outputs['sequences']
+            scores = torch.concat(complete_outputs['scores'], dim=0)
+        else:
+            output_ids = complete_outputs
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
