@@ -47,6 +47,7 @@ class Smooth(object):
         counts_selection = self._sample_noise(x, n0, batch_size)
         # use these samples to take a guess at the top class
         cAHat = counts_selection.argmax().item()
+        print('cHat is found!')
         # draw more samples of f(x + epsilon)
         counts_estimation = self._sample_noise(x, n, batch_size)
         # use these samples to estimate a lower bound on pA

@@ -231,11 +231,12 @@ def evaluate_vqa(
             #     radius = (sigma / 2) * (norm.ppf(pA) - norm.ppf(pB))
             #     print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
             #           torch.max(predictions / num_samples, dim=1).values, radius)
-            smooth_model = Smooth(base_classifier=eval_model, num_classes=30125, sigma=1, batch_text=batch_text,
-                                  min_generation_length=min_generation_length,
-                                  max_generation_length=max_generation_length, num_beams=num_beams,
-                                  length_penalty=length_penalty)
-            print(smooth_model.certify(x=batch_images, n0=100, n=1000, alpha=0.001, batch_size=1))
+            if batch_n >= 1:
+                smooth_model = Smooth(base_classifier=eval_model, num_classes=30125, sigma=1, batch_text=batch_text,
+                                      min_generation_length=min_generation_length,
+                                      max_generation_length=max_generation_length, num_beams=num_beams,
+                                      length_penalty=length_penalty)
+                print(smooth_model.certify(x=batch_images, n0=100, n=1000, alpha=0.001, batch_size=1))
     #         outputs, scores = eval_model.get_outputs(
     #             batch_images=batch_images,
     #             batch_text=batch_text,
