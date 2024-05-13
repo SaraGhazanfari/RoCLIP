@@ -2,7 +2,6 @@ from math import ceil
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from scipy.stats import norm, binom_test
 from statsmodels.stats.proportion import proportion_confint
 
@@ -103,9 +102,9 @@ class Smooth(object):
                                                                    min_generation_length=self.min_generation_length,
                                                                    max_generation_length=self.max_generation_length,
                                                                    num_beams=self.num_beams,
-                                                                   length_penalty=self.length_penalty).argmax(1)
-                predictions = F.softmax(scores, dim=1)
-                counts += self._count_arr(predictions.cpu().numpy(), self.num_classes)
+                                                                   length_penalty=self.length_penalty)
+                print(scores.shape)
+                counts += self._count_arr(scores.argmax(1).cpu().numpy(), self.num_classes)
             return counts
 
     def _count_arr(self, arr: np.ndarray, length: int) -> np.ndarray:
