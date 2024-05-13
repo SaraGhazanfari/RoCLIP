@@ -183,4 +183,4 @@ class Smooth(object):
             print(
                 f"Category {i + 1}: Mean p_{i + 1} = {mean:.3f}, {100 - alpha * 100}% CI = [{lower:.3f}, {upper:.3f}]")
 
-        return bootstrap_probs
+        return np.sum(bootstrap_probs, axis=1)
