@@ -236,7 +236,7 @@ def evaluate_vqa(
                                       min_generation_length=min_generation_length,
                                       max_generation_length=max_generation_length, num_beams=num_beams,
                                       length_penalty=length_penalty)
-                print(smooth_model.certify(x=batch_images, n0=1, n=10, alpha=0.001, batch_size=1))
+                print(smooth_model.certify(x=batch_images, n0=10, n=100, alpha=0.001, batch_size=1))
     #         outputs, scores = eval_model.get_outputs(
     #             batch_images=batch_images,
     #             batch_text=batch_text,
