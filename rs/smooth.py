@@ -103,7 +103,7 @@ class Smooth(object):
                                                                               max_generation_length=self.max_generation_length,
                                                                               num_beams=self.num_beams,
                                                                               length_penalty=self.length_penalty)
-                print(scores.shape)
+                scores = scores[0, :]
                 counts += self._count_arr(scores.argmax(1).cpu().numpy(), self.num_classes)
             return counts
 
