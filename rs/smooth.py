@@ -42,7 +42,7 @@ class Smooth(object):
         :return: (predicted class, certified radius)
                  in the case of abstention, the class will be ABSTAIN and the radius 0.
         """
-        self.base_classifier.eval()
+        # self.base_classifier.eval()
         # draw samples of f(x+ epsilon)
         counts_selection = self._sample_noise(x, n0, batch_size)
         # use these samples to take a guess at the top class
@@ -71,7 +71,7 @@ class Smooth(object):
         :param batch_size: batch size to use when evaluating the base classifier
         :return: the predicted class, or ABSTAIN
         """
-        self.base_classifier.eval()
+        # self.base_classifier.eval()
         counts = self._sample_noise(x, n, batch_size)
         top2 = counts.argsort()[::-1][:2]
         count1 = counts[top2[0]]
