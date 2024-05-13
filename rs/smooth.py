@@ -166,7 +166,7 @@ class Smooth(object):
         num_samples = 1000
 
         # Array to store bootstrap probability estimates
-        bootstrap_probs = np.zeros((num_samples, 2))
+        bootstrap_probs = np.zeros((num_samples, pvals.shape[0]))
 
         # Perform bootstrapping
         for i in range(num_samples):
