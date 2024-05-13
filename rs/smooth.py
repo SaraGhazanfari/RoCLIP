@@ -1,3 +1,4 @@
+import time
 from math import ceil
 
 import numpy as np
@@ -88,6 +89,7 @@ class Smooth(object):
         :param batch_size:
         :return: an ndarray[int] of length num_classes containing the per-class counts
         """
+        start_time = time.time()
         with torch.no_grad():
             counts = np.zeros(self.num_classes, dtype=int)
             for _ in range(ceil(num / batch_size)):
@@ -105,6 +107,8 @@ class Smooth(object):
                                                                               length_penalty=self.length_penalty)
                 scores = scores[0:1, :]
                 counts += self._count_arr(scores.argmax(1).cpu().numpy(), self.num_classes)
+                if _ == 0:
+                    print(f'{(time.time() - start_time) * num / 60} minutes')
             return counts
 
     def _count_arr(self, arr: np.ndarray, length: int) -> np.ndarray:
