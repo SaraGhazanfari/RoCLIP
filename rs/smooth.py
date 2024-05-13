@@ -96,7 +96,7 @@ class Smooth(object):
                 num -= this_batch_size
 
                 batch = x.repeat((this_batch_size, 1, 1, 1))
-                noise = torch.randn_like(batch, device='cuda') * self.sigma
+                noise = torch.randn_like(batch) * self.sigma
 
                 outputs, scores = self.base_classifier.get_outputs(batch_images=batch + noise,
                                                                    batch_text=self.batch_text,
