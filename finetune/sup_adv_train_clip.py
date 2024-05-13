@@ -239,12 +239,11 @@ class LLaVAFinetune:
             elif not args.attack:
                 data_adv = data
 
-            # if args.clean_weight > 0.:
-            #     loss_clean = torch.mean(
-            #         self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
+            #if args.clean_weight > 0.:
+            #     loss_clean = self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
             #                    past_key_values=None,
-            #                    inputs_embeds=None, labels=labels).loss.sum())
-            # else:
+            #                    inputs_embeds=None, labels=labels).loss.sum()
+            #else:
             #     loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
             # vision_embedding = list()
@@ -255,10 +254,13 @@ class LLaVAFinetune:
             #     vision_embedding.append(output)
             #
             # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
-
-            loss_total = self.model(images=self.normalizer(data_adv), input_ids=input_ids,
-                                    attention_mask=attention_mask,
-                                    past_key_values=None, inputs_embeds=None, labels=labels).loss.sum()
+            print(torch.cat((data, data_adv), dim=0).shape, torch.cat((input_ids,input_ids), dim=0).shape,
+                                    torch.cat((attention_mask, attention_mask), dim=0).shape,  
+                                    torch.cat((labels, labels), dim=0).shape)
+            loss_total = self.model(images=self.normalizer(torch.cat((data, data_adv), dim=0)), input_ids=torch.cat((input_ids,input_ids), dim=0),
+                                    attention_mask=torch.cat((attention_mask, attention_mask), dim=0), past_key_values=None, inputs_embeds=None, 
+                                    labels=torch.cat((labels, labels), dim=0)).loss.sum()
+            #loss_total = (1-args.clean_weight) * loss + args.clean_weight * loss_clean
             log_loss += loss_total.item()
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
             # print(vision_embedding[0])
@@ -362,7 +364,7 @@ if __name__ == '__main__':
         slurm_job_name=f'{args.train_dir[-4:]}_{args.mode}',
         # slurm_partition=args.partition,
         slurm_signal_delay_s=0,
-        slurm_mem='64GB',
+        slurm_mem='256GB',
         timeout_min=args.timeout,
         additional_parameters={'mail_type': 'BEGIN',
                                'mail_user': 'sg7457@nyu.edu'}
