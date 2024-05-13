@@ -54,6 +54,7 @@ class Smooth(object):
         nA = counts_estimation[cAHat].item()
         pABar = self._lower_confidence_bound(nA, n, alpha)
         b_list = self._bootstrap(nA, n, alpha)
+        print(b_list)
         b_pABar = self._lower_confidence_bound(b_list[0], b_list[0] + b_list[1], alpha)
         if pABar < 0.5:
             return Smooth.ABSTAIN, 0.0
