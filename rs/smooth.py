@@ -53,6 +53,8 @@ class Smooth(object):
         # use these samples to estimate a lower bound on pA
         nA = counts_estimation[cAHat].item()
         pABar = self._lower_confidence_bound(nA, n, alpha)
+        print(nA, n, alpha)
+        print(pABar)
         if pABar < 0.5:
             return Smooth.ABSTAIN, 0.0
         else:
