@@ -53,9 +53,9 @@ class Smooth(object):
         # use these samples to estimate a lower bound on pA
         nA = counts_estimation[cAHat].item()
         pABar = self._lower_confidence_bound(nA, n, alpha)
-        b_list = self._bootstrap(nA, n, alpha)
-        print(b_list)
-        b_pABar = self._lower_confidence_bound(b_list[0], b_list[0] + b_list[1], alpha)
+        b_list = self._bootstrap(counts_estimation, n, alpha)
+
+        b_pABar = self._lower_confidence_bound(b_list[-1], np.sum(b_list)[0], alpha)
         if pABar < 0.5:
             return Smooth.ABSTAIN, 0.0
         else:
@@ -161,7 +161,7 @@ class Smooth(object):
     for i, (mean, lower, upper) in enumerate(zip(mean_probs, ci_lower, ci_upper)):
         print(f"Category {i + 1}: Mean p_{i + 1} = {mean:.3f}, {100 - alpha * 100}% CI = [{lower:.3f}, {upper:.3f}]")
 
-    def _bootstrap(self, nA, n, alpha):
+    def _bootstrap(self, pvals, n, alpha):
         import numpy as np
         num_samples = 1000
 
@@ -170,7 +170,7 @@ class Smooth(object):
 
         # Perform bootstrapping
         for i in range(num_samples):
-            bootstrap_sample = np.random.multinomial(n=n, pvals=[nA / n, 1 - (nA / n)])
+            bootstrap_sample = np.random.multinomial(n=n, pvals=pvals)
             bootstrap_probs[i] = bootstrap_sample / sum(bootstrap_sample)
 
         # Calculate mean and 95% confidence intervals for each category
@@ -183,4 +183,4 @@ class Smooth(object):
             print(
                 f"Category {i + 1}: Mean p_{i + 1} = {mean:.3f}, {100 - alpha * 100}% CI = [{lower:.3f}, {upper:.3f}]")
 
-        return np.sum(bootstrap_probs, axis=0)
+        return np.sort(np.sum(bootstrap_probs, axis=0))
