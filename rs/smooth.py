@@ -53,13 +53,13 @@ class Smooth(object):
         # use these samples to estimate a lower bound on pA
         nA = counts_estimation[cAHat].item()
         pABar = self._lower_confidence_bound(nA, n, alpha)
-        print(nA, n, alpha)
-        print(pABar)
+        b_pABar = self._bootstrap(nA, n, alpha)
         if pABar < 0.5:
             return Smooth.ABSTAIN, 0.0
         else:
             radius = self.sigma * norm.ppf(pABar)
-            return cAHat, radius
+            b_radius = self.sigma * norm.ppf(b_pABar)
+            return cAHat, radius, b_radius
 
     def predict(self, x: torch.tensor, n: int, alpha: float, batch_size: int) -> int:
         """ Monte Carlo algorithm for evaluating the prediction of g at x.  With probability at least 1 - alpha, the
@@ -131,3 +131,54 @@ class Smooth(object):
         :return: a lower bound on the binomial proportion which holds true w.p at least (1 - alpha) over the samples
         """
         return proportion_confint(NA, N, alpha=2 * alpha, method="beta")[0]
+
+    import numpy as np
+
+    # Example data: counts of categories
+    data = np.array([1000, 2000, 7000])  # e.g., 100 for category 1, 200 for category 2, 700 for category 3
+
+    # Number of bootstrap samples
+    num_samples = 1000
+
+    # Array to store bootstrap probability estimates
+    bootstrap_probs = np.zeros((num_samples, len(data)))
+
+    # Perform bootstrapping
+    for i in range(num_samples):
+        bootstrap_sample = np.random.multinomial(n=sum(data), pvals=data / sum(data))
+        bootstrap_probs[i] = bootstrap_sample / sum(bootstrap_sample)
+
+    alpha = 0.001
+
+    # Calculate mean and 95% confidence intervals for each category
+    mean_probs = np.mean(bootstrap_probs, axis=0)
+    ci_lower = np.percentile(bootstrap_probs, alpha / 2 * 100, axis=0)
+    ci_upper = np.percentile(bootstrap_probs, 100 - alpha / 2 * 100, axis=0)
+
+    # Print results
+    for i, (mean, lower, upper) in enumerate(zip(mean_probs, ci_lower, ci_upper)):
+        print(f"Category {i + 1}: Mean p_{i + 1} = {mean:.3f}, {100 - alpha * 100}% CI = [{lower:.3f}, {upper:.3f}]")
+
+    def _bootstrap(self, nA, n, alpha):
+        import numpy as np
+        num_samples = 1000
+
+        # Array to store bootstrap probability estimates
+        bootstrap_probs = np.zeros((num_samples, 2))
+
+        # Perform bootstrapping
+        for i in range(num_samples):
+            bootstrap_sample = np.random.multinomial(n=n, pvals=[nA / n, 1 - (nA / n)])
+            bootstrap_probs[i] = bootstrap_sample / sum(bootstrap_sample)
+
+        # Calculate mean and 95% confidence intervals for each category
+        mean_probs = np.mean(bootstrap_probs, axis=0)
+        ci_lower = np.percentile(bootstrap_probs, alpha / 2 * 100, axis=0)
+        ci_upper = np.percentile(bootstrap_probs, 100 - alpha / 2 * 100, axis=0)
+
+        # Print results
+        for i, (mean, lower, upper) in enumerate(zip(mean_probs, ci_lower, ci_upper)):
+            print(
+                f"Category {i + 1}: Mean p_{i + 1} = {mean:.3f}, {100 - alpha * 100}% CI = [{lower:.3f}, {upper:.3f}]")
+
+        return ci_lower[0]
