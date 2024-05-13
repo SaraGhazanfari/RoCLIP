@@ -97,12 +97,12 @@ class Smooth(object):
                 batch = x.repeat((this_batch_size, 1, 1, 1))
                 noise = torch.randn_like(batch) * self.sigma
 
-                outputs, scores = self.base_classifier.get_outputs(batch_images=batch + noise,
-                                                                   batch_text=self.batch_text,
-                                                                   min_generation_length=self.min_generation_length,
-                                                                   max_generation_length=self.max_generation_length,
-                                                                   num_beams=self.num_beams,
-                                                                   length_penalty=self.length_penalty)
+                outputs, scores = self.base_classifier.get_outputs_and_scores(batch_images=batch + noise,
+                                                                              batch_text=self.batch_text,
+                                                                              min_generation_length=self.min_generation_length,
+                                                                              max_generation_length=self.max_generation_length,
+                                                                              num_beams=self.num_beams,
+                                                                              length_penalty=self.length_penalty)
                 print(scores.shape)
                 counts += self._count_arr(scores.argmax(1).cpu().numpy(), self.num_classes)
             return counts

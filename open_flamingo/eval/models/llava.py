@@ -107,8 +107,6 @@ class EvalModelLLAVA(BaseEvalModel):
             batch_images: torch.Tensor,
             min_generation_length: int,
             max_generation_length: int,
-            output_scores: bool = False,
-            return_dict_in_generate: bool = False,
             **kwargs,
     ) -> (List[str], Any):
 
@@ -129,14 +127,13 @@ class EvalModelLLAVA(BaseEvalModel):
             min_new_tokens=min_generation_length,
             max_new_tokens=max_generation_length,
             use_cache=False,
-            output_scores=output_scores,
-            return_dict_in_generate=return_dict_in_generate
+            output_scores=True,
+            return_dict_in_generate=True
         )
-        if output_scores:
-            output_ids = complete_outputs['sequences']
-            scores = torch.concat(complete_outputs['scores'], dim=0)
-        else:
-            output_ids = complete_outputs
+
+        output_ids = complete_outputs['sequences']
+        scores = torch.concat(complete_outputs['scores'], dim=0)
+
         input_token_len = input_ids.shape[1]
         n_diff_input_output = (input_ids != output_ids[:, :input_token_len]).sum().item()
         if n_diff_input_output > 0:
