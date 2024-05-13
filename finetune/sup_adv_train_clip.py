@@ -254,12 +254,14 @@ class LLaVAFinetune:
             #     vision_embedding.append(output)
             #
             # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
-            print(torch.cat((data, data_adv), dim=0).shape, torch.cat((input_ids,input_ids), dim=0).shape,
-                                    torch.cat((attention_mask, attention_mask), dim=0).shape,  
-                                    torch.cat((labels, labels), dim=0).shape)
             loss_total = self.model(images=self.normalizer(torch.cat((data, data_adv), dim=0)), input_ids=torch.cat((input_ids,input_ids), dim=0),
                                     attention_mask=torch.cat((attention_mask, attention_mask), dim=0), past_key_values=None, inputs_embeds=None, 
-                                    labels=torch.cat((labels, labels), dim=0)).loss.sum()
+                                    labels=torch.cat((labels, labels), dim=0), reduction='none').loss
+            loss_clean = loss_total[:int(loss_total.shape[0]/2)]
+            loss_adv = loss_total[int(loss_total.shape[0]/2):]
+            if loss_clean.sum() > 0:
+                loss_total = loss_clean.sum() / (loss_clean!=0.0).sum()
+            loss_total = 0.2 * loss_total + 0.8 * (loss_adv.sum()/(loss_adv!=0.0).sum())
             #loss_total = (1-args.clean_weight) * loss + args.clean_weight * loss_clean
             log_loss += loss_total.item()
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
@@ -273,7 +275,7 @@ class LLaVAFinetune:
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss_total.detach().clone()  # vision_loss.detach().clone(),
+            data_adv.detach().clone(), loss_total.detach().clone(), loss_clean.detach().clone(), loss_adv.detach().clone()
             del data_adv, data
             self.model.zero_grad()
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
