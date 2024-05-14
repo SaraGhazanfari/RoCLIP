@@ -362,7 +362,8 @@ def evaluate_captioning(
     if attack_config["save_adv"]:
         for img_id in adv_images_dict:
             torch.save(adv_images_dict[img_id], f'{images_save_path}/{str(img_id).zfill(12)}.pt')
-            img = Image.fromarray(adv_images_dict[img_id].to(dtype=torch.float32).cpu().detach().numpy()[0]).convert(
+            img = Image.fromarray(
+                (adv_images_dict[img_id].to(dtype=torch.float32) * 255).cpu().detach().numpy()[0]).convert(
                 'RGB')
             img.save(f'{images_save_path}/{str(img_id).zfill(12)}.jpg')
     # save gt dict and left to attack dict
