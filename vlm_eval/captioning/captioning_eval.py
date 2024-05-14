@@ -380,7 +380,7 @@ def evaluate_captioning(
         print(f"Saving **best** generated captions to {results_path}")
         with open(results_path, "w") as f:
             f.write(
-                json.dumps([{"image_id": k, "caption": captions_best_dict[k]} for k in captions_best_dict], indent=4)
+                json.dumps([{"image_id": k, "caption": predictions[k]} for k in captions_best_dict], indent=4)
             )
 
     if dataset_name == "coco":
