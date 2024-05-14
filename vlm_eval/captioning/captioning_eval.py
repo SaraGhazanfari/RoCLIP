@@ -312,9 +312,11 @@ def evaluate_captioning(
         print(f"Saving generated captions to {results_path}")
         captions_attack_dict[f"{attack_str_cur}-{precision}-{init}-{gt}"] = results_path
         with open(results_path, "w") as f:
-            f.write(
-                json.dumps([{"image_id": k, "caption": predictions[k]["caption"]} for k in predictions], indent=4)
-            )
+            for k in captions_best_dict:
+                f.write(
+                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset['image_id'],
+                                 'gt_caption': test_dataset['caption']}], indent=4)
+                )
 
         if attack_str == "ensemble":
 
