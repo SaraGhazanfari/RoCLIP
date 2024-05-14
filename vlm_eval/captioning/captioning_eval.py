@@ -314,8 +314,8 @@ def evaluate_captioning(
         with open(results_path, "w") as f:
             for k in captions_best_dict:
                 f.write(
-                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset['image_id'],
-                                 'gt_caption': test_dataset['caption']}], indent=4)
+                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset[0]['image_id'],
+                                 'gt_caption': test_dataset[0]['caption']}], indent=4)
                 )
 
         if attack_str == "ensemble":
