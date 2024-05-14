@@ -314,8 +314,7 @@ def evaluate_captioning(
         with open(results_path, "w") as f:
             for k in captions_best_dict:
                 f.write(
-                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset[0]['image_id'],
-                                 'gt_caption': test_dataset[0]['caption']}], indent=4)
+                    json.dumps([{"image_id": k, "caption": captions_best_dict[k]}], indent=4)
                 )
 
         if attack_str == "ensemble":
@@ -363,8 +362,9 @@ def evaluate_captioning(
     if attack_config["save_adv"]:
         for img_id in adv_images_dict:
             torch.save(adv_images_dict[img_id], f'{images_save_path}/{str(img_id).zfill(12)}.pt')
-            img = Image.fromarray(adv_images_dict[img_id].to(dtype=torch.float32).cpu().detach().numpy()[0]).convert('RGB')
-            img.save(f'{images_save_path}/{str(img_id).zfill(12)}.png')
+            img = Image.fromarray(adv_images_dict[img_id].to(dtype=torch.float32).cpu().detach().numpy()[0]).convert(
+                'RGB')
+            img.save(f'{images_save_path}/{str(img_id).zfill(12)}.jpg')
     # save gt dict and left to attack dict
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
@@ -383,9 +383,9 @@ def evaluate_captioning(
         with open(results_path, "w") as f:
             for k in captions_best_dict:
                 f.write(
-                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset['image_id'],
-                                 'gt_caption': test_dataset['caption']}], indent=4)
+                    json.dumps([{"image_id": k, "caption": captions_best_dict[k]}], indent=4)
                 )
+
     if dataset_name == "coco":
         annotations_path = args.coco_annotations_json_path
     elif dataset_name == 'flickr':
@@ -405,5 +405,6 @@ def evaluate_captioning(
         attack_success = np.nan
     else:
         attack_success = get_attack_success_rate(predictions, target_str)
+
     res = {"cider": metrics["CIDEr"] * 100.0, "success_rate": attack_success}
     return res, results_path
