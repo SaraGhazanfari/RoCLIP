@@ -5,7 +5,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-from PIL.Image import Image
+from PIL import Image
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MCaptionDataset
