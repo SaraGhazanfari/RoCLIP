@@ -5,6 +5,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
+from PIL.Image import Image
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MCaptionDataset
@@ -283,7 +284,6 @@ def evaluate_captioning(
                 img_id = batch["image_id"][i]
                 adv_images_cur_dict[img_id] = batch_images[i]
 
-
             outputs = eval_model.get_outputs(
                 batch_images=batch_images,
                 batch_text=batch_text,
@@ -338,6 +338,7 @@ def evaluate_captioning(
                 if cid < scores_dict[img_id]:
                     scores_dict[img_id] = cid
                     captions_best_dict[img_id] = predictions[img_id]["caption"]
+
                     adv_images_dict[img_id] = adv_images_cur_dict[img_id]
                     if isinstance(gt, int):
                         gt_dict.update({img_id: gt})
@@ -360,6 +361,8 @@ def evaluate_captioning(
     if attack_config["save_adv"]:
         for img_id in adv_images_dict:
             torch.save(adv_images_dict[img_id], f'{images_save_path}/{str(img_id).zfill(12)}.pt')
+            img = Image.fromarray(adv_images_dict[img_id].cpu().detach().numpy()[0])
+            img.save(f'{images_save_path}/{str(img_id).zfill(12)}.png')
     # save gt dict and left to attack dict
     with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
         json.dump(gt_dict, f)
@@ -376,9 +379,11 @@ def evaluate_captioning(
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving **best** generated captions to {results_path}")
         with open(results_path, "w") as f:
-            f.write(
-                json.dumps([{"image_id": k, "caption": captions_best_dict[k]} for k in captions_best_dict], indent=4)
-            )
+            for k in captions_best_dict:
+                f.write(
+                    json.dumps([{"image_id": k, "caption": captions_best_dict[k], 'gt_id': test_dataset['image_id'],
+                                 'gt_caption': test_dataset['caption']}], indent=4)
+                )
     if dataset_name == "coco":
         annotations_path = args.coco_annotations_json_path
     elif dataset_name == 'flickr':
