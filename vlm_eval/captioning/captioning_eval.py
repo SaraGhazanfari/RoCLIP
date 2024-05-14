@@ -5,7 +5,6 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-from PIL import Image
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MCaptionDataset
@@ -312,11 +311,7 @@ def evaluate_captioning(
         print(f"Saving generated captions to {results_path}")
         captions_attack_dict[f"{attack_str_cur}-{precision}-{init}-{gt}"] = results_path
         with open(results_path, "w") as f:
-            for k in captions_best_dict:
-                f.write(
-                    json.dumps([{"image_id": k, "caption": captions_best_dict[k]}], indent=4)
-                )
-
+            f.write(json.dumps([{"answer": predictions[k], "question_id": k} for k in predictions], indent=4))
         if attack_str == "ensemble":
 
             if dataset_name == "coco":
@@ -382,10 +377,7 @@ def evaluate_captioning(
         os.makedirs(os.path.dirname(results_path), exist_ok=True)
         print(f"Saving **best** generated captions to {results_path}")
         with open(results_path, "w") as f:
-            for k in captions_best_dict:
-                f.write(
-                    json.dumps([{"image_id": k, "caption": captions_best_dict[k]}], indent=4)
-                )
+            f.write(json.dumps([{"answer": predictions[k], "question_id": k} for k in predictions], indent=4))
 
     if dataset_name == "coco":
         annotations_path = args.coco_annotations_json_path
