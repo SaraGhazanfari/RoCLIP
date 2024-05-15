@@ -77,14 +77,13 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
         if neftune_alpha:
-            input_lengths = torch.sum(inputs_embeds, 1)  # B
             noise_ = torch.zeros_like(inputs_embeds).uniform_(-1, 1)
             delta = noise_ * attention_mask.unsqueeze(2)
-            dims = input_lengths * inputs_embeds.size(-1)
+            dims = inputs_embeds.shape[-2] * inputs_embeds.shape[-1]
             mag = neftune_alpha / torch.sqrt(dims)
-            print(delta.shape)
-            print(mag.view(-1, 1, 1).shape)
-            delta = (delta * mag.view(-1, 1, 1)).detach()
+            print(mag)
+            print(delta)
+            delta = (delta * mag).detach()
             print(delta)
             inputs_embeds += delta
         outputs = self.model(
