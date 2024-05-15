@@ -1,13 +1,16 @@
 import argparse
+import json
 import os
+import uuid
 from collections import defaultdict
-
+from torch.functional import F
 from tqdm import tqdm
 
 from data.llava_train_dataset import CC3MDataset
 from open_flamingo.eval.eval_datasets import TextVQADataset, VQADataset
 from open_flamingo.eval.eval_model import BaseEvalModel
-from rs.smooth import Smooth
+from open_flamingo.eval.ok_vqa_utils import postprocess_ok_vqa_generation
+from open_flamingo.eval.vqa_metric import compute_vqa_accuracy, postprocess_vqa_generation
 from vlm_eval.attacks.apgd import APGD
 from vlm_eval.utils import *
 
@@ -209,132 +212,105 @@ def evaluate_vqa(
                 # save the adversarial images
                 q_id = batch["question_id"][i]
                 adv_images_cur_dict[q_id] = batch_images[i]
-            # if batch_n == 1:
-            #     sigma = 1.0
-            #     num_samples = 100
-            #     predictions = torch.zeros(2, 32001).cuda()  # Adjust num_classes accordingly
-            #     start_time = time.time()
-            #     for _ in range(num_samples):
-            #         noisy_inputs = torch.randn_like(batch_images) * sigma
-            #         with torch.no_grad():
-            #             outputs, scores = eval_model.get_outputs(
-            #                 batch_images=batch_images + noisy_inputs,
-            #                 batch_text=batch_text,
-            #                 min_generation_length=min_generation_length,
-            #                 max_generation_length=max_generation_length,
-            #                 num_beams=num_beams,
-            #                 length_penalty=length_penalty,
-            #             )
-            #             predictions += F.softmax(scores, dim=1)
-            #     pA = torch.sort(predictions / num_samples, dim=1, descending=True).values[0, 0].cpu().item()
-            #     pB = torch.sort(predictions / num_samples, dim=1, descending=True).values[0, 1].cpu().item()
-            #     radius = (sigma / 2) * (norm.ppf(pA) - norm.ppf(pB))
-            #     print(time.time() - start_time, torch.argmax(predictions / num_samples, dim=1),
-            #           torch.max(predictions / num_samples, dim=1).values, radius)
-            if batch_n >= 1:
-                smooth_model = Smooth(base_classifier=eval_model, num_classes=30125, sigma=1, batch_text=batch_text,
-                                      min_generation_length=min_generation_length,
-                                      max_generation_length=max_generation_length, num_beams=num_beams,
-                                      length_penalty=length_penalty)
-                print(smooth_model.certify(x=batch_images, n0=10, n=100, alpha=0.001, batch_size=1))
-    #         outputs, scores = eval_model.get_outputs(
-    #             batch_images=batch_images,
-    #             batch_text=batch_text,
-    #             min_generation_length=min_generation_length,
-    #             max_generation_length=max_generation_length,
-    #             num_beams=num_beams,
-    #             length_penalty=length_penalty,
-    #         )
-    #         special_tokens = eval_model.tokenizer.all_special_tokens
-    #         special_token_ids = eval_model.tokenizer.convert_tokens_to_ids(special_tokens)
-    #         print(special_token_ids)
-    #
-    #         probabilities = F.softmax(scores, dim=1)
-    #         print(torch.max(probabilities, dim=1).values, torch.argmax(scores, dim=1),
-    #               eval_model.tokenizer.decode(torch.argmax(scores, dim=1)),
-    #               outputs, batch["answers"])
-    #
-    #         process_function = (
-    #             postprocess_ok_vqa_generation
-    #             if dataset_name == "ok_vqa"
-    #             else postprocess_vqa_generation
-    #         )
-    #
-    #         new_predictions = map(process_function, outputs)
-    #
-    #         for new_prediction, sample_id in zip(new_predictions, batch["question_id"]):
-    #             # predictions.append({"answer": new_prediction, "question_id": sample_id})
-    #             predictions[sample_id] = new_prediction
-    #
-    #         if batch_n < 20 and args.verbose:
-    #             print(f"gt answer: {batch['answers']}")
-    #             print(f"batch_text_adv: {batch_text_adv}")
-    #             print(f"new_predictions: {[predictions[q_id] for q_id in batch['question_id']]}\n", flush=True)
-    #
-    #     # save the predictions to a temporary file
-    #     random_uuid = str(uuid.uuid4())
-    #     results_path = f"{dataset_name}results_{random_uuid}.json"
-    #     results_path = os.path.join(args.out_base_path, "captions-json", results_path)
-    #     os.makedirs(os.path.dirname(results_path), exist_ok=True)
-    #     print(f"Saving generated captions to {results_path}")
-    #     answers_attack_dict[f"{attack_str_cur}-{precision}-{init}-{gt}"] = results_path
-    #     with open(results_path, "w") as f:
-    #         answers_best_list = [{"answer": predictions[k], "question_id": k} for k in predictions]
-    #         f.write(json.dumps(answers_best_list, indent=4))
-    #
-    #     if attack_str == "ensemble":
-    #         acc_dict_cur = compute_vqa_accuracy(
-    #             results_path,
-    #             test_questions_json_path,
-    #             test_annotations_json_path,
-    #             return_individual_scores=True
-    #         )
-    #         for q_id, pred in predictions.items():
-    #             acc = acc_dict_cur[q_id]
-    #             if acc < scores_dict[q_id]:
-    #                 scores_dict[q_id] = acc
-    #                 answers_best_dict[q_id] = pred
-    #                 adv_images_dict[q_id] = adv_images_cur_dict[q_id]
-    #                 if isinstance(gt, int):
-    #                     gt_dict.update({q_id: gt})
-    #             if acc == 0.:
-    #                 left_to_attack[q_id] = False
-    #         print(
-    #             f"##### "
-    #             f"after {(attack_str_cur, precision, gt)} left to attack: {sum(left_to_attack.values())} "
-    #             f"current acc: {np.mean(list(acc_dict_cur.values()))}, best acc: {np.mean(list(scores_dict.values()))}\n",
-    #             flush=True
-    #         )
-    #
-    # if attack_config["save_adv"]:
-    #     for q_id in adv_images_dict:
-    #         torch.save(adv_images_dict[q_id], f'{images_save_path}/{str(q_id).zfill(12)}.pt')
-    # # save gt dict and left to attack dict
-    # with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
-    #     json.dump(gt_dict, f)
-    # with open(f'{os.path.dirname(args.results_file)}/left_to_attack.json', 'w') as f:
-    #     json.dump(left_to_attack, f)
-    # with open(f'{os.path.dirname(args.results_file)}/captions_attack_dict.json', 'w') as f:
-    #     json.dump(answers_attack_dict, f)
-    #
-    # if attack_str == "ensemble":
-    #     assert None not in answers_best_dict.values()
-    #     results_path = f"{dataset_name}results-best_{uuid.uuid4()}.json"
-    #     results_path = os.path.join(args.out_base_path, "captions-json", results_path)
-    #     os.makedirs(os.path.dirname(results_path), exist_ok=True)
-    #     print(f"Saving **best** generated captions to {results_path}")
-    #     answers_best_list = [{"answer": answers_best_dict[k], "question_id": k} for k in answers_best_dict]
-    #     with open(results_path, "w") as f:
-    #         f.write(json.dumps(answers_best_list, indent=4))
-    #
-    # acc = compute_vqa_accuracy(
-    #     results_path,
-    #     test_questions_json_path,
-    #     test_annotations_json_path,
-    #     dataset=dataset_name
-    # )
-    #
-    # return acc, results_path
+
+            outputs, scores = eval_model.get_outputs(
+                batch_images=batch_images,
+                batch_text=batch_text,
+                min_generation_length=min_generation_length,
+                max_generation_length=max_generation_length,
+                num_beams=num_beams,
+                length_penalty=length_penalty,
+            )
+            special_tokens = eval_model.tokenizer.all_special_tokens
+            special_token_ids = eval_model.tokenizer.convert_tokens_to_ids(special_tokens)
+            print(special_token_ids)
+
+            probabilities = F.softmax(scores, dim=1)
+            print(torch.max(probabilities, dim=1).values, torch.argmax(scores, dim=1),
+                  eval_model.tokenizer.decode(torch.argmax(scores, dim=1)),
+                  outputs, batch["answers"])
+
+            process_function = (
+                postprocess_ok_vqa_generation
+                if dataset_name == "ok_vqa"
+                else postprocess_vqa_generation
+            )
+
+            new_predictions = map(process_function, outputs)
+
+            for new_prediction, sample_id in zip(new_predictions, batch["question_id"]):
+                # predictions.append({"answer": new_prediction, "question_id": sample_id})
+                predictions[sample_id] = new_prediction
+
+            if batch_n < 20 and args.verbose:
+                print(f"gt answer: {batch['answers']}")
+                print(f"batch_text_adv: {batch_text_adv}")
+                print(f"new_predictions: {[predictions[q_id] for q_id in batch['question_id']]}\n", flush=True)
+
+        # save the predictions to a temporary file
+        random_uuid = str(uuid.uuid4())
+        results_path = f"{dataset_name}results_{random_uuid}.json"
+        results_path = os.path.join(args.out_base_path, "captions-json", results_path)
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+        print(f"Saving generated captions to {results_path}")
+        answers_attack_dict[f"{attack_str_cur}-{precision}-{init}-{gt}"] = results_path
+        with open(results_path, "w") as f:
+            answers_best_list = [{"answer": predictions[k], "question_id": k} for k in predictions]
+            f.write(json.dumps(answers_best_list, indent=4))
+
+        if attack_str == "ensemble":
+            acc_dict_cur = compute_vqa_accuracy(
+                results_path,
+                test_questions_json_path,
+                test_annotations_json_path,
+                return_individual_scores=True
+            )
+            for q_id, pred in predictions.items():
+                acc = acc_dict_cur[q_id]
+                if acc < scores_dict[q_id]:
+                    scores_dict[q_id] = acc
+                    answers_best_dict[q_id] = pred
+                    adv_images_dict[q_id] = adv_images_cur_dict[q_id]
+                    if isinstance(gt, int):
+                        gt_dict.update({q_id: gt})
+                if acc == 0.:
+                    left_to_attack[q_id] = False
+            print(
+                f"##### "
+                f"after {(attack_str_cur, precision, gt)} left to attack: {sum(left_to_attack.values())} "
+                f"current acc: {np.mean(list(acc_dict_cur.values()))}, best acc: {np.mean(list(scores_dict.values()))}\n",
+                flush=True
+            )
+
+    if attack_config["save_adv"]:
+        for q_id in adv_images_dict:
+            torch.save(adv_images_dict[q_id], f'{images_save_path}/{str(q_id).zfill(12)}.pt')
+    # save gt dict and left to attack dict
+    with open(f'{os.path.dirname(args.results_file)}/gt_dict.json', 'w') as f:
+        json.dump(gt_dict, f)
+    with open(f'{os.path.dirname(args.results_file)}/left_to_attack.json', 'w') as f:
+        json.dump(left_to_attack, f)
+    with open(f'{os.path.dirname(args.results_file)}/captions_attack_dict.json', 'w') as f:
+        json.dump(answers_attack_dict, f)
+
+    if attack_str == "ensemble":
+        assert None not in answers_best_dict.values()
+        results_path = f"{dataset_name}results-best_{uuid.uuid4()}.json"
+        results_path = os.path.join(args.out_base_path, "captions-json", results_path)
+        os.makedirs(os.path.dirname(results_path), exist_ok=True)
+        print(f"Saving **best** generated captions to {results_path}")
+        answers_best_list = [{"answer": answers_best_dict[k], "question_id": k} for k in answers_best_dict]
+        with open(results_path, "w") as f:
+            f.write(json.dumps(answers_best_list, indent=4))
+
+    acc = compute_vqa_accuracy(
+        results_path,
+        test_questions_json_path,
+        test_annotations_json_path,
+        dataset=dataset_name
+    )
+
+    return acc, results_path
 
 
 def get_dataset(args, dataset_name):

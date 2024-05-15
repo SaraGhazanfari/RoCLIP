@@ -63,6 +63,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             output_hidden_states: Optional[bool] = None,
             images: Optional[torch.FloatTensor] = None,
             return_dict: Optional[bool] = None,
+            neftune_alpha = None
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -74,6 +75,13 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             images=images, position_ids=None)
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
+        if neftune_alpha:
+            noise_ = torch.zeros_like(inputs_embeds).uniform_(-1, 1)
+            delta = noise_ * attention_mask.unsqueeze(2)
+            dims = inputs_embeds.shape[0] * inputs_embeds.shape[1]
+            mag = neftune_alpha / torch.sqrt(dims)
+            delta = (delta * mag.view(-1, 1, 1)).detach()
+            inputs_embeds += delta
         outputs = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,

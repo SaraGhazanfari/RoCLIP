@@ -35,6 +35,7 @@ parser.add_argument('--stepsize_adv', type=float, default=1.,
                     help='Step size for adversarial attack (no effect for apgd)')
 parser.add_argument('--wandb', type=str2bool, default=True, help='Use Weights & Biases for logging')
 parser.add_argument('--mode', type=str, default='')
+parser.add_argument("--neftune_alpha", type=float, default=None)
 
 # distributed setting
 parser.add_argument("--ncpus", type=int, default=12, help="Number of CPUS per GPU.")
