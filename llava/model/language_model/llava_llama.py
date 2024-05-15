@@ -11,8 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-
-
+import math
 from typing import List, Optional, Tuple, Union
 
 import torch
@@ -80,7 +79,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             noise_ = torch.zeros_like(inputs_embeds).uniform_(-1, 1)
             delta = noise_ * attention_mask.unsqueeze(2)
             dims = inputs_embeds.shape[-2] * inputs_embeds.shape[-1]
-            mag = neftune_alpha / torch.sqrt(dims)
+            mag = neftune_alpha / math.sqrt(dims)
             print(mag)
             print(delta)
             delta = (delta * mag).detach()
