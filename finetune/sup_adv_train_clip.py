@@ -239,12 +239,11 @@ class LLaVAFinetune:
             elif not args.attack:
                 data_adv = data
 
-            # if args.clean_weight > 0.:
-            #     loss_clean = torch.mean(
-            #         self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
+            #if args.clean_weight > 0.:
+            #     loss_clean = self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
             #                    past_key_values=None,
-            #                    inputs_embeds=None, labels=labels).loss.sum())
-            # else:
+            #                    inputs_embeds=None, labels=labels).loss.sum()
+            #else:
             #     loss_clean = 0.
             # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
             # vision_embedding = list()
@@ -255,10 +254,15 @@ class LLaVAFinetune:
             #     vision_embedding.append(output)
             #
             # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
-
-            loss_total = self.model(images=self.normalizer(data_adv), input_ids=input_ids,
-                                    attention_mask=attention_mask,
-                                    past_key_values=None, inputs_embeds=None, labels=labels).loss.sum()
+            loss_total = self.model(images=self.normalizer(torch.cat((data, data_adv), dim=0)), input_ids=torch.cat((input_ids,input_ids), dim=0),
+                                    attention_mask=torch.cat((attention_mask, attention_mask), dim=0), past_key_values=None, inputs_embeds=None, 
+                                    labels=torch.cat((labels, labels), dim=0), reduction='none').loss
+            loss_clean = loss_total[:int(loss_total.shape[0]/2)]
+            loss_adv = loss_total[int(loss_total.shape[0]/2):]
+            if loss_clean.sum() > 0:
+                loss_total = loss_clean.sum() / (loss_clean!=0.0).sum()
+            loss_total = 0.2 * loss_total + 0.8 * (loss_adv.sum()/(loss_adv!=0.0).sum())
+            #loss_total = (1-args.clean_weight) * loss + args.clean_weight * loss_clean
             log_loss += loss_total.item()
             # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
             # print(vision_embedding[0])
@@ -271,7 +275,7 @@ class LLaVAFinetune:
             self.optimizer.zero_grad()
             self.step_total += 1
             self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss_total.detach().clone()  # vision_loss.detach().clone(),
+            data_adv.detach().clone(), loss_total.detach().clone(), loss_clean.detach().clone(), loss_adv.detach().clone()
             del data_adv, data
             self.model.zero_grad()
             if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
