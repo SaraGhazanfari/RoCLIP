@@ -82,7 +82,8 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             delta = noise_ * attention_mask.unsqueeze(2)
             dims = input_lengths * inputs_embeds.size(-1)
             mag = neftune_alpha / torch.sqrt(dims)
-            print(delta)
+            print(delta.shape)
+            print(mag.view(-1, 1, 1).shape)
             delta = (delta * mag.view(-1, 1, 1)).detach()
             print(delta)
             inputs_embeds += delta

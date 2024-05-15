@@ -205,39 +205,37 @@ class LLaVAFinetune:
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
-            try:
-                loss_total = self.model(images=self.normalizer(data), input_ids=input_ids,
-                                        attention_mask=attention_mask, past_key_values=None, inputs_embeds=None,
-                                        labels=labels, neftune_alpha=self.args.neftune_alpha).loss.sum()
-                log_loss += loss_total.item()
-                loss_total.backward()
 
-                self.optimizer.step()
-                self.optimizer.zero_grad()
-                self.step_total += 1
-                self.scheduler(self.step_total)
-                loss_total.detach().clone()  # vision_loss.detach().clone(),
+            loss_total = self.model(images=self.normalizer(data), input_ids=input_ids,
+                                    attention_mask=attention_mask, past_key_values=None, inputs_embeds=None,
+                                    labels=labels, neftune_alpha=self.args.neftune_alpha).loss.sum()
+            log_loss += loss_total.item()
+            loss_total.backward()
 
-                self.model.zero_grad()
-                if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
-                    lr = self.optimizer.param_groups[0]['lr']
-                    self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
-                    self.message.add("lr", lr, format=".10f")
-                    self.message.add("num_steps", self.step_total, format="1d")
-                    self.message.add("total", self.args.steps, format="1d")
-                    self.message.add("adv loss", log_loss / self.args.log_freq, format=".4f")
-                    self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
-                    logging.info(self.message.get_message())
-                    start_time = time.time()
-                    log_loss = 0
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            self.step_total += 1
+            self.scheduler(self.step_total)
+            loss_total.detach().clone()  # vision_loss.detach().clone(),
 
-                if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
-                    self.evaluate()
+            self.model.zero_grad()
+            if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
+                lr = self.optimizer.param_groups[0]['lr']
+                self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
+                self.message.add("lr", lr, format=".10f")
+                self.message.add("num_steps", self.step_total, format="1d")
+                self.message.add("total", self.args.steps, format="1d")
+                self.message.add("adv loss", log_loss / self.args.log_freq, format=".4f")
+                self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
+                logging.info(self.message.get_message())
+                start_time = time.time()
+                log_loss = 0
 
-                if idx % 2000 == 1999:
-                    self._save_model(idx + 1)
-            except Exception as e:
-                print(e)
+            if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
+                self.evaluate()
+
+            if idx % 2000 == 1999:
+                self._save_model(idx + 1)
 
     @torch.no_grad()
     def evaluate(self):
