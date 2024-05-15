@@ -80,10 +80,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             delta = noise_ * attention_mask.unsqueeze(2)
             dims = inputs_embeds.shape[-2] * inputs_embeds.shape[-1]
             mag = neftune_alpha / math.sqrt(dims)
-            print(mag)
-            print(delta[0, 0])
             delta = (delta * mag).detach()
-            print(delta[0, 0])
             inputs_embeds += delta
         outputs = self.model(
             input_ids=input_ids,
