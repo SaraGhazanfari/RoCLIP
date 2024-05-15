@@ -207,97 +207,83 @@ class LLaVAFinetune:
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.dataloader):
             data, input_ids, labels, attention_mask = data.to('cuda:0'), input_ids.to('cuda:0'), labels.to(
                 'cuda:0'), attention_mask.to('cuda:0')
+            try:
+                if args.attack == 'pgd':
+                    data_adv = pgd(
+                        forward=self.model,
+                        loss_fn=None,
+                        data_clean=data,
+                        targets=labels,
+                        norm=args.norm,
+                        eps=args.eps,
+                        iterations=args.iterations_adv,
+                        stepsize=args.stepsize_adv,
+                        normalizer=self.normalizer,
+                        perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
+                        mode='max',
+                        verbose=False,
+                        input_ids=input_ids, labels=labels, attention_mask=attention_mask
+                    )
+                elif args.attack == 'apgd':
+                    # apgd currently always applies output normalization
+                    data_adv = apgd(
+                        model=self.model,
+                        loss_fn=None,
+                        x=data,
+                        y=labels,
+                        norm=args.norm,
+                        eps=args.eps,
+                        n_iter=args.iterations_adv,
+                        verbose=True
+                    )
+                elif not args.attack:
+                    data_adv = data
 
-            if args.attack == 'pgd':
-                data_adv = pgd(
-                    forward=self.model,
-                    loss_fn=None,
-                    data_clean=data,
-                    targets=labels,
-                    norm=args.norm,
-                    eps=args.eps,
-                    iterations=args.iterations_adv,
-                    stepsize=args.stepsize_adv,
-                    normalizer=self.normalizer,
-                    perturbation=torch.zeros_like(data).uniform_(-args.eps, args.eps).requires_grad_(True),
-                    mode='max',
-                    verbose=False,
-                    input_ids=input_ids, labels=labels, attention_mask=attention_mask
-                )
-            elif args.attack == 'apgd':
-                # apgd currently always applies output normalization
-                data_adv = apgd(
-                    model=self.model,
-                    loss_fn=None,
-                    x=data,
-                    y=labels,
-                    norm=args.norm,
-                    eps=args.eps,
-                    n_iter=args.iterations_adv,
-                    verbose=True
-                )
-            elif not args.attack:
-                data_adv = data
+                loss_total = self.model(images=self.normalizer(torch.cat((data, data_adv), dim=0)), input_ids=torch.cat((input_ids,input_ids), dim=0),
+                                        attention_mask=torch.cat((attention_mask, attention_mask), dim=0), past_key_values=None, inputs_embeds=None, 
+                                        labels=torch.cat((labels, labels), dim=0), reduction='none').loss
+                loss_clean = loss_total[:int(loss_total.shape[0]/2)]
+                loss_adv = loss_total[int(loss_total.shape[0]/2):]
+                if loss_clean.sum() > 0:
+                    loss_total = loss_clean.sum() / (loss_clean!=0.0).sum()
+                loss_total = 0.05 * loss_total + 0.95 * (loss_adv.sum()/(loss_adv!=0.0).sum())
+                #loss_total = (1-args.clean_weight) * loss + args.clean_weight * loss_clean
+                log_loss += loss_total.item()
+                # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
+                # print(vision_embedding[0])
+                # vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
 
-            #if args.clean_weight > 0.:
-            #     loss_clean = self.model(images=data, input_ids=input_ids, attention_mask=attention_mask,
-            #                    past_key_values=None,
-            #                    inputs_embeds=None, labels=labels).loss.sum()
-            #else:
-            #     loss_clean = 0.
-            # print('3', torch.cuda.memory_allocated(), torch.cuda.max_memory_allocated())
-            # vision_embedding = list()
-            # with torch.no_grad():
-            #     teacher_vision_embedding = self.vision_teacher(self.normalizer(data))
+                loss_total.backward()
 
-            # def hook(module, input, output):
-            #     vision_embedding.append(output)
-            #
-            # hook_handle = unwrap_model(self.model).get_vision_tower().vision_tower.register_forward_hook(hook)
-            loss_total = self.model(images=self.normalizer(torch.cat((data, data_adv), dim=0)), input_ids=torch.cat((input_ids,input_ids), dim=0),
-                                    attention_mask=torch.cat((attention_mask, attention_mask), dim=0), past_key_values=None, inputs_embeds=None, 
-                                    labels=torch.cat((labels, labels), dim=0), reduction='none').loss
-            loss_clean = loss_total[:int(loss_total.shape[0]/2)]
-            loss_adv = loss_total[int(loss_total.shape[0]/2):]
-            if loss_clean.sum() > 0:
-                loss_total = loss_clean.sum() / (loss_clean!=0.0).sum()
-            loss_total = 0.2 * loss_total + 0.8 * (loss_adv.sum()/(loss_adv!=0.0).sum())
-            #loss_total = (1-args.clean_weight) * loss + args.clean_weight * loss_clean
-            log_loss += loss_total.item()
-            # vision_embedding = [unwrap_model(self.model).get_vision_tower().vision_tower(self.normalizer(data_adv))]
-            # print(vision_embedding[0])
-            # vision_loss = torch.nn.MSELoss()(teacher_vision_embedding, vision_embedding[0])
+                self.optimizer.step()
+                # hook_handle.remove()
+                self.optimizer.zero_grad()
+                self.step_total += 1
+                self.scheduler(self.step_total)
+                data_adv.detach().clone(), loss_total.detach().clone(), loss_clean.detach().clone(), loss_adv.detach().clone()
+                del data_adv, data
+                self.model.zero_grad()
+                if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
+                    lr = self.optimizer.param_groups[0]['lr']
+                    self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
+                    self.message.add("lr", lr, format=".10f")
+                    self.message.add("num_steps", self.step_total, format="1d")
+                    self.message.add("total", self.args.steps, format="1d")
+                    self.message.add("adv loss", log_loss/self.args.log_freq, format=".4f")
+                    # self.message.add("vision loss", vision_loss, format=".4f")
+                    # self.message.add("Total loss", loss_total, format=".4f")
+                    self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
+                    logging.info(self.message.get_message())
+                    start_time = time.time()
+                    log_loss = 0
 
-            loss_total.backward()
+                if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
+                    self.evaluate()
 
-            self.optimizer.step()
-            # hook_handle.remove()
-            self.optimizer.zero_grad()
-            self.step_total += 1
-            self.scheduler(self.step_total)
-            data_adv.detach().clone(), loss_total.detach().clone(), loss_clean.detach().clone(), loss_adv.detach().clone()
-            del data_adv, data
-            self.model.zero_grad()
-            if idx % self.args.log_freq == self.args.log_freq - 1 and self.args.local_rank == 0:
-                lr = self.optimizer.param_groups[0]['lr']
-                self.message.add("epoch", epoch + idx / len(self.dataloader), format="4.2f")
-                self.message.add("lr", lr, format=".10f")
-                self.message.add("num_steps", self.step_total, format="1d")
-                self.message.add("total", self.args.steps, format="1d")
-                self.message.add("adv loss", log_loss/self.args.log_freq, format=".4f")
-                # self.message.add("vision loss", vision_loss, format=".4f")
-                # self.message.add("Total loss", loss_total, format=".4f")
-                self.message.add("time", int(time.time() - start_time) / 60, format=".2f")
-                logging.info(self.message.get_message())
-                start_time = time.time()
-                log_loss = 0
-
-            if idx % self.args.eval_freq == self.args.eval_freq - 1 and self.args.local_rank == 0:
-                self.evaluate()
-
-            if idx % 2000 == 1999:
-                self._save_model(idx + 1)
-
+                if idx % 2000 == 1999:
+                    self._save_model(idx + 1)
+            except Exception as e:
+                print(e)
     @torch.no_grad()
     def evaluate(self):
         for idx, (data, input_ids, labels, attention_mask) in enumerate(self.valloader):
