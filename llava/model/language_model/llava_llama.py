@@ -62,7 +62,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             output_hidden_states: Optional[bool] = None,
             images: Optional[torch.FloatTensor] = None,
             return_dict: Optional[bool] = None,
-            neftune_alpha = None,
+            neftune_alpha=None,
             reduction='mean'
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
@@ -81,9 +81,9 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             dims = inputs_embeds.shape[-2] * inputs_embeds.shape[-1]
             mag = neftune_alpha / math.sqrt(dims)
             print(mag)
-            print(delta)
+            print(delta[0, 0])
             delta = (delta * mag).detach()
-            print(delta)
+            print(delta[0, 0])
             inputs_embeds += delta
         outputs = self.model(
             input_ids=input_ids,
