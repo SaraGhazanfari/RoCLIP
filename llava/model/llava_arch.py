@@ -117,7 +117,7 @@ class LlavaMetaForCausalLM(ABC):
 
         else:
             image_features = self.encode_images(images)
-
+        print(image_features.shape)
         # Let's just add dummy tensors if they do not exist,
         # it is a headache to deal with None all the time.
         # But it is not ideal, and if you have a better idea,
