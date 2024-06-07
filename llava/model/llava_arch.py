@@ -31,6 +31,10 @@ class LlavaMetaModel:
         if hasattr(config, "mm_vision_tower"):
             self.vision_tower = build_vision_tower(config, delay_load=True)
             self.mm_projector = build_vision_projector(config)
+            print(self.mm_projector)
+            print('--------------------------------------------------------')
+            print('--------------------------------------------------------')
+            print(self.vision_tower)
 
     def get_vision_tower(self):
         vision_tower = getattr(self, 'vision_tower', None)
