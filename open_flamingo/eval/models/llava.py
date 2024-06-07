@@ -226,8 +226,8 @@ class EvalModelLLAVA(BaseEvalModel):
         return conv
 
     def get_caption_prompt(self, caption=None) -> str:
-        #qs = "Provide a short caption for this image."
-        qs = ""
+        qs = "Provide a short caption for this image."
+        #qs = ""
         if self.model.config.mm_use_im_start_end:
             qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
         else:
