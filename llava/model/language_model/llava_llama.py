@@ -74,7 +74,7 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
             images=images, position_ids=None)
 
         # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
-
+        print(inputs_embeds.shape)
         outputs = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
