@@ -70,9 +70,6 @@ class LlavaLlamaForCausalLM(LlamaForCausalLM, LlavaMetaForCausalLM):
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        print(input_ids.shape, images.shape)
-
-
         input_ids, attention_mask, past_key_values, inputs_embeds, labels = self.prepare_inputs_labels_for_multimodal(
             input_ids=input_ids, attention_mask=attention_mask, past_key_values=past_key_values, labels=labels,
             images=images, position_ids=None)
